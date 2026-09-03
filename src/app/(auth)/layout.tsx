@@ -17,7 +17,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         <Link href="/" className="inline-flex items-center gap-3">
           <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center p-1 shadow-lg">
             <Image
-              src="/logo.svg"
+              src="/logo.png"
               alt="TOOLSMAN"
               width={40}
               height={40}

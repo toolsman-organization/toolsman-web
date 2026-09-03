@@ -236,7 +236,7 @@ function CheckoutContent() {
         currency: 'INR',
         name: 'TOOLSMAN',
         description: `Order #${orderNumber}`,
-        image: '/logo.svg',
+        image: '/logo.png',
         order_id: razorpayOrderId.startsWith('test_') ? undefined : razorpayOrderId,
         prefill: {
           name: formData.fullName,

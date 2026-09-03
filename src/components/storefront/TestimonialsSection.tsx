@@ -26,18 +26,18 @@ const testimonials = [
 
 export default function TestimonialsSection() {
   return (
-    <section className="py-12 sm:py-16 bg-white border-b border-neutral-200">
+    <section className="py-12 sm:py-16 lg:py-20 bg-white border-b border-neutral-200">
       <div className="container-site">
-        <div className="text-center max-w-xl mx-auto mb-10">
-          <span className="text-xs font-bold text-orange-600 uppercase tracking-widest">
+        <div className="text-center max-w-xl mx-auto mb-10 lg:mb-12">
+          <span className="text-[11px] font-bold text-orange-600 uppercase tracking-widest block mb-2">
             Real Reviews From Real People
           </span>
-          <h2 className="text-2xl sm:text-3xl font-black text-neutral-950 tracking-tight mt-1 uppercase">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-neutral-950 tracking-tight uppercase leading-tight">
             What Our Customers Say
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 lg:gap-6">
           {testimonials.map((t, idx) => (
             <div
               key={idx}
@@ -50,20 +50,20 @@ export default function TestimonialsSection() {
                       <Star key={i} size={14} className="fill-amber-500 text-amber-500" />
                     ))}
                   </div>
-                  <Quote size={20} className="text-neutral-300" />
+                  <Quote size={20} className="text-neutral-300 shrink-0" />
                 </div>
                 <p className="text-sm text-neutral-700 leading-relaxed italic">
                   &ldquo;{t.comment}&rdquo;
                 </p>
               </div>
 
-              <div className="mt-6 pt-4 border-t border-neutral-200/60 flex items-center justify-between">
-                <div>
-                  <h4 className="text-sm font-bold text-neutral-900">{t.name}</h4>
-                  <p className="text-xs text-neutral-500">{t.role}</p>
+              <div className="mt-6 pt-4 border-t border-neutral-200/60 flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <h4 className="text-sm font-bold text-neutral-900 truncate">{t.name}</h4>
+                  <p className="text-xs text-neutral-500 truncate">{t.role}</p>
                 </div>
                 {t.verified && (
-                  <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">
+                  <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full shrink-0">
                     Verified Buyer
                   </span>
                 )}
