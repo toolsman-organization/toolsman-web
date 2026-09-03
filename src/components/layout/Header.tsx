@@ -40,45 +40,50 @@ export default function Header({ categories, storePhone }: HeaderProps) {
 
   return (
     <>
-      {/* Main Header */}
+      {/* ================================================================
+          Main Header — sticky, dark, contains logo + search + icons
+          ================================================================ */}
       <header
-        className={`sticky top-0 z-50 transition-shadow duration-200 ${scrolled ? 'shadow-lg' : ''}`}
+        className={`sticky top-0 z-50 transition-shadow duration-200 ${scrolled ? 'shadow-xl shadow-black/30' : ''}`}
         style={{ backgroundColor: '#111111' }}
       >
-        {/* Desktop Header */}
-        <div className="container-site hidden md:flex items-center gap-4 py-3">
+        {/* Desktop Header Row */}
+        <div className="container-site hidden md:flex items-center gap-5 py-3">
+
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 shrink-0" aria-label="TOOLSMAN Home">
-            <Image
-              src="/logo.png"
-              alt="TOOLSMAN Logo"
-              width={44}
-              height={44}
-              className="object-contain"
-              priority
-            />
-            <div className="hidden lg:block">
-              <div className="text-white font-bold text-lg leading-none tracking-wide">TOOLSMAN</div>
-              <div className="text-xs mt-0.5" style={{ color: '#f97316', fontSize: '10px' }}>
+          <Link href="/" className="flex items-center gap-3 shrink-0" aria-label="TOOLSMAN Home">
+            <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center p-1 shrink-0">
+              <Image
+                src="/logo.png"
+                alt="TOOLSMAN Logo"
+                width={34}
+                height={34}
+                className="object-contain"
+                priority
+              />
+            </div>
+            <div className="hidden lg:flex flex-col leading-none">
+              <span className="text-white font-black text-[17px] tracking-widest uppercase">TOOLSMAN</span>
+              <span className="text-[9px] font-bold tracking-widest uppercase mt-0.5" style={{ color: '#f97316' }}>
                 SALES • SERVICE • RENT
-              </div>
+              </span>
             </div>
           </Link>
 
-          {/* Search Bar */}
-          <form onSubmit={handleSearchSubmit} className="flex-1 max-w-xl">
+          {/* Search Bar — takes remaining space */}
+          <form onSubmit={handleSearchSubmit} className="flex-1">
             <div className="relative">
               <input
                 type="search"
                 placeholder="Search for drills, grinders, accessories..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-4 pr-12 py-2.5 rounded-sm text-sm bg-white text-gray-900 border-0 outline-none"
+                className="w-full pl-4 pr-14 py-2.5 rounded-sm text-sm bg-white text-gray-900 border-0 outline-none placeholder:text-gray-400"
                 aria-label="Search products"
               />
               <button
                 type="submit"
-                className="absolute right-0 top-0 bottom-0 px-4 rounded-r-sm flex items-center justify-center"
+                className="absolute right-0 top-0 bottom-0 px-4 rounded-r-sm flex items-center justify-center transition-colors hover:brightness-110"
                 style={{ backgroundColor: '#f97316' }}
                 aria-label="Search"
               >
@@ -87,39 +92,43 @@ export default function Header({ categories, storePhone }: HeaderProps) {
             </div>
           </form>
 
-          {/* Right Icons */}
-          <div className="flex items-center gap-1 shrink-0">
-            {/* Phone */}
+          {/* Right Icons — phone + account + wishlist + cart */}
+          <div className="flex items-center shrink-0">
+
+            {/* Phone — only xl+ */}
             {storePhone && (
               <a
                 href={`tel:${storePhone}`}
-                className="hidden xl:flex items-center gap-1.5 text-white text-xs px-3 py-2 hover:text-orange-400 transition-colors"
+                className="hidden xl:flex items-center gap-1.5 text-white text-xs px-3 py-2 rounded hover:text-orange-400 hover:bg-white/5 transition-colors"
               >
                 <Phone size={14} />
-                <span>{storePhone}</span>
+                <span className="font-medium">{storePhone}</span>
               </a>
             )}
 
             {/* Account */}
             <Link
               href={user ? '/account' : '/login'}
-              className="flex flex-col items-center gap-0.5 text-white px-3 py-2 hover:text-orange-400 transition-colors"
+              className="flex flex-col items-center gap-0.5 text-white px-3 py-2 rounded hover:text-orange-400 hover:bg-white/5 transition-colors"
               aria-label="Account"
             >
               <User size={20} />
-              <span className="text-xs">Account</span>
+              <span className="text-[10px] font-medium">Account</span>
             </Link>
 
             {/* Wishlist */}
             <Link
               href="/account/wishlist"
-              className="flex flex-col items-center gap-0.5 text-white px-3 py-2 hover:text-orange-400 transition-colors relative"
+              className="flex flex-col items-center gap-0.5 text-white px-3 py-2 rounded hover:text-orange-400 hover:bg-white/5 transition-colors relative"
               aria-label={`Wishlist (${wishlistCount} items)`}
             >
               <Heart size={20} />
-              <span className="text-xs">Wishlist</span>
+              <span className="text-[10px] font-medium">Wishlist</span>
               {wishlistCount > 0 && (
-                <span className="absolute top-1 right-1 text-xs bg-orange-500 text-white rounded-full w-4 h-4 flex items-center justify-center font-bold" style={{ fontSize: '9px' }}>
+                <span
+                  className="absolute top-1.5 right-1.5 text-white rounded-full w-4 h-4 flex items-center justify-center font-black leading-none"
+                  style={{ backgroundColor: '#f97316', fontSize: '9px' }}
+                >
                   {wishlistCount > 99 ? '99+' : wishlistCount}
                 </span>
               )}
@@ -128,14 +137,14 @@ export default function Header({ categories, storePhone }: HeaderProps) {
             {/* Cart */}
             <Link
               href="/cart"
-              className="flex flex-col items-center gap-0.5 text-white px-3 py-2 hover:text-orange-400 transition-colors relative"
+              className="flex flex-col items-center gap-0.5 text-white px-3 py-2 rounded hover:text-orange-400 hover:bg-white/5 transition-colors relative"
               aria-label={`Cart (${cartCount} items)`}
             >
               <ShoppingCart size={20} />
-              <span className="text-xs">Cart</span>
+              <span className="text-[10px] font-medium">Cart</span>
               {cartCount > 0 && (
                 <span
-                  className="absolute top-1 right-1 text-xs text-white rounded-full w-4 h-4 flex items-center justify-center font-bold"
+                  className="absolute top-1.5 right-1.5 text-white rounded-full w-4 h-4 flex items-center justify-center font-black leading-none"
                   style={{ backgroundColor: '#f97316', fontSize: '9px' }}
                 >
                   {cartCount > 99 ? '99+' : cartCount}
@@ -145,22 +154,23 @@ export default function Header({ categories, storePhone }: HeaderProps) {
           </div>
         </div>
 
-        {/* Navigation Bar (Desktop) */}
+        {/* Desktop Navigation Bar */}
         <div style={{ backgroundColor: '#1a1a1a', borderTop: '1px solid #2d2d2d' }} className="hidden md:block">
           <div className="container-site">
-            <nav className="flex items-center gap-0" aria-label="Main navigation">
+            <nav className="flex items-center justify-center gap-1 sm:gap-2" aria-label="Main navigation">
+
               {/* All Categories Dropdown */}
               <div className="relative group">
                 <button
-                  className="flex items-center gap-2 px-4 py-3 text-sm font-semibold text-white hover:bg-orange-500 transition-colors"
+                  className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white hover:bg-orange-500 rounded transition-colors whitespace-nowrap"
                   aria-haspopup="true"
                 >
-                  <Menu size={16} />
+                  <Menu size={15} />
                   All Categories
-                  <ChevronDown size={14} className="group-hover:rotate-180 transition-transform duration-200" />
+                  <ChevronDown size={13} className="group-hover:rotate-180 transition-transform duration-200 ml-0.5" />
                 </button>
                 {/* Mega dropdown */}
-                <div className="absolute top-full left-0 w-56 bg-white shadow-xl rounded-b-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                <div className="absolute top-full left-0 w-56 bg-white shadow-xl rounded-b-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 border-t-2 border-orange-500 text-left">
                   {categories.map((cat) => (
                     <Link
                       key={cat.id}
@@ -178,20 +188,22 @@ export default function Header({ categories, storePhone }: HeaderProps) {
                 <Link
                   key={label}
                   href={`/shop?search=${encodeURIComponent(label)}`}
-                  className="px-4 py-3 text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 transition-colors"
+                  className="px-4 py-2.5 text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 rounded transition-colors whitespace-nowrap"
                 >
                   {label}
                 </Link>
               ))}
+
               <Link
                 href="/shop"
-                className="px-4 py-3 text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 transition-colors"
+                className="px-4 py-2.5 text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 rounded transition-colors"
               >
                 Brands
               </Link>
+
               <Link
                 href="/shop?sort=price-low"
-                className="px-4 py-3 text-sm font-semibold hover:bg-white/10 transition-colors"
+                className="px-4 py-2.5 text-sm font-semibold hover:bg-white/10 rounded transition-colors"
                 style={{ color: '#f97316' }}
               >
                 Offers
@@ -200,44 +212,40 @@ export default function Header({ categories, storePhone }: HeaderProps) {
           </div>
         </div>
 
-        {/* Mobile Header */}
+        {/* Mobile Header Row */}
         <div className="flex md:hidden items-center gap-3 px-4 py-3">
           <button
             onClick={() => setMobileNavOpen(true)}
-            className="text-white p-1"
+            className="text-white p-1.5 rounded hover:bg-white/10 transition-colors"
             aria-label="Open menu"
           >
-            <Menu size={24} />
+            <Menu size={22} />
           </button>
 
-          <Link href="/" className="flex items-center gap-2 flex-1" aria-label="TOOLSMAN Home">
-            <Image
-              src="/logo.png"
-              alt="TOOLSMAN"
-              width={36}
-              height={36}
-              className="object-contain"
-            />
-            <span className="text-white font-bold text-base tracking-wide">TOOLSMAN</span>
+          <Link href="/" className="flex items-center gap-2.5 flex-1" aria-label="TOOLSMAN Home">
+            <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center p-1 shrink-0">
+              <Image src="/logo.png" alt="TOOLSMAN" width={26} height={26} className="object-contain" />
+            </div>
+            <span className="text-white font-black text-base tracking-widest uppercase">TOOLSMAN</span>
           </Link>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <button
               onClick={() => setShowSearch(!showSearch)}
-              className="text-white p-1"
+              className="text-white p-1.5 rounded hover:bg-white/10 transition-colors"
               aria-label="Toggle search"
             >
               <Search size={20} />
             </button>
             <Link
               href="/cart"
-              className="text-white p-1 relative"
+              className="text-white p-1.5 rounded hover:bg-white/10 transition-colors relative"
               aria-label={`Cart (${cartCount} items)`}
             >
               <ShoppingCart size={20} />
               {cartCount > 0 && (
                 <span
-                  className="absolute -top-1 -right-1 text-white rounded-full w-4 h-4 flex items-center justify-center font-bold"
+                  className="absolute -top-0.5 -right-0.5 text-white rounded-full w-4 h-4 flex items-center justify-center font-black leading-none"
                   style={{ backgroundColor: '#f97316', fontSize: '9px' }}
                 >
                   {cartCount}
@@ -257,12 +265,12 @@ export default function Header({ categories, storePhone }: HeaderProps) {
                 placeholder="Search products..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-4 pr-12 py-2.5 rounded-sm text-sm bg-white text-gray-900 outline-none"
+                className="w-full pl-4 pr-12 py-2.5 rounded-sm text-sm bg-white text-gray-900 outline-none placeholder:text-gray-400"
                 autoFocus
               />
               <button
                 type="submit"
-                className="absolute right-0 top-0 bottom-0 px-3 rounded-r-sm"
+                className="absolute right-0 top-0 bottom-0 px-3 rounded-r-sm flex items-center justify-center"
                 style={{ backgroundColor: '#f97316' }}
               >
                 <Search size={16} className="text-white" />

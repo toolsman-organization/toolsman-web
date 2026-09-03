@@ -46,29 +46,29 @@ export default async function HomePage() {
       <BrandSection brands={brands} />
 
       {/* 4. TOP PICKS / Best Selling Tools */}
-      <section className="py-10 sm:py-14 bg-white border-b border-neutral-200/70">
+      <section className="py-8 sm:py-12 lg:py-14 bg-white border-b border-neutral-200/70">
         <div className="container-site">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-4">
+          <div className="flex items-end justify-between mb-6 sm:mb-8">
             <div>
-              <div className="flex items-center gap-1.5 text-xs font-bold text-orange-600 uppercase tracking-widest mb-1">
-                <Flame size={15} className="fill-orange-500 text-orange-500" />
+              <div className="flex items-center gap-1.5 text-[11px] font-bold text-orange-600 uppercase tracking-widest mb-1">
+                <Flame size={14} className="fill-orange-500 text-orange-500 shrink-0" />
                 <span>Best Selling Tools This Week</span>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-black text-neutral-950 tracking-tight">
+              <h2 className="text-xl sm:text-2xl lg:text-3xl font-black text-neutral-950 tracking-tight leading-none">
                 TOP PICKS
               </h2>
             </div>
             <Link
               href="/shop?sort=popular"
-              className="group inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-orange-600 hover:text-orange-700 transition-colors"
+              className="group inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-orange-600 hover:text-orange-700 transition-colors shrink-0"
             >
-              <span>View All Products</span>
-              <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+              <span>View All</span>
+              <ArrowRight size={15} className="group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
 
           {topPicks.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3.5 sm:gap-5">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-5 gap-3 sm:gap-4 lg:gap-5">
               {topPicks.map((product, idx) => (
                 <ProductCard key={product.id} product={product} priority={idx < 4} />
               ))}
@@ -89,7 +89,7 @@ export default async function HomePage() {
       </section>
 
       {/* 5. Promotional Industrial Mid-Banner */}
-      <section className="py-10 sm:py-14 bg-neutral-950 text-white relative overflow-hidden">
+      <section className="py-12 sm:py-16 bg-neutral-950 text-white relative overflow-hidden">
         <div
           className="absolute inset-0 opacity-15"
           style={{
@@ -105,12 +105,12 @@ export default async function HomePage() {
               Special Pro Contractor Offer
             </span>
             <h2
-              className="text-3xl sm:text-5xl font-black text-white leading-tight uppercase tracking-tight"
+              className="text-3xl sm:text-4xl lg:text-5xl font-black text-white leading-tight uppercase tracking-tight"
               style={{ fontFamily: 'var(--font-display)' }}
             >
               Heavy Duty Cordless Combo Kits
             </h2>
-            <p className="text-sm sm:text-base text-neutral-300 mt-3 mb-6 max-w-lg">
+            <p className="text-sm sm:text-base text-neutral-300 mt-3 mb-6 max-w-lg leading-relaxed">
               Upgrade your workshop with high-output 20V brushless hammer drills and angle grinders. 2-Year warranty on all brushless motors.
             </p>
             <div className="flex flex-wrap gap-3">
@@ -127,28 +127,28 @@ export default async function HomePage() {
 
       {/* 6. New Arrivals Section (if available) */}
       {newArrivals.length > 0 && (
-        <section className="py-10 sm:py-14 bg-neutral-50 border-b border-neutral-200/70">
+        <section className="py-8 sm:py-12 lg:py-14 bg-neutral-50 border-b border-neutral-200/70">
           <div className="container-site">
-            <div className="flex items-center justify-between mb-8">
+            <div className="flex items-end justify-between mb-6 sm:mb-8">
               <div>
-                <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-600 uppercase tracking-widest mb-1">
-                  <Sparkles size={14} />
+                <div className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-600 uppercase tracking-widest mb-1">
+                  <Sparkles size={14} className="shrink-0" />
                   <span>Just Arrived In Stock</span>
                 </div>
-                <h2 className="text-2xl sm:text-3xl font-black text-neutral-950 tracking-tight">
+                <h2 className="text-xl sm:text-2xl lg:text-3xl font-black text-neutral-950 tracking-tight leading-none">
                   NEW ARRIVALS
                 </h2>
               </div>
               <Link
                 href="/shop?isNew=true"
-                className="group inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-orange-600 hover:text-orange-700 transition-colors"
+                className="group inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-orange-600 hover:text-orange-700 transition-colors shrink-0"
               >
-                <span>Explore New Tools</span>
-                <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                <span>View All</span>
+                <ArrowRight size={15} className="group-hover:translate-x-1 transition-transform" />
               </Link>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3.5 sm:gap-5">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-5 gap-3 sm:gap-4 lg:gap-5">
               {newArrivals.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}

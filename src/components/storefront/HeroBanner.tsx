@@ -1,23 +1,192 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
 import type { Banner } from '@/types/database';
+import {
+  parseBannerContent,
+  DEFAULT_BANNER_TEMPLATE,
+  type BannerStructuredContent,
+  type BannerHeadingSize,
+  type BannerHeadingWeight,
+} from '@/lib/bannerHelper';
+import BannerFeatureIconComponent from './BannerFeatureIcon';
 
 interface HeroBannerProps {
   banners: Banner[];
 }
 
-// Fallback when no banners are configured
-const fallbackSlide = {
-  title: 'BUILT FOR',
-  titleAccent: 'THE JOB.',
-  subtitle: 'Professional tools. Serious performance.',
-  buttonText: 'SHOP NOW',
-  buttonLink: '/shop',
-};
+function getHeadingSizeClass(size: BannerHeadingSize): string {
+  switch (size) {
+    case 'small':
+      return 'text-3xl sm:text-4xl lg:text-5xl tracking-wide leading-none';
+    case 'medium':
+      return 'text-4xl sm:text-5xl md:text-6xl lg:text-7xl tracking-wide leading-none';
+    case 'large':
+      return 'text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl tracking-wider leading-[0.92]';
+    case 'massive':
+      return 'text-6xl sm:text-8xl md:text-[6.5rem] lg:text-[8rem] xl:text-[9.5rem] 2xl:text-[11rem] tracking-widest leading-[0.88]';
+    case 'extra-large':
+    default:
+      return 'text-5xl sm:text-7xl md:text-8xl lg:text-[6.5rem] xl:text-[7.5rem] 2xl:text-[8.5rem] tracking-wider leading-[0.9]';
+  }
+}
+
+function getHeadingWeightClass(weight: BannerHeadingWeight): string {
+  switch (weight) {
+    case 'normal':
+      return 'font-normal';
+    case 'semibold':
+      return 'font-semibold';
+    case 'bold':
+      return 'font-bold';
+    case 'extrabold':
+      return 'font-extrabold';
+    case 'black':
+    default:
+      return 'font-black';
+  }
+}
+
+function getButtonStyleClass(style?: string): string {
+  switch (style) {
+    case 'secondary':
+      return 'btn-secondary text-white border-white/60 hover:bg-white hover:text-neutral-950';
+    case 'dark':
+      return 'btn-dark bg-neutral-900 text-white hover:bg-neutral-800 border border-neutral-700';
+    case 'outline-white':
+      return 'inline-flex items-center justify-center gap-2 px-6 py-3 rounded text-sm font-bold border-2 border-white text-white hover:bg-white hover:text-neutral-950 transition-all';
+    case 'primary':
+    default:
+      return 'btn-primary text-sm sm:text-base px-7 py-3 gap-2 shadow-lg shadow-orange-500/30';
+  }
+}
+
+/**
+ * Reusable Banner Content View used for both Storefront and Admin Live Preview.
+ */
+export function BannerContentView({
+  content,
+  isLive = false,
+}: {
+  content: BannerStructuredContent;
+  isLive?: boolean;
+}) {
+  const horizontalClass = useMemo(() => {
+    switch (content.horizontal_position) {
+      case 'center':
+        return 'items-center text-center mx-auto';
+      case 'right':
+        return 'items-end text-right ml-auto';
+      case 'left':
+      default:
+        return 'items-start text-left mr-auto';
+    }
+  }, [content.horizontal_position]);
+
+  return (
+    <div className={`flex flex-col max-w-2xl lg:max-w-3xl xl:max-w-4xl ${horizontalClass}`}>
+      {/* 1. Top Badge / Tagline */}
+      {content.badge && (
+        <span
+          className="text-xs sm:text-sm font-bold uppercase tracking-widest mb-2.5 inline-flex items-center gap-2 drop-shadow-sm"
+          style={{ color: content.badge_color || '#f97316' }}
+        >
+          <span
+            className="w-2 h-2 rounded-full animate-pulse"
+            style={{ backgroundColor: content.badge_color || '#f97316' }}
+          />
+          {content.badge}
+        </span>
+      )}
+
+      {/* 2. Multi-line Headings with impactful elongated display typography */}
+      <div className="flex flex-col gap-1 sm:gap-1.5 mb-3.5">
+        {content.heading_lines.map((line, idx) => (
+          <h1
+            key={line.id || idx}
+            className={`${getHeadingSizeClass(line.size)} ${getHeadingWeightClass(
+              line.weight
+            )} uppercase drop-shadow-lg`}
+            style={{
+              fontFamily: 'var(--font-display)',
+              color: line.color || '#ffffff',
+            }}
+          >
+            {line.text}
+          </h1>
+        ))}
+      </div>
+
+      {/* 3. Subtitle */}
+      {content.subtitle && (
+        <p
+          className="text-sm sm:text-base lg:text-lg xl:text-xl mb-2.5 leading-relaxed font-medium drop-shadow-sm max-w-xl"
+          style={{ color: content.subtitle_color || '#d4d4d4' }}
+        >
+          {content.subtitle}
+        </p>
+      )}
+
+      {/* 4. Optional Description */}
+      {content.description && (
+        <p
+          className="text-xs sm:text-sm mb-4 leading-relaxed max-w-lg"
+          style={{ color: content.description_color || '#a3a3a3' }}
+        >
+          {content.description}
+        </p>
+      )}
+
+      {/* 5. Feature Badges (e.g. Sales, Service, Support) */}
+      {content.features && content.features.length > 0 && (
+        <div
+          className={`flex flex-wrap gap-2.5 sm:gap-4 my-4 ${
+            content.horizontal_position === 'center'
+              ? 'justify-center'
+              : content.horizontal_position === 'right'
+              ? 'justify-end'
+              : 'justify-start'
+          }`}
+        >
+          {content.features.map((feat, idx) => (
+            <div
+              key={feat.id || idx}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/45 backdrop-blur-xs border border-white/10 shadow-sm"
+            >
+              <BannerFeatureIconComponent icon={feat.icon} size={15} className="text-orange-500 shrink-0" />
+              <div className="flex flex-col text-left leading-none">
+                <span className="text-[11px] font-black text-white uppercase tracking-wider">{feat.title}</span>
+                {feat.description && (
+                  <span className="text-[9px] text-neutral-400 font-medium mt-0.5">{feat.description}</span>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* 6. CTA Button */}
+      {content.button_visible !== false && content.button_text && (
+        <div className="mt-2.5 pt-1">
+          {isLive ? (
+            <span className={getButtonStyleClass(content.button_style)}>
+              <span>{content.button_text}</span>
+              <ArrowRight size={17} />
+            </span>
+          ) : (
+            <Link href={content.button_link || '/shop'} className={getButtonStyleClass(content.button_style)}>
+              <span>{content.button_text}</span>
+              <ArrowRight size={17} />
+            </Link>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function HeroBanner({ banners }: HeroBannerProps) {
   const [current, setCurrent] = useState(0);
@@ -43,73 +212,75 @@ export default function HeroBanner({ banners }: HeroBannerProps) {
 
   useEffect(() => {
     if (banners.length <= 1) return;
-    const interval = setInterval(next, 5000);
+    const interval = setInterval(next, 5500);
     return () => clearInterval(interval);
   }, [banners.length, next]);
 
-  // No banners: show a styled placeholder
+  // Fallback state when no banner exists
   if (!banners.length) {
     return (
       <section
-        className="relative overflow-hidden"
+        className="relative overflow-hidden bg-neutral-950"
         style={{
-          background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0a0a0a 100%)',
-          minHeight: 'clamp(320px, 50vw, 560px)',
+          minHeight: 'clamp(420px, 50vw, 660px)',
         }}
       >
-        {/* Pattern overlay */}
+        {/* Industrial Pattern Overlay */}
         <div
-          className="absolute inset-0 opacity-10"
+          className="absolute inset-0 opacity-15"
           style={{
             backgroundImage:
               'repeating-linear-gradient(45deg, transparent, transparent 35px, rgba(255,255,255,.05) 35px, rgba(255,255,255,.05) 70px)',
           }}
         />
-        <div className="container-site h-full flex items-center py-16 relative z-10">
-          <div className="max-w-xl">
-            <p className="text-orange-400 font-semibold text-sm uppercase tracking-widest mb-2">
-              Professional Tools Store
-            </p>
-            <h1 className="text-white leading-none mb-2" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(3rem, 8vw, 6rem)' }}>
-              {fallbackSlide.title}
-            </h1>
-            <h2 className="leading-none mb-6" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(3rem, 8vw, 6rem)', color: '#f97316' }}>
-              {fallbackSlide.titleAccent}
-            </h2>
-            <p className="text-gray-300 text-lg mb-8">{fallbackSlide.subtitle}</p>
-            <div className="flex flex-wrap gap-3">
-              <Link href={fallbackSlide.buttonLink} className="btn-primary text-base px-8 py-3 gap-2">
-                {fallbackSlide.buttonText}
-                <ArrowRight size={18} />
-              </Link>
-              <div className="flex items-center gap-6 mt-2">
-                {['Sales', 'Service', 'Support'].map((label) => (
-                  <div key={label} className="flex items-center gap-1.5">
-                    <div className="w-1.5 h-1.5 rounded-full bg-orange-500" />
-                    <span className="text-gray-400 text-sm font-medium">{label}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+        {/* Radial highlight */}
+        <div
+          className="absolute inset-0 opacity-30 pointer-events-none"
+          style={{
+            background: 'radial-gradient(circle at 20% 50%, rgba(249,115,22,0.25) 0%, transparent 60%)',
+          }}
+        />
+
+        <div className="container-site h-full flex items-center py-16 sm:py-24 relative z-10">
+          <BannerContentView content={DEFAULT_BANNER_TEMPLATE} />
         </div>
       </section>
     );
   }
 
-  const banner = banners[current];
+  const activeBanner = banners[current];
+  const structured = parseBannerContent(activeBanner);
+
+  // Determine vertical alignment container class
+  const verticalContainerClass =
+    structured.vertical_position === 'top'
+      ? 'items-start pt-14 sm:pt-20 pb-24'
+      : structured.vertical_position === 'bottom'
+      ? 'items-end pt-24 pb-14 sm:pb-20'
+      : 'items-center py-14 sm:py-20 lg:py-24';
+
+  // Dynamic gradient overlay depending on content horizontal position
+  const gradientOverlay =
+    structured.horizontal_position === 'right'
+      ? 'linear-gradient(to left, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.5) 60%, rgba(0,0,0,0.15) 100%)'
+      : structured.horizontal_position === 'center'
+      ? 'linear-gradient(to bottom, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.75) 100%)'
+      : 'linear-gradient(to right, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.55) 55%, rgba(0,0,0,0.1) 100%)';
 
   return (
-    <section className="relative overflow-hidden" style={{ minHeight: 'clamp(300px, 50vw, 560px)' }}>
-      {/* Background image */}
+    <section
+      className="relative overflow-hidden bg-neutral-950"
+      style={{ minHeight: 'clamp(420px, 50vw, 660px)' }}
+    >
+      {/* Background Image Layer */}
       <div
         className="absolute inset-0 transition-opacity duration-300"
-        style={{ opacity: transitioning ? 0.4 : 1 }}
+        style={{ opacity: transitioning ? 0.3 : 1 }}
       >
-        {banner.image_url ? (
+        {activeBanner.image_url ? (
           <Image
-            src={banner.image_url}
-            alt={banner.title ?? 'Banner'}
+            src={activeBanner.image_url}
+            alt={structured.heading_lines[0]?.text || 'Toolsman Hero Banner'}
             fill
             className="object-cover"
             priority={current === 0}
@@ -118,64 +289,57 @@ export default function HeroBanner({ banners }: HeroBannerProps) {
         ) : (
           <div style={{ background: 'linear-gradient(135deg, #0a0a0a, #1a1a1a)' }} className="w-full h-full" />
         )}
-        {/* Dark overlay for text readability */}
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(to right, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.3) 60%, rgba(0,0,0,0.1) 100%)' }} />
+
+        {/* Dynamic Dark Gradient Overlay for Readability */}
+        <div className="absolute inset-0" style={{ background: gradientOverlay }} />
       </div>
 
-      {/* Content */}
-      <div className="container-site relative z-10 flex items-center py-16" style={{ minHeight: 'inherit' }}>
-        <div className="max-w-lg" style={{ opacity: transitioning ? 0 : 1, transition: 'opacity 0.3s' }}>
-          {banner.title && (
-            <h1
-              className="text-white leading-tight mb-2 hero-text-shadow"
-              style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(2.5rem, 6vw, 5rem)' }}
-            >
-              {banner.title}
-            </h1>
-          )}
-          {banner.subtitle && (
-            <p className="text-gray-300 text-base sm:text-lg mb-8 leading-relaxed">{banner.subtitle}</p>
-          )}
-          {banner.button_text && banner.button_link && (
-            <Link href={banner.button_link} className="btn-primary text-base px-8 py-3 gap-2">
-              {banner.button_text}
-              <ArrowRight size={18} />
-            </Link>
-          )}
+      {/* HTML Content Overlay Layer */}
+      <div
+        className={`container-site relative z-10 flex ${verticalContainerClass}`}
+        style={{ minHeight: 'inherit' }}
+      >
+        <div
+          className="w-full"
+          style={{
+            opacity: transitioning ? 0 : 1,
+            transform: transitioning ? 'translateY(8px)' : 'translateY(0)',
+            transition: 'opacity 0.3s ease, transform 0.3s ease',
+          }}
+        >
+          <BannerContentView content={structured} />
         </div>
       </div>
 
-      {/* Navigation arrows */}
+      {/* Navigation Arrows */}
       {banners.length > 1 && (
         <>
           <button
             onClick={prev}
-            className="absolute left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full flex items-center justify-center transition-all hover:bg-orange-500"
-            style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
+            className="absolute left-3 sm:left-5 top-1/2 -translate-y-1/2 z-20 w-9 h-9 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-all bg-black/50 hover:bg-orange-500 text-white backdrop-blur-xs border border-white/10"
             aria-label="Previous slide"
           >
-            <ChevronLeft size={20} className="text-white" />
+            <ChevronLeft size={20} />
           </button>
           <button
             onClick={next}
-            className="absolute right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full flex items-center justify-center transition-all hover:bg-orange-500"
-            style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
+            className="absolute right-3 sm:right-5 top-1/2 -translate-y-1/2 z-20 w-9 h-9 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-all bg-black/50 hover:bg-orange-500 text-white backdrop-blur-xs border border-white/10"
             aria-label="Next slide"
           >
-            <ChevronRight size={20} className="text-white" />
+            <ChevronRight size={20} />
           </button>
 
-          {/* Dots */}
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+          {/* Dots Indicator */}
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 z-20 bg-black/40 backdrop-blur-xs px-3 py-1.5 rounded-full border border-white/10">
             {banners.map((_, i) => (
               <button
                 key={i}
                 onClick={() => setCurrent(i)}
-                className="rounded-full transition-all"
+                className="rounded-full transition-all duration-300"
                 style={{
-                  width: i === current ? '24px' : '8px',
-                  height: '8px',
-                  backgroundColor: i === current ? '#f97316' : 'rgba(255,255,255,0.5)',
+                  width: i === current ? '24px' : '7px',
+                  height: '7px',
+                  backgroundColor: i === current ? '#f97316' : 'rgba(255,255,255,0.4)',
                 }}
                 aria-label={`Go to slide ${i + 1}`}
               />

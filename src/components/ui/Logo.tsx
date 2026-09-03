@@ -19,15 +19,15 @@ export default function Logo({
   const content = (
     <div className={`flex items-center gap-2.5 ${className}`}>
       <div 
-        className={`relative flex items-center justify-center shrink-0 rounded-full ${inverted ? 'bg-white p-1' : ''}`}
+        className="relative flex items-center justify-center shrink-0 rounded-full bg-white p-1"
         style={{ width: size, height: size }}
       >
         <Image
-          src="/logo.svg"
+          src="/logo.png"
           alt="TOOLSMAN"
           width={size}
           height={size}
-          className={`object-contain ${inverted ? '' : 'filter'}`}
+          className="object-contain"
           priority
         />
       </div>
