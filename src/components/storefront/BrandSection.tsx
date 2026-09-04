@@ -10,17 +10,23 @@ interface BrandSectionProps {
 export default function BrandSection({ brands }: BrandSectionProps) {
   if (!brands || brands.length === 0) return null;
 
+  // Duplicate brands array to ensure continuous smooth infinite marquee loop
+  const duplicatedBrands =
+    brands.length < 6
+      ? [...brands, ...brands, ...brands, ...brands]
+      : [...brands, ...brands];
+
   return (
-    <section className="py-8 sm:py-12 lg:py-14 bg-white border-b border-neutral-200/60">
+    <section className="py-8 sm:py-12 lg:py-14 bg-white border-b border-neutral-200/60 overflow-hidden">
       <div className="container-site">
 
         {/* Section Header */}
         <div className="flex items-end justify-between mb-6 sm:mb-8">
           <div>
             <span className="text-[11px] font-bold text-orange-600 uppercase tracking-widest block mb-1">
-              Authorized Partner
+              Authorized Partners
             </span>
-            <h2 className="text-xl sm:text-2xl lg:text-3xl font-black text-neutral-950 tracking-tight leading-none">
+            <h2 className="text-lg sm:text-xl lg:text-2xl font-black text-neutral-950 tracking-tight leading-none">
               Shop by Brand
             </h2>
           </div>
@@ -33,38 +39,40 @@ export default function BrandSection({ brands }: BrandSectionProps) {
           </Link>
         </div>
 
-        {/* Brand Logos Grid
-            - Mobile: 2 columns
-            - Tablet: 4 columns
-            - Laptop 1024px: 4 columns (good size)
-            - Desktop 1280px+: 8 columns
-            Logos always display in original uploaded colors — no filter applied */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 xl:grid-cols-8 gap-3 sm:gap-4">
-          {brands.map((brand) => (
+      </div>
+
+      {/* Auto-sliding Single-line Marquee with edge gradient fade */}
+      <div className="relative w-full overflow-hidden py-1">
+        {/* Left & Right gradient edge fades */}
+        <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-12 sm:w-28 bg-gradient-to-r from-white via-white/80 to-transparent z-10" />
+        <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-12 sm:w-28 bg-gradient-to-l from-white via-white/80 to-transparent z-10" />
+
+        {/* Sliding brand track */}
+        <div className="animate-brand-marquee flex items-center gap-3 sm:gap-4 lg:gap-5">
+          {duplicatedBrands.map((brand, idx) => (
             <Link
-              key={brand.id}
+              key={`${brand.id}-${idx}`}
               href={`/shop?brand=${brand.slug}`}
-              className="group flex flex-col items-center justify-center h-24 sm:h-28 p-4 rounded-xl bg-neutral-50 hover:bg-white border border-neutral-200/70 hover:border-orange-400 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
+              className="group shrink-0 flex items-center justify-center w-36 xs:w-40 sm:w-48 lg:w-52 h-20 xs:h-22 sm:h-26 p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-white hover:bg-white border border-neutral-200/90 hover:border-orange-500 shadow-2xs hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
             >
               {brand.logo_url ? (
-                <div className="w-full h-14 sm:h-16 flex items-center justify-center">
+                <div className="relative w-full h-10 xs:h-12 sm:h-14 flex items-center justify-center">
                   <Image
                     src={brand.logo_url}
                     alt={brand.name}
-                    width={120}
-                    height={56}
-                    className="max-h-12 max-w-full object-contain group-hover:scale-105 transition-transform duration-200"
+                    fill
+                    sizes="140px"
+                    className="object-contain p-1 group-hover:scale-108 transition-transform duration-300"
                   />
                 </div>
               ) : (
-                <span className="font-black text-sm text-neutral-800 group-hover:text-orange-600 transition-colors tracking-wider text-center leading-tight">
+                <span className="font-black text-xs sm:text-sm md:text-base text-neutral-900 group-hover:text-orange-600 transition-colors tracking-wider text-center leading-tight">
                   {brand.name}
                 </span>
               )}
             </Link>
           ))}
         </div>
-
       </div>
     </section>
   );

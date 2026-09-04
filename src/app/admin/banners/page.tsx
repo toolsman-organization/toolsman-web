@@ -20,6 +20,8 @@ import {
   Monitor,
   Smartphone,
   CheckCircle2,
+  Image as ImageIcon,
+  ExternalLink,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import ImageUploader from '@/components/admin/ImageUploader';
@@ -55,6 +57,8 @@ export default function AdminBannersPage() {
   // Basic fields
   const [imageUrl, setImageUrl] = useState('');
   const [cloudinaryPublicId, setCloudinaryPublicId] = useState('');
+  const [mobileImageUrl, setMobileImageUrl] = useState('');
+  const [mobileCloudinaryPublicId, setMobileCloudinaryPublicId] = useState('');
   const [position, setPosition] = useState<'hero' | 'promo' | 'sidebar'>('hero');
   const [sortOrder, setSortOrder] = useState(1);
   const [isActive, setIsActive] = useState(true);
@@ -81,11 +85,14 @@ export default function AdminBannersPage() {
     setEditingBanner(null);
     setImageUrl('');
     setCloudinaryPublicId('');
+    setMobileImageUrl('');
+    setMobileCloudinaryPublicId('');
     setPosition('hero');
     setSortOrder(banners.length + 1);
     setIsActive(true);
     setStructuredContent({
       ...DEFAULT_BANNER_TEMPLATE,
+      show_overlay: true,
       heading_lines: [
         {
           id: `h-${Date.now()}-1`,
@@ -114,8 +121,10 @@ export default function AdminBannersPage() {
 
   const openEditModal = (b: Banner) => {
     setEditingBanner(b);
-    setImageUrl(b.image_url);
+    setImageUrl(b.image_url || '');
     setCloudinaryPublicId(b.cloudinary_public_id || '');
+    setMobileImageUrl(b.mobile_image_url || '');
+    setMobileCloudinaryPublicId(b.mobile_cloudinary_public_id || '');
     setPosition(b.position);
     setSortOrder(b.sort_order);
     setIsActive(b.is_active);
@@ -194,13 +203,14 @@ export default function AdminBannersPage() {
   // Form submit
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!imageUrl) {
-      alert('Please upload a banner background image');
+    if (!imageUrl.trim()) {
+      alert('Please upload a Desktop Banner Image');
       return;
     }
 
-    if (!structuredContent.heading_lines.length || !structuredContent.heading_lines[0].text.trim()) {
-      alert('Please provide at least one heading line with text');
+    const showOverlay = structuredContent.show_overlay !== false;
+    if (showOverlay && (!structuredContent.heading_lines.length || !structuredContent.heading_lines[0].text.trim())) {
+      alert('Please provide at least one heading line with text, or disable the text overlay');
       return;
     }
 
@@ -211,8 +221,10 @@ export default function AdminBannersPage() {
     const payload = {
       title: serialized.title,
       subtitle: serialized.subtitle,
-      image_url: imageUrl,
+      image_url: imageUrl.trim(),
       cloudinary_public_id: cloudinaryPublicId || null,
+      mobile_image_url: mobileImageUrl.trim() || null,
+      mobile_cloudinary_public_id: mobileCloudinaryPublicId || null,
       button_text: serialized.button_text,
       button_link: serialized.button_link,
       position: position,
@@ -220,10 +232,19 @@ export default function AdminBannersPage() {
       is_active: isActive,
     };
 
+    let error = null;
     if (editingBanner) {
-      await supabase.from('banners').update(payload).eq('id', editingBanner.id);
+      const res = await supabase.from('banners').update(payload).eq('id', editingBanner.id);
+      error = res.error;
     } else {
-      await supabase.from('banners').insert(payload);
+      const res = await supabase.from('banners').insert(payload);
+      error = res.error;
+    }
+
+    if (error) {
+      alert(`Failed to save banner: ${error.message}`);
+      setSubmitting(false);
+      return;
     }
 
     setSubmitting(false);
@@ -237,6 +258,9 @@ export default function AdminBannersPage() {
     await loadBanners();
   };
 
+  const currentPreviewImage = previewMode === 'mobile' ? (mobileImageUrl || imageUrl) : imageUrl;
+  const isOverlayActive = structuredContent.show_overlay !== false;
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -248,14 +272,17 @@ export default function AdminBannersPage() {
           <h1 className="text-2xl sm:text-3xl font-black text-neutral-950 uppercase tracking-tight">
             Homepage Banners ({banners.length})
           </h1>
+          <p className="text-xs text-neutral-500 mt-1">
+            Manage desktop & mobile responsive banners with interactive typography or pure image graphics.
+          </p>
         </div>
 
         <button
           onClick={openAddModal}
-          className="btn-primary py-2.5 px-4 text-xs font-bold flex items-center gap-1.5 shadow-md self-start sm:self-auto"
+          className="btn-primary py-2.5 px-4 text-xs font-bold flex items-center gap-1.5 shadow-md self-start sm:self-auto cursor-pointer"
         >
           <Plus size={16} />
-          <span>Create New Hero Banner</span>
+          <span>Create New Banner</span>
         </button>
       </div>
 
@@ -270,8 +297,8 @@ export default function AdminBannersPage() {
             <table className="w-full text-left text-xs">
               <thead className="bg-neutral-50 text-neutral-500 font-bold uppercase tracking-wider border-b border-neutral-200">
                 <tr>
-                  <th className="py-3.5 px-4">Preview</th>
-                  <th className="py-3.5 px-4">Heading Structure</th>
+                  <th className="py-3.5 px-4">Banner Images</th>
+                  <th className="py-3.5 px-4">Heading Structure / Mode</th>
                   <th className="py-3.5 px-4">Feature Items</th>
                   <th className="py-3.5 px-4">Call To Action</th>
                   <th className="py-3.5 px-4">Order / Status</th>
@@ -281,37 +308,70 @@ export default function AdminBannersPage() {
               <tbody className="divide-y divide-neutral-100 font-medium">
                 {banners.map((b) => {
                   const content = parseBannerContent(b);
+                  const hasOverlay = content.show_overlay !== false;
                   return (
                     <tr key={b.id} className="hover:bg-neutral-50/80 transition-colors">
+                      {/* Banner Thumbnails */}
                       <td className="py-3.5 px-4">
-                        <div className="relative w-28 h-14 rounded-lg bg-neutral-900 border border-neutral-200 overflow-hidden shadow-xs">
-                          {b.image_url ? (
-                            <Image src={b.image_url} alt={b.title || 'Banner'} fill className="object-cover" />
+                        <div className="flex items-center gap-2">
+                          {/* Desktop Thumb */}
+                          <div className="relative w-24 h-12 rounded-lg bg-neutral-900 border border-neutral-200 overflow-hidden shadow-xs shrink-0">
+                            {b.image_url ? (
+                              <Image src={b.image_url} alt={b.title || 'Banner'} fill className="object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-[10px] text-neutral-500">No Img</div>
+                            )}
+                            <span className="absolute bottom-0.5 right-0.5 px-1 py-0.2 bg-black/70 text-[8px] font-bold text-white rounded">
+                              DESK
+                            </span>
+                          </div>
+
+                          {/* Mobile Thumb (if any) */}
+                          {b.mobile_image_url ? (
+                            <div className="relative w-9 h-12 rounded-lg bg-neutral-900 border border-neutral-200 overflow-hidden shadow-xs shrink-0">
+                              <Image src={b.mobile_image_url} alt="Mobile Banner" fill className="object-cover" />
+                              <span className="absolute bottom-0.5 right-0.5 px-0.5 py-0.2 bg-orange-600 text-[7px] font-bold text-white rounded">
+                                MOB
+                              </span>
+                            </div>
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center text-neutral-500">No Img</div>
+                            <span className="text-[10px] text-neutral-400 font-normal">Auto Mobile</span>
                           )}
                         </div>
                       </td>
 
+                      {/* Heading / Banner Mode */}
                       <td className="py-3.5 px-4 max-w-xs">
-                        <div className="flex flex-col gap-0.5">
-                          {content.heading_lines.map((line, idx) => (
-                            <span
-                              key={idx}
-                              className="font-black text-xs leading-tight inline-block uppercase"
-                              style={{ color: line.color || '#111111' }}
-                            >
-                              {line.text}
+                        {hasOverlay ? (
+                          <div className="flex flex-col gap-0.5">
+                            <span className="inline-flex items-center gap-1 text-[9px] font-bold text-orange-600 uppercase tracking-wider mb-0.5">
+                              <Sparkles size={10} /> Text Overlay Enabled
                             </span>
-                          ))}
-                        </div>
-                        {content.subtitle && (
-                          <div className="text-[11px] text-neutral-500 line-clamp-1 mt-1">{content.subtitle}</div>
+                            {content.heading_lines.map((line, idx) => (
+                              <span
+                                key={idx}
+                                className="font-black text-xs leading-tight inline-block uppercase text-neutral-900"
+                              >
+                                {line.text}
+                              </span>
+                            ))}
+                            {content.subtitle && (
+                              <div className="text-[11px] text-neutral-500 line-clamp-1 mt-0.5">{content.subtitle}</div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="flex flex-col gap-1">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[10px] font-bold w-max">
+                              <ImageIcon size={10} /> Clean Graphic Banner (No Text Overlay)
+                            </span>
+                            <span className="text-[11px] text-neutral-600 font-semibold">{b.title || 'Hero Banner'}</span>
+                          </div>
                         )}
                       </td>
 
+                      {/* Feature Items */}
                       <td className="py-3.5 px-4">
-                        {content.features && content.features.length > 0 ? (
+                        {hasOverlay && content.features && content.features.length > 0 ? (
                           <div className="flex flex-wrap gap-1">
                             {content.features.map((f, idx) => (
                               <span
@@ -327,19 +387,26 @@ export default function AdminBannersPage() {
                         )}
                       </td>
 
+                      {/* Call to Action */}
                       <td className="py-3.5 px-4">
-                        {content.button_visible && content.button_text ? (
+                        {hasOverlay && content.button_visible && content.button_text ? (
                           <div className="font-bold text-orange-600">
                             {content.button_text}{' '}
                             <span className="text-neutral-400 font-normal font-mono text-[11px]">
                               → {content.button_link}
                             </span>
                           </div>
+                        ) : content.button_link ? (
+                          <div className="text-neutral-600 font-mono text-[11px] flex items-center gap-1">
+                            <ExternalLink size={11} className="text-neutral-400" />
+                            <span>{content.button_link}</span>
+                          </div>
                         ) : (
-                          <span className="text-neutral-400">No CTA</span>
+                          <span className="text-neutral-400">/shop</span>
                         )}
                       </td>
 
+                      {/* Order & Active Status */}
                       <td className="py-3.5 px-4">
                         <div className="flex items-center gap-2">
                           <span className="font-bold text-neutral-700">#{b.sort_order}</span>
@@ -353,18 +420,19 @@ export default function AdminBannersPage() {
                         </div>
                       </td>
 
+                      {/* Actions */}
                       <td className="py-3.5 px-4 text-right">
                         <div className="flex items-center justify-end gap-1.5">
                           <button
                             onClick={() => openEditModal(b)}
-                            className="p-1.5 text-neutral-600 hover:text-orange-600 rounded-lg hover:bg-orange-50 transition-colors"
+                            className="p-1.5 text-neutral-600 hover:text-orange-600 rounded-lg hover:bg-orange-50 transition-colors cursor-pointer"
                             title="Edit Banner"
                           >
                             <Edit size={16} />
                           </button>
                           <button
                             onClick={() => handleDelete(b.id)}
-                            className="p-1.5 text-neutral-600 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors"
+                            className="p-1.5 text-neutral-600 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors cursor-pointer"
                             title="Delete Banner"
                           >
                             <Trash2 size={16} />
@@ -398,16 +466,16 @@ export default function AdminBannersPage() {
                 </div>
                 <div>
                   <h2 className="font-black text-lg text-white uppercase tracking-tight leading-none">
-                    {editingBanner ? 'Edit Banner Builder' : 'New Hero Banner Builder'}
+                    {editingBanner ? 'Edit Banner' : 'Create New Banner'}
                   </h2>
                   <p className="text-[11px] text-neutral-400 mt-0.5">
-                    Configure multi-line headlines, colors, features, CTA and preview in real time.
+                    Configure desktop & mobile images, typography overlays, and test responsive preview in real-time.
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setModalOpen(false)}
-                className="text-neutral-400 hover:text-white p-1 rounded-lg hover:bg-neutral-800 transition-colors"
+                className="text-neutral-400 hover:text-white p-1 rounded-lg hover:bg-neutral-800 transition-colors cursor-pointer"
               >
                 <X size={20} />
               </button>
@@ -417,21 +485,68 @@ export default function AdminBannersPage() {
             <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-0 overflow-y-auto">
               {/* Left Column: Builder Form Tabs */}
               <div className="lg:col-span-6 p-5 sm:p-6 border-b lg:border-b-0 lg:border-r border-neutral-800 overflow-y-auto space-y-5 bg-neutral-900">
+                {/* Master Mode Switcher: Text Overlay vs Clean Graphic */}
+                <div className="p-3.5 rounded-xl bg-neutral-950 border border-neutral-800 space-y-2.5">
+                  <span className="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider">
+                    Banner Display Mode
+                  </span>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setStructuredContent({ ...structuredContent, show_overlay: true })}
+                      className={`p-2.5 rounded-lg border text-left transition-all cursor-pointer ${
+                        isOverlayActive
+                          ? 'border-orange-500 bg-orange-500/10 text-white'
+                          : 'border-neutral-800 bg-neutral-900/60 text-neutral-400 hover:text-white'
+                      }`}
+                    >
+                      <div className="flex items-center gap-1.5 font-bold text-xs">
+                        <Type size={14} className={isOverlayActive ? 'text-orange-500' : 'text-neutral-400'} />
+                        <span>Interactive Text Overlay</span>
+                      </div>
+                      <p className="text-[10px] text-neutral-400 mt-1 leading-tight">
+                        Headlines, badges, icons, & animated button over photo.
+                      </p>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setStructuredContent({ ...structuredContent, show_overlay: false })}
+                      className={`p-2.5 rounded-lg border text-left transition-all cursor-pointer ${
+                        !isOverlayActive
+                          ? 'border-orange-500 bg-orange-500/10 text-white'
+                          : 'border-neutral-800 bg-neutral-900/60 text-neutral-400 hover:text-white'
+                      }`}
+                    >
+                      <div className="flex items-center gap-1.5 font-bold text-xs">
+                        <ImageIcon size={14} className={!isOverlayActive ? 'text-orange-500' : 'text-neutral-400'} />
+                        <span>Clean Graphic Banner</span>
+                      </div>
+                      <p className="text-[10px] text-neutral-400 mt-1 leading-tight">
+                        Pure image artwork only (no text overlay). Entire banner is clickable.
+                      </p>
+                    </button>
+                  </div>
+                </div>
+
                 {/* Form Tabs */}
                 <div className="flex items-center gap-1 bg-neutral-950 p-1 rounded-xl border border-neutral-800">
                   {[
-                    { id: 'content', label: 'Headlines', icon: <Type size={14} /> },
-                    { id: 'features', label: 'Features', icon: <Layers size={14} /> },
-                    { id: 'cta', label: 'CTA & Position', icon: <AlignLeft size={14} /> },
-                    { id: 'settings', label: 'Image & Setup', icon: <Eye size={14} /> },
+                    { id: 'content', label: 'Headlines', icon: <Type size={14} />, disabled: !isOverlayActive },
+                    { id: 'features', label: 'Features', icon: <Layers size={14} />, disabled: !isOverlayActive },
+                    { id: 'cta', label: 'CTA & Link', icon: <AlignLeft size={14} />, disabled: false },
+                    { id: 'settings', label: 'Images & Setup', icon: <Eye size={14} />, disabled: false },
                   ].map((tab) => (
                     <button
                       key={tab.id}
                       type="button"
+                      disabled={tab.disabled}
                       onClick={() => setActiveTab(tab.id as any)}
-                      className={`flex-1 py-2 px-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+                      className={`flex-1 py-2 px-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                         activeTab === tab.id
                           ? 'bg-orange-500 text-white shadow-md'
+                          : tab.disabled
+                          ? 'opacity-30 cursor-not-allowed text-neutral-500'
                           : 'text-neutral-400 hover:text-white hover:bg-neutral-800'
                       }`}
                     >
@@ -442,7 +557,7 @@ export default function AdminBannersPage() {
                 </div>
 
                 {/* TAB 1: Headlines & Subtitles */}
-                {activeTab === 'content' && (
+                {isOverlayActive && activeTab === 'content' && (
                   <div className="space-y-4 text-xs">
                     {/* Top Tagline Badge */}
                     <div className="p-4 rounded-xl bg-neutral-950 border border-neutral-800 space-y-2">
@@ -456,7 +571,7 @@ export default function AdminBannersPage() {
                               key={p.value}
                               type="button"
                               onClick={() => setStructuredContent({ ...structuredContent, badge_color: p.value })}
-                              className="w-4 h-4 rounded-full border border-neutral-700 transition-transform hover:scale-125"
+                              className="w-4 h-4 rounded-full border border-neutral-700 transition-transform hover:scale-125 cursor-pointer"
                               style={{ backgroundColor: p.value }}
                               title={p.label}
                             />
@@ -486,7 +601,7 @@ export default function AdminBannersPage() {
                         <button
                           type="button"
                           onClick={addHeadingLine}
-                          className="px-2.5 py-1 rounded-lg bg-orange-500 hover:bg-orange-600 text-white font-bold text-[11px] flex items-center gap-1 shadow-sm transition-all"
+                          className="px-2.5 py-1 rounded-lg bg-orange-500 hover:bg-orange-600 text-white font-bold text-[11px] flex items-center gap-1 shadow-sm transition-all cursor-pointer"
                         >
                           <Plus size={13} />
                           <span>Add Line</span>
@@ -507,7 +622,7 @@ export default function AdminBannersPage() {
                                 type="button"
                                 onClick={() => moveHeadingLine(index, 'up')}
                                 disabled={index === 0}
-                                className="p-1 rounded text-neutral-400 hover:text-white disabled:opacity-30"
+                                className="p-1 rounded text-neutral-400 hover:text-white disabled:opacity-30 cursor-pointer"
                               >
                                 <ChevronUp size={14} />
                               </button>
@@ -515,14 +630,14 @@ export default function AdminBannersPage() {
                                 type="button"
                                 onClick={() => moveHeadingLine(index, 'down')}
                                 disabled={index === structuredContent.heading_lines.length - 1}
-                                className="p-1 rounded text-neutral-400 hover:text-white disabled:opacity-30"
+                                className="p-1 rounded text-neutral-400 hover:text-white disabled:opacity-30 cursor-pointer"
                               >
                                 <ChevronDown size={14} />
                               </button>
                               <button
                                 type="button"
                                 onClick={() => removeHeadingLine(index)}
-                                className="p-1 rounded text-neutral-400 hover:text-red-400 ml-1"
+                                className="p-1 rounded text-neutral-400 hover:text-red-400 ml-1 cursor-pointer"
                               >
                                 <Trash2 size={14} />
                               </button>
@@ -558,7 +673,7 @@ export default function AdminBannersPage() {
                                       key={p.value}
                                       type="button"
                                       onClick={() => updateHeadingLine(index, { color: p.value })}
-                                      className="w-4 h-4 rounded-full border border-neutral-700 hover:scale-125 transition-transform"
+                                      className="w-4 h-4 rounded-full border border-neutral-700 hover:scale-125 transition-transform cursor-pointer"
                                       style={{ backgroundColor: p.value }}
                                       title={p.label}
                                     />
@@ -579,18 +694,18 @@ export default function AdminBannersPage() {
                                 }
                                 className="w-full px-2 py-1.5 rounded-lg bg-neutral-900 border border-neutral-700 text-white text-xs font-semibold focus:outline-none"
                               >
-                                <option value="small">Small (3xl)</option>
-                                <option value="medium">Medium (4xl)</option>
-                                <option value="large">Large (5xl-8xl)</option>
-                                <option value="extra-large">Extra Large (Hero 8xl+)</option>
-                                <option value="massive">Massive (Ultra Hero 10xl+)</option>
+                                <option value="small">Small</option>
+                                <option value="medium">Medium</option>
+                                <option value="large">Large</option>
+                                <option value="extra-large">Extra Large</option>
+                                <option value="massive">Massive (Hero)</option>
                               </select>
                             </div>
 
                             {/* Weight Selector */}
                             <div>
                               <span className="block text-[10px] text-neutral-400 uppercase font-bold mb-1">
-                                Weight
+                                Font Weight
                               </span>
                               <select
                                 value={line.weight}
@@ -599,11 +714,11 @@ export default function AdminBannersPage() {
                                 }
                                 className="w-full px-2 py-1.5 rounded-lg bg-neutral-900 border border-neutral-700 text-white text-xs font-semibold focus:outline-none"
                               >
-                                <option value="normal">Normal</option>
-                                <option value="semibold">Semi-Bold</option>
-                                <option value="bold">Bold</option>
-                                <option value="extrabold">Extra Bold</option>
-                                <option value="black">Black (Ultra)</option>
+                                <option value="normal">Normal (400)</option>
+                                <option value="semibold">Semibold (600)</option>
+                                <option value="bold">Bold (700)</option>
+                                <option value="extrabold">Extra Bold (800)</option>
+                                <option value="black">Ultra Black (900)</option>
                               </select>
                             </div>
                           </div>
@@ -611,77 +726,53 @@ export default function AdminBannersPage() {
                       ))}
                     </div>
 
-                    {/* Subtitle & Description */}
-                    <div className="p-4 rounded-xl bg-neutral-950 border border-neutral-800 space-y-3">
-                      <div>
-                        <div className="flex items-center justify-between mb-1">
-                          <label className="font-bold text-neutral-300 uppercase tracking-wider text-[11px]">
-                            Subtitle Text
-                          </label>
-                          <input
-                            type="color"
-                            value={structuredContent.subtitle_color || '#d4d4d4'}
-                            onChange={(e) =>
-                              setStructuredContent({ ...structuredContent, subtitle_color: e.target.value })
-                            }
-                            className="w-5 h-5 rounded border border-neutral-700 bg-transparent cursor-pointer"
-                            title="Subtitle Color"
-                          />
+                    {/* Subtitle Field */}
+                    <div className="p-4 rounded-xl bg-neutral-950 border border-neutral-800 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label className="font-bold text-neutral-300 uppercase tracking-wider text-[11px]">
+                          Subtitle / Supporting Line
+                        </label>
+                        <div className="flex items-center gap-1">
+                          {BANNER_COLOR_PRESETS.map((p) => (
+                            <button
+                              key={p.value}
+                              type="button"
+                              onClick={() => setStructuredContent({ ...structuredContent, subtitle_color: p.value })}
+                              className="w-4 h-4 rounded-full border border-neutral-700 hover:scale-125 transition-transform cursor-pointer"
+                              style={{ backgroundColor: p.value }}
+                              title={p.label}
+                            />
+                          ))}
                         </div>
-                        <input
-                          type="text"
-                          value={structuredContent.subtitle || ''}
-                          onChange={(e) => setStructuredContent({ ...structuredContent, subtitle: e.target.value })}
-                          className="w-full px-3 py-2 rounded-lg bg-neutral-900 border border-neutral-700 text-white text-xs focus:outline-none focus:border-orange-500 font-medium"
-                          placeholder="e.g. Professional tools. Serious performance."
-                        />
                       </div>
-
-                      <div>
-                        <div className="flex items-center justify-between mb-1">
-                          <label className="font-bold text-neutral-300 uppercase tracking-wider text-[11px]">
-                            Description / Fine Print (Optional)
-                          </label>
-                          <input
-                            type="color"
-                            value={structuredContent.description_color || '#a3a3a3'}
-                            onChange={(e) =>
-                              setStructuredContent({ ...structuredContent, description_color: e.target.value })
-                            }
-                            className="w-5 h-5 rounded border border-neutral-700 bg-transparent cursor-pointer"
-                            title="Description Color"
-                          />
-                        </div>
-                        <textarea
-                          rows={2}
-                          value={structuredContent.description || ''}
-                          onChange={(e) =>
-                            setStructuredContent({ ...structuredContent, description: e.target.value })
-                          }
-                          className="w-full px-3 py-2 rounded-lg bg-neutral-900 border border-neutral-700 text-white text-xs focus:outline-none focus:border-orange-500"
-                          placeholder="e.g. Authorized supplier with full manufacturer warranty across Kerala."
-                        />
-                      </div>
+                      <input
+                        type="text"
+                        value={structuredContent.subtitle || ''}
+                        onChange={(e) => setStructuredContent({ ...structuredContent, subtitle: e.target.value })}
+                        className="w-full px-3 py-2 rounded-lg bg-neutral-900 border border-neutral-700 text-white text-xs focus:outline-none focus:border-orange-500"
+                        placeholder="e.g. Heavy-duty tools for professionals and tradespeople"
+                      />
                     </div>
                   </div>
                 )}
 
-                {/* TAB 2: Feature & Benefit Badges */}
-                {activeTab === 'features' && (
+                {/* TAB 2: Feature Badges (Sales, Service, Support) */}
+                {isOverlayActive && activeTab === 'features' && (
                   <div className="space-y-4 text-xs">
                     <div className="flex items-center justify-between">
                       <div>
                         <span className="font-black text-white uppercase tracking-wider text-xs">
-                          Feature Badges ({structuredContent.features.length})
+                          Trust Badges & Feature Pills ({structuredContent.features.length})
                         </span>
                         <p className="text-[10px] text-neutral-400">
-                          Highlights like SALES, SERVICE, SUPPORT displayed as visual badges.
+                          Highlights shown below subtitle (e.g. Sales, Service, Support).
                         </p>
                       </div>
                       <button
                         type="button"
                         onClick={addFeatureItem}
-                        className="px-2.5 py-1 rounded-lg bg-orange-500 hover:bg-orange-600 text-white font-bold text-[11px] flex items-center gap-1 shadow-sm"
+                        disabled={structuredContent.features.length >= 4}
+                        className="px-2.5 py-1 rounded-lg bg-orange-500 hover:bg-orange-600 disabled:opacity-40 text-white font-bold text-[11px] flex items-center gap-1 shadow-sm transition-all cursor-pointer"
                       >
                         <Plus size={13} />
                         <span>Add Badge</span>
@@ -691,7 +782,7 @@ export default function AdminBannersPage() {
                     {structuredContent.features.map((feat, index) => (
                       <div
                         key={feat.id}
-                        className="p-3.5 rounded-xl bg-neutral-950 border border-neutral-800 space-y-3"
+                        className="p-3.5 rounded-xl bg-neutral-950 border border-neutral-800 space-y-2.5"
                       >
                         <div className="flex items-center justify-between">
                           <span className="text-[10px] font-black uppercase text-orange-500 tracking-wider">
@@ -700,7 +791,7 @@ export default function AdminBannersPage() {
                           <button
                             type="button"
                             onClick={() => removeFeatureItem(index)}
-                            className="p-1 rounded text-neutral-400 hover:text-red-400"
+                            className="p-1 rounded text-neutral-400 hover:text-red-400 cursor-pointer"
                           >
                             <Trash2 size={14} />
                           </button>
@@ -709,9 +800,7 @@ export default function AdminBannersPage() {
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                           {/* Icon Selector */}
                           <div>
-                            <span className="block text-[10px] text-neutral-400 uppercase font-bold mb-1">
-                              Badge Icon
-                            </span>
+                            <span className="block text-[10px] text-neutral-400 uppercase font-bold mb-1">Icon</span>
                             <select
                               value={feat.icon}
                               onChange={(e) =>
@@ -719,9 +808,9 @@ export default function AdminBannersPage() {
                               }
                               className="w-full px-2 py-2 rounded-lg bg-neutral-900 border border-neutral-700 text-white text-xs font-semibold focus:outline-none"
                             >
-                              {BANNER_ICON_OPTIONS.map((opt) => (
-                                <option key={opt.value} value={opt.value}>
-                                  {opt.label}
+                              {BANNER_ICON_OPTIONS.map((ico) => (
+                                <option key={ico.value} value={ico.value}>
+                                  {ico.label}
                                 </option>
                               ))}
                             </select>
@@ -730,13 +819,13 @@ export default function AdminBannersPage() {
                           {/* Title */}
                           <div>
                             <span className="block text-[10px] text-neutral-400 uppercase font-bold mb-1">
-                              Title
+                              Badge Title
                             </span>
                             <input
                               type="text"
                               value={feat.title}
                               onChange={(e) => updateFeatureItem(index, { title: e.target.value })}
-                              className="w-full px-2.5 py-2 rounded-lg bg-neutral-900 border border-neutral-700 text-white text-xs font-black uppercase"
+                              className="w-full px-2.5 py-2 rounded-lg bg-neutral-900 border border-neutral-700 text-white text-xs font-bold uppercase"
                               placeholder="e.g. SALES"
                             />
                           </div>
@@ -767,23 +856,25 @@ export default function AdminBannersPage() {
                     <div className="p-4 rounded-xl bg-neutral-950 border border-neutral-800 space-y-3">
                       <div className="flex items-center justify-between">
                         <span className="font-black text-white uppercase tracking-wider text-xs">
-                          Call To Action (CTA Button)
+                          Call To Action (Destination Link)
                         </span>
-                        <label className="flex items-center gap-1.5 cursor-pointer font-bold text-xs text-orange-500">
-                          <input
-                            type="checkbox"
-                            checked={structuredContent.button_visible ?? true}
-                            onChange={(e) =>
-                              setStructuredContent({ ...structuredContent, button_visible: e.target.checked })
-                            }
-                            className="w-4 h-4 text-orange-600 rounded"
-                          />
-                          <span>Show Button</span>
-                        </label>
+                        {isOverlayActive && (
+                          <label className="flex items-center gap-1.5 cursor-pointer font-bold text-xs text-orange-500">
+                            <input
+                              type="checkbox"
+                              checked={structuredContent.button_visible ?? true}
+                              onChange={(e) =>
+                                setStructuredContent({ ...structuredContent, button_visible: e.target.checked })
+                              }
+                              className="w-4 h-4 text-orange-600 rounded"
+                            />
+                            <span>Show Button Overlay</span>
+                          </label>
+                        )}
                       </div>
 
-                      {structuredContent.button_visible !== false && (
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                        {isOverlayActive && structuredContent.button_visible !== false && (
                           <div>
                             <label className="block text-[10px] text-neutral-400 uppercase font-bold mb-1">
                               Button Label
@@ -798,23 +889,25 @@ export default function AdminBannersPage() {
                               placeholder="SHOP NOW"
                             />
                           </div>
+                        )}
 
-                          <div>
-                            <label className="block text-[10px] text-neutral-400 uppercase font-bold mb-1">
-                              Destination Link
-                            </label>
-                            <input
-                              type="text"
-                              value={structuredContent.button_link || ''}
-                              onChange={(e) =>
-                                setStructuredContent({ ...structuredContent, button_link: e.target.value })
-                              }
-                              className="w-full px-3 py-2 rounded-lg bg-neutral-900 border border-neutral-700 text-white text-xs font-mono"
-                              placeholder="/shop"
-                            />
-                          </div>
+                        <div className={!isOverlayActive || structuredContent.button_visible === false ? 'sm:col-span-2' : ''}>
+                          <label className="block text-[10px] text-neutral-400 uppercase font-bold mb-1">
+                            Destination Link
+                          </label>
+                          <input
+                            type="text"
+                            value={structuredContent.button_link || ''}
+                            onChange={(e) =>
+                              setStructuredContent({ ...structuredContent, button_link: e.target.value })
+                            }
+                            className="w-full px-3 py-2 rounded-lg bg-neutral-900 border border-neutral-700 text-white text-xs font-mono"
+                            placeholder="/shop or /category/cordless-tools"
+                          />
+                        </div>
 
-                          <div>
+                        {isOverlayActive && structuredContent.button_visible !== false && (
+                          <div className="sm:col-span-2">
                             <label className="block text-[10px] text-neutral-400 uppercase font-bold mb-1">
                               Button Style
                             </label>
@@ -828,97 +921,105 @@ export default function AdminBannersPage() {
                               }
                               className="w-full px-2 py-2 rounded-lg bg-neutral-900 border border-neutral-700 text-white text-xs font-semibold focus:outline-none"
                             >
-                              <option value="primary">Brand Orange</option>
-                              <option value="secondary">Outline White</option>
-                              <option value="dark">Dark Slate</option>
+                              <option value="primary">Brand Orange Button</option>
+                              <option value="secondary">Outline White Button</option>
+                              <option value="dark">Dark Slate Button</option>
                             </select>
                           </div>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
 
-                    {/* Positioning Controls */}
-                    <div className="p-4 rounded-xl bg-neutral-950 border border-neutral-800 space-y-3">
-                      <span className="font-black text-white uppercase tracking-wider text-xs block">
-                        Content Positioning Over Background
-                      </span>
+                    {/* Positioning Controls (Only relevant if overlay is enabled) */}
+                    {isOverlayActive && (
+                      <div className="p-4 rounded-xl bg-neutral-950 border border-neutral-800 space-y-3">
+                        <span className="font-black text-white uppercase tracking-wider text-xs block">
+                          Content Positioning Over Background
+                        </span>
 
-                      <div className="grid grid-cols-2 gap-4">
-                        {/* Horizontal Position */}
-                        <div>
-                          <label className="block text-[10px] text-neutral-400 uppercase font-bold mb-1.5">
-                            Horizontal Align
-                          </label>
-                          <div className="grid grid-cols-3 gap-1.5 bg-neutral-900 p-1 rounded-lg border border-neutral-800">
-                            {[
-                              { val: 'left', icon: <AlignLeft size={14} />, label: 'Left' },
-                              { val: 'center', icon: <AlignCenter size={14} />, label: 'Center' },
-                              { val: 'right', icon: <AlignRight size={14} />, label: 'Right' },
-                            ].map((pos) => (
-                              <button
-                                key={pos.val}
-                                type="button"
-                                onClick={() =>
-                                  setStructuredContent({
-                                    ...structuredContent,
-                                    horizontal_position: pos.val as BannerHorizontalPosition,
-                                  })
-                                }
-                                className={`py-1.5 px-2 rounded font-bold text-xs flex flex-col items-center gap-1 transition-all ${
-                                  structuredContent.horizontal_position === pos.val
-                                    ? 'bg-orange-500 text-white shadow-xs'
-                                    : 'text-neutral-400 hover:text-white'
-                                }`}
-                              >
-                                {pos.icon}
-                                <span className="text-[9px]">{pos.label}</span>
-                              </button>
-                            ))}
+                        <div className="grid grid-cols-2 gap-4">
+                          {/* Horizontal Position */}
+                          <div>
+                            <label className="block text-[10px] text-neutral-400 uppercase font-bold mb-1.5">
+                              Horizontal Align
+                            </label>
+                            <div className="grid grid-cols-3 gap-1.5 bg-neutral-900 p-1 rounded-lg border border-neutral-800">
+                              {[
+                                { val: 'left', label: 'Left' },
+                                { val: 'center', label: 'Center' },
+                                { val: 'right', label: 'Right' },
+                              ].map((pos) => (
+                                <button
+                                  key={pos.val}
+                                  type="button"
+                                  onClick={() =>
+                                    setStructuredContent({
+                                      ...structuredContent,
+                                      horizontal_position: pos.val as BannerHorizontalPosition,
+                                    })
+                                  }
+                                  className={`py-2 px-2 rounded font-bold text-[10px] flex items-center justify-center transition-all cursor-pointer ${
+                                    structuredContent.horizontal_position === pos.val
+                                      ? 'bg-orange-500 text-white shadow-xs'
+                                      : 'text-neutral-400 hover:text-white'
+                                  }`}
+                                >
+                                  {pos.label}
+                                </button>
+                              ))}
+                            </div>
                           </div>
-                        </div>
 
-                        {/* Vertical Position */}
-                        <div>
-                          <label className="block text-[10px] text-neutral-400 uppercase font-bold mb-1.5">
-                            Vertical Align
-                          </label>
-                          <div className="grid grid-cols-3 gap-1.5 bg-neutral-900 p-1 rounded-lg border border-neutral-800">
-                            {[
-                              { val: 'top', label: 'Top' },
-                              { val: 'center', label: 'Middle' },
-                              { val: 'bottom', label: 'Bottom' },
-                            ].map((pos) => (
-                              <button
-                                key={pos.val}
-                                type="button"
-                                onClick={() =>
-                                  setStructuredContent({
-                                    ...structuredContent,
-                                    vertical_position: pos.val as BannerVerticalPosition,
-                                  })
-                                }
-                                className={`py-2 px-2 rounded font-bold text-[10px] flex items-center justify-center transition-all ${
-                                  structuredContent.vertical_position === pos.val
-                                    ? 'bg-orange-500 text-white shadow-xs'
-                                    : 'text-neutral-400 hover:text-white'
-                                }`}
-                              >
-                                {pos.label}
-                              </button>
-                            ))}
+                          {/* Vertical Position */}
+                          <div>
+                            <label className="block text-[10px] text-neutral-400 uppercase font-bold mb-1.5">
+                              Vertical Align
+                            </label>
+                            <div className="grid grid-cols-3 gap-1.5 bg-neutral-900 p-1 rounded-lg border border-neutral-800">
+                              {[
+                                { val: 'top', label: 'Top' },
+                                { val: 'center', label: 'Middle' },
+                                { val: 'bottom', label: 'Bottom' },
+                              ].map((pos) => (
+                                <button
+                                  key={pos.val}
+                                  type="button"
+                                  onClick={() =>
+                                    setStructuredContent({
+                                      ...structuredContent,
+                                      vertical_position: pos.val as BannerVerticalPosition,
+                                    })
+                                  }
+                                  className={`py-2 px-2 rounded font-bold text-[10px] flex items-center justify-center transition-all cursor-pointer ${
+                                    structuredContent.vertical_position === pos.val
+                                      ? 'bg-orange-500 text-white shadow-xs'
+                                      : 'text-neutral-400 hover:text-white'
+                                  }`}
+                                >
+                                  {pos.label}
+                                </button>
+                              ))}
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 )}
 
                 {/* TAB 4: Image & Basic Settings */}
                 {activeTab === 'settings' && (
                   <div className="space-y-4 text-xs">
-                    <div>
+                    {/* 1. Desktop Banner Image */}
+                    <div className="p-4 rounded-xl bg-neutral-950 border border-neutral-800 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-neutral-200 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                          <Monitor size={14} className="text-orange-500" />
+                          <span>Desktop Banner Image *</span>
+                        </span>
+                        <span className="text-[10px] text-neutral-400">1920x800px (16:9 / 21:9)</span>
+                      </div>
                       <ImageUploader
-                        label="Background Image (Upload from Device) *"
                         value={imageUrl}
                         folder="toolsman/banners"
                         onChange={(url, publicId) => {
@@ -926,11 +1027,31 @@ export default function AdminBannersPage() {
                           setCloudinaryPublicId(publicId || '');
                         }}
                       />
-                      <p className="text-[10px] text-neutral-500 mt-1">
-                        Recommended size: 1920x800px or wide banner photo with tools on the right.
+                    </div>
+
+                    {/* 2. Mobile Banner Image (Optional) */}
+                    <div className="p-4 rounded-xl bg-neutral-950 border border-neutral-800 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-neutral-200 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                          <Smartphone size={14} className="text-orange-500" />
+                          <span>Mobile Banner Image (Optional)</span>
+                        </span>
+                        <span className="text-[10px] text-orange-400 font-medium">800x1000px (4:5 / 9:16)</span>
+                      </div>
+                      <ImageUploader
+                        value={mobileImageUrl}
+                        folder="toolsman/banners/mobile"
+                        onChange={(url, publicId) => {
+                          setMobileImageUrl(url);
+                          setMobileCloudinaryPublicId(publicId || '');
+                        }}
+                      />
+                      <p className="text-[10px] text-neutral-400 mt-1 leading-relaxed">
+                        💡 If no mobile image is uploaded, the desktop banner will automatically center and adapt on mobile phones.
                       </p>
                     </div>
 
+                    {/* Sort Order & Active */}
                     <div className="grid grid-cols-2 gap-3 pt-2">
                       <div>
                         <label className="block font-bold text-neutral-400 uppercase tracking-wider mb-1">
@@ -967,7 +1088,7 @@ export default function AdminBannersPage() {
                     <div className="flex items-center gap-1.5">
                       <Eye size={15} className="text-orange-500" />
                       <span className="font-bold text-xs uppercase tracking-wider text-white">
-                        Live Storefront Preview
+                        Live Preview ({previewMode.toUpperCase()})
                       </span>
                     </div>
 
@@ -976,8 +1097,8 @@ export default function AdminBannersPage() {
                       <button
                         type="button"
                         onClick={() => setPreviewMode('desktop')}
-                        className={`px-2.5 py-1 rounded text-xs font-bold flex items-center gap-1 transition-all ${
-                          previewMode === 'desktop' ? 'bg-orange-500 text-white' : 'text-neutral-400 hover:text-white'
+                        className={`px-2.5 py-1 rounded text-xs font-bold flex items-center gap-1 transition-all cursor-pointer ${
+                          previewMode === 'desktop' ? 'bg-orange-500 text-white shadow-xs' : 'text-neutral-400 hover:text-white'
                         }`}
                       >
                         <Monitor size={12} />
@@ -986,8 +1107,8 @@ export default function AdminBannersPage() {
                       <button
                         type="button"
                         onClick={() => setPreviewMode('mobile')}
-                        className={`px-2.5 py-1 rounded text-xs font-bold flex items-center gap-1 transition-all ${
-                          previewMode === 'mobile' ? 'bg-orange-500 text-white' : 'text-neutral-400 hover:text-white'
+                        className={`px-2.5 py-1 rounded text-xs font-bold flex items-center gap-1 transition-all cursor-pointer ${
+                          previewMode === 'mobile' ? 'bg-orange-500 text-white shadow-xs' : 'text-neutral-400 hover:text-white'
                         }`}
                       >
                         <Smartphone size={12} />
@@ -998,14 +1119,16 @@ export default function AdminBannersPage() {
 
                   {/* Preview Canvas */}
                   <div
-                    className={`mx-auto rounded-xl overflow-hidden border border-neutral-800 shadow-2xl relative transition-all duration-300 ${
-                      previewMode === 'desktop' ? 'w-full aspect-[16/9]' : 'max-w-xs w-full aspect-[4/5]'
+                    className={`mx-auto overflow-hidden relative transition-all duration-300 flex items-center justify-center ${
+                      previewMode === 'desktop'
+                        ? 'w-full aspect-[16/8] rounded-xl border border-neutral-800 shadow-2xl'
+                        : 'max-w-[300px] w-full aspect-[9/16] rounded-3xl border-4 border-neutral-700 shadow-2xl'
                     }`}
                     style={{ backgroundColor: '#0a0a0a' }}
                   >
                     {/* Background Image Layer */}
-                    {imageUrl ? (
-                      <Image src={imageUrl} alt="Preview Background" fill className="object-cover" />
+                    {currentPreviewImage ? (
+                      <Image src={currentPreviewImage} alt="Preview Background" fill className="object-cover" />
                     ) : (
                       <div
                         className="w-full h-full opacity-20"
@@ -1016,33 +1139,45 @@ export default function AdminBannersPage() {
                       />
                     )}
 
-                    {/* Gradient Overlay for Readability */}
-                    <div
-                      className="absolute inset-0 pointer-events-none"
-                      style={{
-                        background:
-                          structuredContent.horizontal_position === 'right'
-                            ? 'linear-gradient(to left, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 60%, rgba(0,0,0,0.1) 100%)'
-                            : structuredContent.horizontal_position === 'center'
-                            ? 'linear-gradient(to bottom, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.7) 100%)'
-                            : 'linear-gradient(to right, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.5) 55%, rgba(0,0,0,0.15) 100%)',
-                      }}
-                    />
+                    {/* Content Overlay / Graphic Overlay */}
+                    {isOverlayActive ? (
+                      <>
+                        {/* Gradient Overlay for Readability */}
+                        <div
+                          className="absolute inset-0 pointer-events-none"
+                          style={{
+                            background:
+                              structuredContent.horizontal_position === 'right'
+                                ? 'linear-gradient(to left, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 60%, rgba(0,0,0,0.1) 100%)'
+                                : structuredContent.horizontal_position === 'center'
+                                ? 'linear-gradient(to bottom, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.7) 100%)'
+                                : 'linear-gradient(to right, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.5) 55%, rgba(0,0,0,0.15) 100%)',
+                          }}
+                        />
 
-                    {/* Content Overlay */}
-                    <div
-                      className={`absolute inset-0 p-5 sm:p-7 flex ${
-                        structuredContent.vertical_position === 'top'
-                          ? 'items-start'
-                          : structuredContent.vertical_position === 'bottom'
-                          ? 'items-end'
-                          : 'items-center'
-                      }`}
-                    >
-                      <div className="w-full scale-90 sm:scale-95 origin-top-left">
-                        <BannerContentView content={structuredContent} isLive={true} />
+                        {/* Content Overlay */}
+                        <div
+                          className={`absolute inset-0 p-4 sm:p-6 flex ${
+                            structuredContent.vertical_position === 'top'
+                              ? 'items-start'
+                              : structuredContent.vertical_position === 'bottom'
+                              ? 'items-end'
+                              : 'items-center'
+                          }`}
+                        >
+                          <div className={`w-full ${previewMode === 'mobile' ? 'scale-85 origin-top-left' : 'scale-95 origin-top-left'}`}>
+                            <BannerContentView content={structuredContent} isLive={true} />
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="absolute bottom-3 inset-x-3 text-center">
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/75 backdrop-blur-md border border-white/20 text-[10px] font-bold text-white shadow-lg">
+                          <ExternalLink size={12} className="text-orange-400" />
+                          <span>Click destination: {structuredContent.button_link || '/shop'}</span>
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 </div>
 
@@ -1051,7 +1186,7 @@ export default function AdminBannersPage() {
                   <button
                     type="button"
                     onClick={() => setModalOpen(false)}
-                    className="flex-1 py-2.5 rounded-xl border border-neutral-700 font-bold text-neutral-300 hover:bg-neutral-800 transition-colors text-xs"
+                    className="flex-1 py-2.5 rounded-xl border border-neutral-700 font-bold text-neutral-300 hover:bg-neutral-800 transition-colors text-xs cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -1059,7 +1194,7 @@ export default function AdminBannersPage() {
                     type="submit"
                     onClick={handleSubmit}
                     disabled={submitting}
-                    className="flex-1 btn-primary py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-orange-500/20"
+                    className="flex-1 btn-primary py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-orange-500/20 cursor-pointer"
                   >
                     {submitting ? (
                       <>

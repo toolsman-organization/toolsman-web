@@ -21,16 +21,16 @@ interface HeroBannerProps {
 function getHeadingSizeClass(size: BannerHeadingSize): string {
   switch (size) {
     case 'small':
-      return 'text-3xl sm:text-4xl lg:text-5xl tracking-wide leading-none';
+      return 'text-xl xs:text-2xl sm:text-3xl md:text-4xl lg:text-5xl tracking-wide leading-tight';
     case 'medium':
-      return 'text-4xl sm:text-5xl md:text-6xl lg:text-7xl tracking-wide leading-none';
+      return 'text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl tracking-wide leading-tight';
     case 'large':
-      return 'text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl tracking-wider leading-[0.92]';
+      return 'text-3xl xs:text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl tracking-wider leading-[0.96]';
     case 'massive':
-      return 'text-6xl sm:text-8xl md:text-[6.5rem] lg:text-[8rem] xl:text-[9.5rem] 2xl:text-[11rem] tracking-widest leading-[0.88]';
+      return 'text-4xl xs:text-5xl sm:text-7xl md:text-8xl lg:text-[8.5rem] xl:text-[10rem] tracking-widest leading-[0.92]';
     case 'extra-large':
     default:
-      return 'text-5xl sm:text-7xl md:text-8xl lg:text-[6.5rem] xl:text-[7.5rem] 2xl:text-[8.5rem] tracking-wider leading-[0.9]';
+      return 'text-3xl xs:text-4xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-[7.5rem] tracking-wider leading-[0.94]';
   }
 }
 
@@ -53,14 +53,14 @@ function getHeadingWeightClass(weight: BannerHeadingWeight): string {
 function getButtonStyleClass(style?: string): string {
   switch (style) {
     case 'secondary':
-      return 'btn-secondary text-white border-white/60 hover:bg-white hover:text-neutral-950';
+      return 'btn-secondary text-white border-white/60 hover:bg-white hover:text-neutral-950 text-xs sm:text-sm px-5 sm:px-6 py-2.5 sm:py-3';
     case 'dark':
-      return 'btn-dark bg-neutral-900 text-white hover:bg-neutral-800 border border-neutral-700';
+      return 'btn-dark bg-neutral-900 text-white hover:bg-neutral-800 border border-neutral-700 text-xs sm:text-sm px-5 sm:px-6 py-2.5 sm:py-3';
     case 'outline-white':
-      return 'inline-flex items-center justify-center gap-2 px-6 py-3 rounded text-sm font-bold border-2 border-white text-white hover:bg-white hover:text-neutral-950 transition-all';
+      return 'inline-flex items-center justify-center gap-2 px-5 sm:px-6 py-2.5 sm:py-3 rounded text-xs sm:text-sm font-bold border-2 border-white text-white hover:bg-white hover:text-neutral-950 transition-all';
     case 'primary':
     default:
-      return 'btn-primary text-sm sm:text-base px-7 py-3 gap-2 shadow-lg shadow-orange-500/30';
+      return 'btn-primary text-xs sm:text-sm md:text-base px-5 sm:px-7 py-2.5 sm:py-3 gap-2 shadow-lg shadow-orange-500/30';
   }
 }
 
@@ -222,7 +222,7 @@ export default function HeroBanner({ banners }: HeroBannerProps) {
       <section
         className="relative overflow-hidden bg-neutral-950"
         style={{
-          minHeight: 'clamp(420px, 50vw, 660px)',
+          minHeight: 'clamp(500px, 68vh, 680px)',
         }}
       >
         {/* Industrial Pattern Overlay */}
@@ -250,14 +250,15 @@ export default function HeroBanner({ banners }: HeroBannerProps) {
 
   const activeBanner = banners[current];
   const structured = parseBannerContent(activeBanner);
+  const showOverlay = structured.show_overlay !== false;
 
   // Determine vertical alignment container class
   const verticalContainerClass =
     structured.vertical_position === 'top'
-      ? 'items-start pt-14 sm:pt-20 pb-24'
+      ? 'items-start pt-14 sm:pt-20 pb-20'
       : structured.vertical_position === 'bottom'
-      ? 'items-end pt-24 pb-14 sm:pb-20'
-      : 'items-center py-14 sm:py-20 lg:py-24';
+      ? 'items-end pt-20 pb-14 sm:pb-20'
+      : 'items-center py-16 sm:py-20 lg:py-24';
 
   // Dynamic gradient overlay depending on content horizontal position
   const gradientOverlay =
@@ -265,22 +266,53 @@ export default function HeroBanner({ banners }: HeroBannerProps) {
       ? 'linear-gradient(to left, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.5) 60%, rgba(0,0,0,0.15) 100%)'
       : structured.horizontal_position === 'center'
       ? 'linear-gradient(to bottom, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.75) 100%)'
-      : 'linear-gradient(to right, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.55) 55%, rgba(0,0,0,0.1) 100%)';
+      : 'linear-gradient(to right, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.5) 58%, rgba(0,0,0,0.15) 100%)';
+
+  const bannerLink = activeBanner.button_link || structured.button_link || '/shop';
 
   return (
     <section
       className="relative overflow-hidden bg-neutral-950"
-      style={{ minHeight: 'clamp(420px, 50vw, 660px)' }}
+      style={{ minHeight: 'clamp(500px, 68vh, 680px)' }}
     >
       {/* Background Image Layer */}
       <div
         className="absolute inset-0 transition-opacity duration-300"
         style={{ opacity: transitioning ? 0.3 : 1 }}
       >
-        {activeBanner.image_url ? (
+        {activeBanner.mobile_image_url ? (
+          <>
+            {/* Mobile Banner Image */}
+            <div className="relative w-full h-full sm:hidden">
+              <Image
+                src={activeBanner.mobile_image_url}
+                alt={structured.heading_lines[0]?.text || activeBanner.title || 'Toolsman Hero Banner'}
+                fill
+                className="object-cover"
+                priority={current === 0}
+                sizes="100vw"
+              />
+            </div>
+            {/* Desktop Banner Image */}
+            <div className="relative w-full h-full hidden sm:block">
+              {activeBanner.image_url ? (
+                <Image
+                  src={activeBanner.image_url}
+                  alt={structured.heading_lines[0]?.text || activeBanner.title || 'Toolsman Hero Banner'}
+                  fill
+                  className="object-cover"
+                  priority={current === 0}
+                  sizes="100vw"
+                />
+              ) : (
+                <div style={{ background: 'linear-gradient(135deg, #0a0a0a, #1a1a1a)' }} className="w-full h-full" />
+              )}
+            </div>
+          </>
+        ) : activeBanner.image_url ? (
           <Image
             src={activeBanner.image_url}
-            alt={structured.heading_lines[0]?.text || 'Toolsman Hero Banner'}
+            alt={structured.heading_lines[0]?.text || activeBanner.title || 'Toolsman Hero Banner'}
             fill
             className="object-cover"
             priority={current === 0}
@@ -290,40 +322,51 @@ export default function HeroBanner({ banners }: HeroBannerProps) {
           <div style={{ background: 'linear-gradient(135deg, #0a0a0a, #1a1a1a)' }} className="w-full h-full" />
         )}
 
-        {/* Dynamic Dark Gradient Overlay for Readability */}
-        <div className="absolute inset-0" style={{ background: gradientOverlay }} />
+        {/* Dynamic Dark Gradient Overlay for Readability (Only shown if overlay content is enabled) */}
+        {showOverlay && (
+          <div className="absolute inset-0" style={{ background: gradientOverlay }} />
+        )}
       </div>
 
-      {/* HTML Content Overlay Layer */}
-      <div
-        className={`container-site relative z-10 flex ${verticalContainerClass}`}
-        style={{ minHeight: 'inherit' }}
-      >
+      {/* HTML Content Overlay Layer OR Clickable Area */}
+      {showOverlay ? (
         <div
-          className="w-full"
-          style={{
-            opacity: transitioning ? 0 : 1,
-            transform: transitioning ? 'translateY(8px)' : 'translateY(0)',
-            transition: 'opacity 0.3s ease, transform 0.3s ease',
-          }}
+          className={`container-site relative z-10 flex ${verticalContainerClass}`}
+          style={{ minHeight: 'inherit' }}
         >
-          <BannerContentView content={structured} />
+          <div
+            className="w-full"
+            style={{
+              opacity: transitioning ? 0 : 1,
+              transform: transitioning ? 'translateY(8px)' : 'translateY(0)',
+              transition: 'opacity 0.3s ease, transform 0.3s ease',
+            }}
+          >
+            <BannerContentView content={structured} />
+          </div>
         </div>
-      </div>
+      ) : (
+        /* In Graphic Banner mode, the entire banner is clickable */
+        <Link
+          href={bannerLink}
+          className="absolute inset-0 z-10 block"
+          aria-label={activeBanner.title || 'View Banner Promotion'}
+        />
+      )}
 
       {/* Navigation Arrows */}
       {banners.length > 1 && (
         <>
           <button
             onClick={prev}
-            className="absolute left-3 sm:left-5 top-1/2 -translate-y-1/2 z-20 w-9 h-9 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-all bg-black/50 hover:bg-orange-500 text-white backdrop-blur-xs border border-white/10"
+            className="absolute left-3 sm:left-5 top-1/2 -translate-y-1/2 z-20 w-9 h-9 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-all bg-black/50 hover:bg-orange-500 text-white backdrop-blur-xs border border-white/10 cursor-pointer shadow-lg"
             aria-label="Previous slide"
           >
             <ChevronLeft size={20} />
           </button>
           <button
             onClick={next}
-            className="absolute right-3 sm:right-5 top-1/2 -translate-y-1/2 z-20 w-9 h-9 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-all bg-black/50 hover:bg-orange-500 text-white backdrop-blur-xs border border-white/10"
+            className="absolute right-3 sm:right-5 top-1/2 -translate-y-1/2 z-20 w-9 h-9 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-all bg-black/50 hover:bg-orange-500 text-white backdrop-blur-xs border border-white/10 cursor-pointer shadow-lg"
             aria-label="Next slide"
           >
             <ChevronRight size={20} />
@@ -335,7 +378,7 @@ export default function HeroBanner({ banners }: HeroBannerProps) {
               <button
                 key={i}
                 onClick={() => setCurrent(i)}
-                className="rounded-full transition-all duration-300"
+                className="rounded-full transition-all duration-300 cursor-pointer"
                 style={{
                   width: i === current ? '24px' : '7px',
                   height: '7px',

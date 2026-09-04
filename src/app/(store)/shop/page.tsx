@@ -58,7 +58,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
   const { data: products, total, totalPages } = productsResult;
 
   return (
-    <div className="bg-neutral-50/50 min-h-screen py-6 sm:py-10 border-b border-neutral-200">
+    <div className="bg-white min-h-screen py-6 sm:py-10 border-b border-neutral-200">
       <div className="container-site">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-1.5 text-xs text-neutral-500 mb-6" aria-label="Breadcrumb">

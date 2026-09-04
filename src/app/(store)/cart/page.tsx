@@ -84,7 +84,7 @@ export default function CartPage() {
   }
 
   return (
-    <div className="bg-neutral-50/40 min-h-screen py-8 sm:py-12 border-b border-neutral-200">
+    <div className="bg-white min-h-screen py-6 sm:py-10 border-b border-neutral-200">
       <div className="container-site">
         <div className="flex items-center justify-between pb-6 mb-8 border-b border-neutral-200">
           <div>

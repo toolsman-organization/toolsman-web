@@ -26,8 +26,8 @@ export default async function EditProductPage({ params }: EditProductPageProps) 
       .from('products')
       .select(`
         *,
-        images:product_images(* ORDER BY sort_order ASC),
-        specifications:product_specifications(* ORDER BY sort_order ASC)
+        images:product_images(*),
+        specifications:product_specifications(*)
       `)
       .eq('id', id)
       .single(),
@@ -36,10 +36,22 @@ export default async function EditProductPage({ params }: EditProductPageProps) 
   ]);
 
   if (productRes.error || !productRes.data) {
+    console.error('[EditProductPage] Failed to fetch product:', productRes.error);
     notFound();
   }
 
-  const product = productRes.data as unknown as ProductFullDetail;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const rawProduct = productRes.data as any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sortedImages = (rawProduct.images || []).sort((a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sortedSpecs = (rawProduct.specifications || []).sort((a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+
+  const product: ProductFullDetail = {
+    ...rawProduct,
+    images: sortedImages,
+    specifications: sortedSpecs,
+  };
 
   return (
     <div className="space-y-6 max-w-5xl">

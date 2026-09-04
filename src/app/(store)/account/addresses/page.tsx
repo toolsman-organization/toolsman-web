@@ -98,7 +98,7 @@ export default function AddressesPage() {
   };
 
   return (
-    <div className="bg-neutral-50/50 min-h-screen py-8 sm:py-12 border-b border-neutral-200">
+    <div className="bg-white min-h-screen py-6 sm:py-10 border-b border-neutral-200">
       <div className="container-site max-w-4xl">
         <Link href="/account" className="text-xs font-bold text-neutral-500 hover:text-neutral-900 inline-flex items-center gap-1 mb-6">
           <ArrowLeft size={14} />

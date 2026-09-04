@@ -37,6 +37,7 @@ export interface BannerFeatureItem {
 
 export interface BannerStructuredContent {
   version: 2;
+  show_overlay?: boolean;
   badge?: string;
   badge_color?: string;
   heading_lines: BannerHeadingLine[];
@@ -80,6 +81,7 @@ export const BANNER_ICON_OPTIONS: { value: BannerFeatureIcon; label: string }[] 
 
 export const DEFAULT_BANNER_TEMPLATE: BannerStructuredContent = {
   version: 2,
+  show_overlay: true,
   badge: 'Professional Tools Store',
   badge_color: '#f97316',
   heading_lines: [
@@ -133,6 +135,7 @@ export function parseBannerContent(banner: Partial<Banner> | null | undefined): 
         return {
           ...DEFAULT_BANNER_TEMPLATE,
           ...parsed,
+          show_overlay: parsed.show_overlay ?? true,
           button_text: banner.button_text ?? parsed.button_text ?? 'SHOP NOW',
           button_link: banner.button_link ?? parsed.button_link ?? '/shop',
           button_visible: parsed.button_visible ?? Boolean(banner.button_text),
@@ -174,6 +177,7 @@ export function parseBannerContent(banner: Partial<Banner> | null | undefined): 
 
   return {
     version: 2,
+    show_overlay: true,
     badge: 'Professional Tools Store',
     badge_color: '#f97316',
     heading_lines: lines,
@@ -211,6 +215,6 @@ export function serializeBannerContent(content: BannerStructuredContent): {
     title: plainTitle || 'Hero Banner',
     subtitle: serializedSubtitle,
     button_text: content.button_visible && content.button_text ? content.button_text.trim() : null,
-    button_link: content.button_visible && content.button_link ? content.button_link.trim() : null,
+    button_link: content.button_link ? content.button_link.trim() : '/shop',
   };
 }

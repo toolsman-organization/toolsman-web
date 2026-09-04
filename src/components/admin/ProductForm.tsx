@@ -32,6 +32,8 @@ export default function ProductForm({ categories, brands, initialData }: Product
   const [originalPrice, setOriginalPrice] = useState(initialData?.original_price?.toString() || '');
   const [sellingPrice, setSellingPrice] = useState(initialData?.selling_price?.toString() || '');
   const [stockQuantity, setStockQuantity] = useState(initialData?.stock_quantity?.toString() || '10');
+  const [weight, setWeight] = useState(initialData?.weight || '');
+  const [includedComponents, setIncludedComponents] = useState(initialData?.included_components || '');
 
   // Badges & Status
   const [isActive, setIsActive] = useState(initialData ? initialData.is_active : true);
@@ -174,6 +176,8 @@ export default function ProductForm({ categories, brands, initialData }: Product
         original_price: parseFloat(originalPrice) || parseFloat(sellingPrice),
         selling_price: parseFloat(sellingPrice),
         stock_quantity: parseInt(stockQuantity, 10) || 0,
+        weight: weight.trim() || null,
+        included_components: includedComponents.trim() || null,
         is_active: isActive,
         is_featured: isFeatured,
         is_best_seller: isBestSeller,
@@ -328,7 +332,20 @@ export default function ProductForm({ categories, brands, initialData }: Product
             </select>
           </div>
 
-          <div className="sm:col-span-2">
+          <div>
+            <label className="block font-bold text-neutral-700 uppercase tracking-wider mb-1">
+              Item Weight <span className="text-neutral-400 font-normal normal-case">(Optional)</span>
+            </label>
+            <input
+              type="text"
+              value={weight}
+              onChange={(e) => setWeight(e.target.value)}
+              className="w-full px-3 py-2.5 rounded-lg border border-neutral-300 text-sm focus:outline-none focus:border-orange-500"
+              placeholder="e.g. 2.4 kg or 850 g"
+            />
+          </div>
+
+          <div>
             <label className="block font-bold text-neutral-700 uppercase tracking-wider mb-1">
               Short Summary
             </label>
@@ -336,7 +353,7 @@ export default function ProductForm({ categories, brands, initialData }: Product
               type="text"
               value={shortDescription}
               onChange={(e) => setShortDescription(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-neutral-300 focus:outline-none focus:border-orange-500"
+              className="w-full px-3 py-2.5 rounded-lg border border-neutral-300 text-sm focus:outline-none focus:border-orange-500"
               placeholder="Brief 1-sentence product summary"
             />
           </div>
@@ -351,6 +368,22 @@ export default function ProductForm({ categories, brands, initialData }: Product
               onChange={(e) => setDescription(e.target.value)}
               className="w-full px-3 py-2 rounded-lg border border-neutral-300 focus:outline-none focus:border-orange-500"
               placeholder="Detailed product features, packaging, warranty, application guide..."
+            />
+          </div>
+
+          <div className="sm:col-span-2">
+            <div className="flex items-center justify-between mb-1">
+              <label className="block font-bold text-neutral-700 uppercase tracking-wider">
+                Included Components / In The Box <span className="text-neutral-400 font-normal normal-case">(Optional)</span>
+              </label>
+              <span className="text-[10px] text-neutral-400 font-medium">Separate items with commas or newlines</span>
+            </div>
+            <textarea
+              rows={2}
+              value={includedComponents}
+              onChange={(e) => setIncludedComponents(e.target.value)}
+              className="w-full px-3 py-2 rounded-lg border border-neutral-300 text-sm focus:outline-none focus:border-orange-500"
+              placeholder="e.g. 1x Brushless Angle Grinder, 2x 20V 4.0Ah Batteries, 1x Fast Charger, 1x Wheel Guard, 1x Auxiliary Handle, 1x Carry Case"
             />
           </div>
         </div>

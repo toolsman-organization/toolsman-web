@@ -27,22 +27,22 @@ export default function Footer({ settings }: FooterProps) {
   return (
     <footer style={{ backgroundColor: '#111111', color: '#d4d4d4' }}>
       {/* Main Footer */}
-      <div className="container-site py-12 lg:py-16">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10">
+      <div className="container-site py-8 sm:py-12 lg:py-16">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-7 sm:gap-8 lg:gap-10">
           {/* Brand Column */}
           <div className="lg:col-span-1">
-            <Link href="/" className="inline-flex items-center gap-3 mb-4" aria-label="TOOLSMAN Home">
-              <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center p-1 shrink-0">
-                <Image src="/logo.png" alt="TOOLSMAN" width={32} height={32} className="object-contain" />
+            <Link href="/" className="inline-flex items-center gap-2.5 sm:gap-3 mb-3 sm:mb-4" aria-label="TOOLSMAN Home">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 bg-white rounded-full flex items-center justify-center p-1 shrink-0">
+                <Image src="/logo.png" alt="TOOLSMAN" width={30} height={30} className="object-contain" />
               </div>
               <div>
-                <div className="text-white font-black text-lg tracking-wider leading-none uppercase">TOOLSMAN</div>
-                <div className="text-[10px] mt-0.5 font-bold tracking-widest uppercase" style={{ color: '#f97316' }}>
-                  SINCE 2025
+                <div className="text-white font-black text-base sm:text-lg tracking-wider leading-none uppercase">TOOLSMAN</div>
+                <div className="text-[9px] sm:text-[10px] mt-0.5 font-bold tracking-widest uppercase" style={{ color: '#f97316' }}>
+                  SALES • SERVICE • RENT
                 </div>
               </div>
             </Link>
-            <p className="text-xs sm:text-sm leading-relaxed mb-4" style={{ color: '#a3a3a3' }}>
+            <p className="text-xs sm:text-sm leading-relaxed mb-3 sm:mb-4 text-neutral-400">
               {settings.store_tagline || 'Built for the job. Professional tools for serious performance.'}
             </p>
           </div>
