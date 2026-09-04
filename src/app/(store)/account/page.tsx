@@ -23,41 +23,35 @@ export default async function AccountPage() {
   const recentOrders = orders.slice(0, 3);
 
   return (
-    <div className="bg-neutral-50/50 min-h-screen py-8 sm:py-12 border-b border-neutral-200">
+    <div className="bg-white min-h-screen py-5 sm:py-10 border-b border-neutral-200">
       <div className="container-site max-w-5xl">
         {/* Welcome Header */}
-        <div className="bg-neutral-900 text-white rounded-2xl p-6 sm:p-8 mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-full bg-orange-500 text-white font-black text-xl flex items-center justify-center shrink-0">
+        <div className="bg-neutral-900 text-white rounded-2xl p-4 sm:p-6 mb-4 sm:mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
+          <div className="flex items-center gap-3.5 sm:gap-4">
+            <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-orange-500 text-white font-black text-lg sm:text-xl flex items-center justify-center shrink-0 shadow-sm">
               {user.email?.charAt(0).toUpperCase()}
             </div>
             <div>
-              <span className="text-[10px] font-bold text-orange-400 uppercase tracking-widest">
+              <span className="text-[9px] sm:text-[10px] font-bold text-orange-400 uppercase tracking-widest">
                 Toolsman Member Account
               </span>
-              <h1 className="text-xl sm:text-2xl font-black text-white">
+              <h1 className="text-lg sm:text-2xl font-black text-white leading-tight">
                 {profile?.full_name || user.email?.split('@')[0]}
               </h1>
               <p className="text-xs text-neutral-400">{user.email}</p>
             </div>
           </div>
-
-          {profile?.role === 'admin' && (
-            <Link href="/admin" className="btn-primary text-xs py-2 px-4 bg-orange-600">
-              Go to Admin Dashboard
-            </Link>
-          )}
         </div>
 
         {/* Quick Nav Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-4 mb-5 sm:mb-8">
           <Link
             href="/account/orders"
-            className="p-5 rounded-xl bg-white border border-neutral-200/80 shadow-xs hover:border-orange-500 hover:shadow-md transition-all flex items-center justify-between group"
+            className="p-4 sm:p-5 rounded-xl bg-white border border-neutral-200/80 shadow-xs hover:border-orange-500 hover:shadow-md transition-all flex items-center justify-between group"
           >
             <div className="flex items-center gap-3">
-              <div className="p-3 rounded-lg bg-orange-50 text-orange-600">
-                <Package size={22} />
+              <div className="p-2.5 sm:p-3 rounded-lg bg-orange-50 text-orange-600">
+                <Package size={20} className="sm:w-[22px] sm:h-[22px]" />
               </div>
               <div>
                 <h3 className="font-bold text-sm text-neutral-900">My Orders</h3>

@@ -14,7 +14,7 @@ export default async function CustomerOrdersPage() {
   const orders = await getUserOrders(user.id);
 
   return (
-    <div className="bg-neutral-50/50 min-h-screen py-8 sm:py-12 border-b border-neutral-200">
+    <div className="bg-white min-h-screen py-6 sm:py-10 border-b border-neutral-200">
       <div className="container-site max-w-5xl">
         <div className="flex items-center gap-2 mb-6">
           <Link href="/account" className="text-xs font-bold text-neutral-500 hover:text-neutral-900 flex items-center gap-1">
