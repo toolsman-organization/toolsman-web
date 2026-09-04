@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Search, ShoppingCart, Heart, User, Menu, X, ChevronDown, Phone } from 'lucide-react';
+import { Search, ShoppingCart, Heart, User, Menu, X, ChevronDown } from 'lucide-react';
 import type { Category } from '@/types/database';
 import { useCart } from '@/hooks/useCart';
 import { useWishlist } from '@/hooks/useWishlist';
@@ -15,7 +15,7 @@ interface HeaderProps {
   storePhone?: string;
 }
 
-export default function Header({ categories, storePhone }: HeaderProps) {
+export default function Header({ categories }: HeaderProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -48,7 +48,7 @@ export default function Header({ categories, storePhone }: HeaderProps) {
         style={{ backgroundColor: '#111111' }}
       >
         {/* Desktop Header Row */}
-        <div className="container-site hidden md:flex items-center gap-5 py-3">
+        <div className="container-site hidden md:flex items-center justify-between gap-5 py-3">
 
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3 shrink-0" aria-label="TOOLSMAN Home">
@@ -70,8 +70,8 @@ export default function Header({ categories, storePhone }: HeaderProps) {
             </div>
           </Link>
 
-          {/* Search Bar — takes remaining space */}
-          <form onSubmit={handleSearchSubmit} className="flex-1">
+          {/* Search Bar */}
+          <form onSubmit={handleSearchSubmit} className="flex-1 max-w-xl lg:max-w-2xl xl:max-w-3xl mx-6">
             <div className="relative">
               <input
                 type="search"
@@ -92,19 +92,8 @@ export default function Header({ categories, storePhone }: HeaderProps) {
             </div>
           </form>
 
-          {/* Right Icons — phone + account + wishlist + cart */}
+          {/* Right Icons — account + wishlist + cart */}
           <div className="flex items-center shrink-0">
-
-            {/* Phone — only xl+ */}
-            {storePhone && (
-              <a
-                href={`tel:${storePhone}`}
-                className="hidden xl:flex items-center gap-1.5 text-white text-xs px-3 py-2 rounded hover:text-orange-400 hover:bg-white/5 transition-colors"
-              >
-                <Phone size={14} />
-                <span className="font-medium">{storePhone}</span>
-              </a>
-            )}
 
             {/* Account */}
             <Link
@@ -213,67 +202,90 @@ export default function Header({ categories, storePhone }: HeaderProps) {
         </div>
 
         {/* Mobile Header Row */}
-        <div className="flex md:hidden items-center gap-3 px-4 py-3">
+        <div className="flex md:hidden items-center justify-between gap-2 px-3.5 py-2.5">
+          {/* Left: Menu Drawer Toggle */}
           <button
             onClick={() => setMobileNavOpen(true)}
-            className="text-white p-1.5 rounded hover:bg-white/10 transition-colors"
-            aria-label="Open menu"
+            className="w-10 h-10 flex items-center justify-center text-white rounded-lg hover:bg-white/10 active:bg-white/15 transition-colors shrink-0"
+            aria-label="Open navigation menu"
           >
             <Menu size={22} />
           </button>
 
-          <Link href="/" className="flex items-center gap-2.5 flex-1" aria-label="TOOLSMAN Home">
-            <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center p-1 shrink-0">
-              <Image src="/logo.png" alt="TOOLSMAN" width={26} height={26} className="object-contain" />
+          {/* Center: Brand Logo */}
+          <Link href="/" className="flex items-center gap-2 min-w-0" aria-label="TOOLSMAN Home">
+            <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center p-1 shrink-0 shadow-xs">
+              <Image src="/logo.png" alt="TOOLSMAN" width={24} height={24} className="object-contain" priority />
             </div>
-            <span className="text-white font-black text-base tracking-widest uppercase">TOOLSMAN</span>
+            <div className="flex flex-col leading-none">
+              <span className="text-white font-black text-[15px] tracking-wider uppercase">TOOLSMAN</span>
+              <span className="text-[7.5px] font-bold tracking-widest uppercase text-orange-500 mt-0.5">
+                POWER TOOLS
+              </span>
+            </div>
           </Link>
 
-          <div className="flex items-center gap-1">
+          {/* Right: Search & Cart Action Icons */}
+          <div className="flex items-center gap-0.5 shrink-0">
+            {/* Search Toggle Button */}
             <button
               onClick={() => setShowSearch(!showSearch)}
-              className="text-white p-1.5 rounded hover:bg-white/10 transition-colors"
+              className={`w-10 h-10 flex items-center justify-center rounded-lg transition-colors ${
+                showSearch ? 'bg-orange-500 text-white' : 'text-white hover:bg-white/10 active:bg-white/15'
+              }`}
               aria-label="Toggle search"
             >
-              <Search size={20} />
+              {showSearch ? <X size={19} /> : <Search size={19} />}
             </button>
+
+            {/* Cart Button */}
             <Link
               href="/cart"
-              className="text-white p-1.5 rounded hover:bg-white/10 transition-colors relative"
+              className="w-10 h-10 flex items-center justify-center text-white rounded-lg hover:bg-white/10 active:bg-white/15 transition-colors relative"
               aria-label={`Cart (${cartCount} items)`}
             >
-              <ShoppingCart size={20} />
+              <ShoppingCart size={19} />
               {cartCount > 0 && (
                 <span
-                  className="absolute -top-0.5 -right-0.5 text-white rounded-full w-4 h-4 flex items-center justify-center font-black leading-none"
+                  className="absolute top-1.5 right-1.5 text-white rounded-full min-w-4 h-4 px-1 flex items-center justify-center font-black leading-none shadow-xs"
                   style={{ backgroundColor: '#f97316', fontSize: '9px' }}
                 >
-                  {cartCount}
+                  {cartCount > 99 ? '99+' : cartCount}
                 </span>
               )}
             </Link>
           </div>
         </div>
 
-        {/* Mobile search bar */}
+        {/* Mobile Expandable Search Bar */}
         {showSearch && (
-          <div className="md:hidden px-4 pb-3">
-            <form onSubmit={handleSearchSubmit} className="relative">
+          <div className="md:hidden px-3.5 pb-3 pt-0.5 animate-in fade-in slide-in-from-top-2 duration-150">
+            <form onSubmit={handleSearchSubmit} className="relative flex items-center">
               <input
                 ref={searchRef}
                 type="search"
-                placeholder="Search products..."
+                placeholder="Search drills, grinders, accessories..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-4 pr-12 py-2.5 rounded-sm text-sm bg-white text-gray-900 outline-none placeholder:text-gray-400"
+                className="w-full pl-3.5 pr-20 py-2 rounded-lg text-sm bg-white text-gray-900 outline-none border border-neutral-300 focus:border-orange-500 placeholder:text-gray-400 shadow-inner"
                 autoFocus
               />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-12 text-gray-400 hover:text-gray-600 p-1"
+                  aria-label="Clear search"
+                >
+                  <X size={14} />
+                </button>
+              )}
               <button
                 type="submit"
-                className="absolute right-0 top-0 bottom-0 px-3 rounded-r-sm flex items-center justify-center"
-                style={{ backgroundColor: '#f97316' }}
+                className="absolute right-1 top-1 bottom-1 px-3 rounded-md flex items-center justify-center bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs shadow-xs"
+                aria-label="Submit search"
               >
-                <Search size={16} className="text-white" />
+                <Search size={14} />
               </button>
             </form>
           </div>

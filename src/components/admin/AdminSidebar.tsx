@@ -29,8 +29,7 @@ interface AdminSidebarProps {
 
 const navItems = [
   { href: '/admin', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
-  { href: '/admin/products', label: 'All Products', icon: <Package size={18} /> },
-  { href: '/admin/products/new', label: 'Add Product', icon: <PlusCircle size={18} /> },
+  { href: '/admin/products', label: 'Products', icon: <Package size={18} /> },
   { href: '/admin/categories', label: 'Categories', icon: <FolderTree size={18} /> },
   { href: '/admin/brands', label: 'Brands', icon: <Tag size={18} /> },
   { href: '/admin/orders', label: 'Orders', icon: <ShoppingBag size={18} /> },

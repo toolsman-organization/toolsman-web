@@ -87,11 +87,11 @@ export default function ProductActions({ product }: ProductActionsProps) {
       </div>
 
       {/* Buttons: Add to Cart, Buy Now, Wishlist */}
-      <div className="flex flex-col sm:flex-row items-stretch gap-3">
+      <div className="flex items-center gap-2 sm:gap-3 w-full">
         <button
           onClick={handleAddToCart}
           disabled={isOutOfStock || adding}
-          className={`flex-1 h-12 rounded-lg font-bold text-sm flex items-center justify-center gap-2 transition-all duration-200 shadow-md ${
+          className={`flex-1 min-w-0 h-11 sm:h-12 rounded-lg font-bold text-xs sm:text-sm tracking-tight sm:tracking-normal flex items-center justify-center gap-1.5 sm:gap-2 transition-all duration-200 shadow-md ${
             added
               ? 'bg-emerald-600 text-white'
               : isOutOfStock
@@ -100,16 +100,16 @@ export default function ProductActions({ product }: ProductActionsProps) {
           }`}
         >
           {adding ? (
-            <Loader2 size={18} className="animate-spin" />
+            <Loader2 size={16} className="animate-spin shrink-0" />
           ) : added ? (
             <>
-              <Check size={18} className="stroke-[3]" />
-              <span>Added to Cart!</span>
+              <Check size={16} className="stroke-[3] shrink-0" />
+              <span className="truncate">Added!</span>
             </>
           ) : (
             <>
-              <ShoppingCart size={18} />
-              <span>ADD TO CART</span>
+              <ShoppingCart size={16} className="shrink-0" />
+              <span className="truncate">ADD TO CART</span>
             </>
           )}
         </button>
@@ -117,28 +117,28 @@ export default function ProductActions({ product }: ProductActionsProps) {
         <button
           onClick={handleBuyNow}
           disabled={isOutOfStock || buyingNow}
-          className="flex-1 h-12 rounded-lg font-bold text-sm bg-orange-500 hover:bg-orange-600 text-white flex items-center justify-center gap-2 transition-all duration-200 shadow-lg shadow-orange-500/25 active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex-1 min-w-0 h-11 sm:h-12 rounded-lg font-bold text-xs sm:text-sm tracking-tight sm:tracking-normal bg-orange-500 hover:bg-orange-600 text-white flex items-center justify-center gap-1.5 sm:gap-2 transition-all duration-200 shadow-lg shadow-orange-500/25 active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {buyingNow ? (
-            <Loader2 size={18} className="animate-spin" />
+            <Loader2 size={16} className="animate-spin shrink-0" />
           ) : (
             <>
-              <Zap size={18} className="fill-current" />
-              <span>BUY NOW</span>
+              <Zap size={16} className="fill-current shrink-0" />
+              <span className="truncate">BUY NOW</span>
             </>
           )}
         </button>
 
         <button
           onClick={() => toggleWishlist(product.id)}
-          className={`w-12 h-12 rounded-lg flex items-center justify-center border transition-all duration-200 shrink-0 ${
+          className={`w-11 h-11 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center border transition-all duration-200 shrink-0 ${
             isWishlisted
               ? 'bg-red-50 text-red-500 border-red-200'
               : 'bg-white text-neutral-400 border-neutral-300 hover:text-red-500 hover:bg-neutral-50'
           }`}
           aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
         >
-          <Heart size={20} className={isWishlisted ? 'fill-current' : ''} />
+          <Heart size={18} className={isWishlisted ? 'fill-current' : ''} />
         </button>
       </div>
 

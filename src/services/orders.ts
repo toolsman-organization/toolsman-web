@@ -8,13 +8,17 @@ export async function getOrderById(orderId: string): Promise<OrderWithItems | nu
     .select(`
       *,
       order_items(*),
-      status_history:order_status_history(* ORDER BY created_at ASC)
+      status_history:order_status_history(*)
     `)
     .eq('id', orderId)
     .single();
 
   if (error || !data) return null;
-  return data as unknown as OrderWithItems;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const raw = data as any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sortedHistory = (raw.status_history || []).sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+  return { ...raw, status_history: sortedHistory } as OrderWithItems;
 }
 
 export async function getOrderByNumber(orderNumber: string): Promise<OrderWithItems | null> {
@@ -24,13 +28,17 @@ export async function getOrderByNumber(orderNumber: string): Promise<OrderWithIt
     .select(`
       *,
       order_items(*),
-      status_history:order_status_history(* ORDER BY created_at ASC)
+      status_history:order_status_history(*)
     `)
     .eq('order_number', orderNumber)
     .single();
 
   if (error || !data) return null;
-  return data as unknown as OrderWithItems;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const raw = data as any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sortedHistory = (raw.status_history || []).sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+  return { ...raw, status_history: sortedHistory } as OrderWithItems;
 }
 
 export async function getUserOrders(userId: string): Promise<Order[]> {

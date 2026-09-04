@@ -61,6 +61,8 @@ export interface Product {
   original_price: number;
   selling_price: number;
   stock_quantity: number;
+  weight?: string | null;
+  included_components?: string | null;
   is_active: boolean;
   is_featured: boolean;
   is_best_seller: boolean;

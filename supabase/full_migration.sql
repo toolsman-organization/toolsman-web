@@ -113,6 +113,8 @@ CREATE TABLE IF NOT EXISTS public.products (
   original_price    NUMERIC(10,2) NOT NULL DEFAULT 0 CHECK (original_price >= 0),
   selling_price     NUMERIC(10,2) NOT NULL DEFAULT 0 CHECK (selling_price >= 0),
   stock_quantity    INTEGER NOT NULL DEFAULT 0 CHECK (stock_quantity >= 0),
+  weight            TEXT,
+  included_components TEXT,
   is_active         BOOLEAN NOT NULL DEFAULT TRUE,
   is_featured       BOOLEAN NOT NULL DEFAULT FALSE,
   is_best_seller    BOOLEAN NOT NULL DEFAULT FALSE,
