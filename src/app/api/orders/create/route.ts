@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { createRazorpayOrder } from '@/lib/razorpay';
 import { calculateDeliveryCharge, parseWeightInKg } from '@/lib/delivery';
 
 export async function POST(request: Request) {
@@ -9,9 +8,10 @@ export async function POST(request: Request) {
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized. Please login to place an order.' }, { status: 401 });
     }
 
+    const body = await request.json();
     const {
       customerName,
       customerPhone,
@@ -19,13 +19,14 @@ export async function POST(request: Request) {
       shippingAddress,
       items,
       couponCode,
-    } = await request.json();
+      paymentMethod = 'cod',
+    } = body;
 
     if (!customerName || !customerPhone || !shippingAddress || !items || !Array.isArray(items) || items.length === 0) {
-      return NextResponse.json({ error: 'Invalid order parameters' }, { status: 400 });
+      return NextResponse.json({ error: 'Invalid order parameters or empty items list' }, { status: 400 });
     }
 
-    // 1. Authoritative verification of products & weights from database
+    // 1. Fetch authoritative product details from database for all items
     const productIds = items.map((i: { productId: string }) => i.productId).filter(Boolean);
     const { data: dbProducts, error: prodError } = await supabase
       .from('products')
@@ -38,7 +39,7 @@ export async function POST(request: Request) {
 
     const productMap = new Map(dbProducts.map((p) => [p.id, p]));
 
-    // 2. Fetch active delivery pricing settings
+    // 2. Fetch active site settings for delivery charges
     const { data: settingsData } = await supabase
       .from('site_settings')
       .select('setting_key, setting_value')
@@ -98,6 +99,7 @@ export async function POST(request: Request) {
       });
     }
 
+    // Round total weight
     serverTotalWeightKg = Math.round(serverTotalWeightKg * 1000) / 1000;
 
     // 4. Calculate authoritative delivery charge
@@ -132,7 +134,7 @@ export async function POST(request: Request) {
 
     const serverGrandTotal = Math.max(0, serverSubtotal - serverDiscountAmount + serverShippingFee);
 
-    // 6. Create order record in Supabase
+    // 6. Insert order record into database
     const { data: order, error: orderError } = await supabase
       .from('orders')
       .insert({
@@ -146,16 +148,16 @@ export async function POST(request: Request) {
         shipping_amount: serverShippingFee,
         total_amount: serverGrandTotal,
         coupon_code: validCouponCode,
-        payment_method: 'razorpay',
-        payment_status: 'pending',
-        order_status: 'pending',
+        payment_method: paymentMethod,
+        payment_status: paymentMethod === 'cod' ? 'pending' : 'pending',
+        order_status: paymentMethod === 'cod' ? 'confirmed' : 'pending',
       })
       .select()
       .single();
 
     if (orderError || !order) {
-      console.error('Failed to create DB order:', orderError);
-      return NextResponse.json({ error: 'Failed to create order in database' }, { status: 500 });
+      console.error('Failed to create order in DB:', orderError);
+      return NextResponse.json({ error: 'Failed to create order record' }, { status: 500 });
     }
 
     // 7. Insert order items snapshot
@@ -172,47 +174,20 @@ export async function POST(request: Request) {
 
     await supabase.from('order_items').insert(orderItemsToInsert);
 
-    // 8. Create Razorpay order
-    try {
-      const razorpayOrder = await createRazorpayOrder({
-        amount: serverGrandTotal,
-        currency: 'INR',
-        receipt: order.order_number,
-        notes: {
-          order_id: order.id,
-          user_id: user.id,
-          order_number: order.order_number,
-        },
-      });
-
-      // Update order with razorpay_order_id
-      await supabase
-        .from('orders')
-        .update({ razorpay_order_id: razorpayOrder.id })
-        .eq('id', order.id);
-
-      return NextResponse.json({
-        orderId: order.id,
-        orderNumber: order.order_number,
-        razorpayOrderId: razorpayOrder.id,
-        amount: serverGrandTotal,
-        currency: 'INR',
-        keyId: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_placeholder',
-      });
-    } catch (rzpErr) {
-      console.error('Razorpay order creation error:', rzpErr);
-      // Fallback if Razorpay credentials are test/unconfigured
-      return NextResponse.json({
-        orderId: order.id,
-        orderNumber: order.order_number,
-        razorpayOrderId: `test_rzp_${Date.now()}`,
-        amount: serverGrandTotal,
-        currency: 'INR',
-        keyId: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_placeholder',
-      });
-    }
-  } catch (err) {
-    console.error('Razorpay create-order route error:', err);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({
+      success: true,
+      orderId: order.id,
+      orderNumber: order.order_number,
+      shippingAmount: serverShippingFee,
+      totalWeightKg: serverTotalWeightKg,
+      chargeableWeightKg: deliveryCalc.chargeableWeightKg,
+      totalAmount: serverGrandTotal,
+    });
+  } catch (err: unknown) {
+    console.error('Order creation error:', err);
+    return NextResponse.json(
+      { error: (err as Error).message || 'An unexpected error occurred creating order' },
+      { status: 500 }
+    );
   }
 }

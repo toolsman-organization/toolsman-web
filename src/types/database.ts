@@ -302,6 +302,8 @@ export interface SiteSettings {
   store_address: string;
   free_shipping_above: string;
   shipping_charge: string;
+  delivery_base_charge: string;
+  delivery_additional_kg_charge: string;
   cod_enabled: string;
   cod_min_order: string;
   cod_max_order: string;

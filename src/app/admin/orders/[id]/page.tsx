@@ -123,7 +123,7 @@ export default async function AdminOrderDetailPage({ params }: AdminOrderDetailP
               )}
               <div className="flex justify-between">
                 <span>Delivery Charge</span>
-                <span className="font-bold text-neutral-900">{order.shipping_amount === 0 ? 'FREE' : formatCurrency(order.shipping_amount)}</span>
+                <span className="font-bold text-neutral-900">{formatCurrency(order.shipping_amount)}</span>
               </div>
               <div className="pt-2 border-t border-neutral-200 flex justify-between items-baseline font-black text-base text-neutral-950">
                 <span>Total Amount Paid/Due</span>
