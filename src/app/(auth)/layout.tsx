@@ -14,24 +14,19 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       />
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10 text-center mb-6">
-        <Link href="/" className="inline-flex items-center gap-3">
-          <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center p-1 shadow-lg">
+        <Link href="/" className="inline-flex items-center gap-3.5 group">
+          <div className="w-14 h-14 flex items-center justify-center shrink-0">
             <Image
               src="/logo.png"
               alt="TOOLSMAN"
-              width={40}
-              height={40}
-              className="object-contain"
+              width={56}
+              height={56}
+              className="w-full h-full object-contain"
             />
           </div>
-          <div className="text-left">
-            <span className="text-white font-black text-2xl tracking-wider block leading-none">
-              TOOLSMAN
-            </span>
-            <span className="text-[10px] font-bold text-orange-500 uppercase tracking-widest">
-              SALES • SERVICE • RENT
-            </span>
-          </div>
+          <span className="text-white font-black text-2xl tracking-wider uppercase leading-none">
+            TOOLSMAN
+          </span>
         </Link>
       </div>
 

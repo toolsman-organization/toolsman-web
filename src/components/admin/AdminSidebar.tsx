@@ -58,8 +58,8 @@ export default function AdminSidebar({ mobileOpen = false, onClose }: AdminSideb
       {/* Brand Header */}
       <div className="p-4 flex items-center justify-between border-b border-neutral-800">
         <Link href="/admin" className="flex items-center gap-2.5">
-          <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center p-1">
-            <Image src="/logo.png" alt="TOOLSMAN" width={28} height={28} className="object-contain" />
+          <div className="w-10 h-10 flex items-center justify-center shrink-0">
+            <Image src="/logo.png" alt="TOOLSMAN" width={40} height={40} className="w-full h-full object-contain" />
           </div>
           <div>
             <span className="text-white font-black text-base tracking-wider block leading-none">
