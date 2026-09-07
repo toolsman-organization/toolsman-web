@@ -18,19 +18,36 @@ interface HeroBannerProps {
   banners: Banner[];
 }
 
-function getHeadingSizeClass(size: BannerHeadingSize): string {
+function getMobileHeadingSizeClass(mobileSize?: BannerHeadingSize | 'auto', desktopSize?: BannerHeadingSize): string {
+  const effective = !mobileSize || mobileSize === 'auto' ? desktopSize || 'extra-large' : mobileSize;
+  switch (effective) {
+    case 'small':
+      return 'text-2xl xs:text-3xl tracking-wide leading-tight';
+    case 'medium':
+      return 'text-3xl xs:text-4xl tracking-wide leading-tight';
+    case 'large':
+      return 'text-4xl xs:text-5xl tracking-wider leading-[0.94]';
+    case 'extra-large':
+      return 'text-5xl xs:text-6xl tracking-wider leading-[0.90]';
+    case 'massive':
+    default:
+      return 'text-6xl xs:text-7xl tracking-wider leading-[0.88]';
+  }
+}
+
+function getDesktopHeadingSizeClass(size: BannerHeadingSize): string {
   switch (size) {
     case 'small':
-      return 'text-xl xs:text-2xl sm:text-3xl md:text-4xl lg:text-5xl tracking-wide leading-tight';
+      return 'sm:text-3xl md:text-4xl lg:text-5xl sm:tracking-wide sm:leading-tight';
     case 'medium':
-      return 'text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl tracking-wide leading-tight';
+      return 'sm:text-4xl md:text-5xl lg:text-6xl sm:tracking-wide sm:leading-tight';
     case 'large':
-      return 'text-3xl xs:text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl tracking-wider leading-[0.96]';
+      return 'sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl sm:tracking-wider sm:leading-[0.96]';
     case 'massive':
-      return 'text-4xl xs:text-5xl sm:text-7xl md:text-8xl lg:text-[8.5rem] xl:text-[10rem] tracking-widest leading-[0.92]';
+      return 'sm:text-7xl md:text-8xl lg:text-[8.5rem] xl:text-[10rem] sm:tracking-widest sm:leading-[0.92]';
     case 'extra-large':
     default:
-      return 'text-3xl xs:text-4xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-[7.5rem] tracking-wider leading-[0.94]';
+      return 'sm:text-6xl md:text-7xl lg:text-8xl xl:text-[7.5rem] sm:tracking-wider sm:leading-[0.94]';
   }
 }
 
@@ -64,15 +81,33 @@ function getButtonStyleClass(style?: string): string {
   }
 }
 
+function getFontFamilyStyle(font?: string): string {
+  switch (font) {
+    case 'anton':
+      return "'Anton', 'Impact', sans-serif";
+    case 'barlow':
+      return "'Barlow Condensed', sans-serif";
+    case 'montserrat':
+      return "'Montserrat', sans-serif";
+    case 'inter':
+      return "'Inter', sans-serif";
+    case 'bebas':
+    default:
+      return "'Bebas Neue', 'Impact', sans-serif";
+  }
+}
+
 /**
  * Reusable Banner Content View used for both Storefront and Admin Live Preview.
  */
 export function BannerContentView({
   content,
   isLive = false,
+  isMobilePreview = false,
 }: {
   content: BannerStructuredContent;
   isLive?: boolean;
+  isMobilePreview?: boolean;
 }) {
   const horizontalClass = useMemo(() => {
     switch (content.horizontal_position) {
@@ -104,29 +139,59 @@ export function BannerContentView({
 
       {/* 2. Multi-line Headings with impactful elongated display typography */}
       <div className="flex flex-col gap-1 sm:gap-1.5 mb-3.5">
-        {content.heading_lines.map((line, idx) => (
-          <h1
-            key={line.id || idx}
-            className={`${getHeadingSizeClass(line.size)} ${getHeadingWeightClass(
-              line.weight
-            )} uppercase drop-shadow-lg`}
-            style={{
-              fontFamily: 'var(--font-display)',
-              color: line.color || '#ffffff',
-            }}
-          >
-            {line.text}
-          </h1>
-        ))}
+        {content.heading_lines.map((line, idx) => {
+          const mobileSizeClass = getMobileHeadingSizeClass(line.mobile_size, line.size);
+          const desktopSizeClass = getDesktopHeadingSizeClass(line.size);
+          const weightClass = getHeadingWeightClass(line.weight);
+          const hasMobileText = Boolean(line.mobile_text && line.mobile_text.trim());
+          const fontStyle = getFontFamilyStyle(line.font_family || content.font_family);
+
+          return (
+            <h1
+              key={line.id || idx}
+              className={`${
+                isMobilePreview ? mobileSizeClass : `${mobileSizeClass} ${desktopSizeClass}`
+              } ${weightClass} uppercase drop-shadow-lg`}
+              style={{
+                fontFamily: fontStyle,
+                color: line.color || '#ffffff',
+              }}
+            >
+              {isMobilePreview ? (
+                hasMobileText ? line.mobile_text : line.text
+              ) : hasMobileText ? (
+                <>
+                  <span className="sm:hidden">{line.mobile_text}</span>
+                  <span className="hidden sm:inline">{line.text}</span>
+                </>
+              ) : (
+                line.text
+              )}
+            </h1>
+          );
+        })}
       </div>
 
       {/* 3. Subtitle */}
-      {content.subtitle && (
+      {(content.subtitle || content.mobile_subtitle) && (
         <p
           className="text-sm sm:text-base lg:text-lg xl:text-xl mb-2.5 leading-relaxed font-medium drop-shadow-sm max-w-xl"
           style={{ color: content.subtitle_color || '#d4d4d4' }}
         >
-          {content.subtitle}
+          {isMobilePreview ? (
+            content.mobile_subtitle && content.mobile_subtitle.trim() ? (
+              content.mobile_subtitle
+            ) : (
+              content.subtitle
+            )
+          ) : content.mobile_subtitle && content.mobile_subtitle.trim() ? (
+            <>
+              <span className="sm:hidden">{content.mobile_subtitle}</span>
+              <span className="hidden sm:inline">{content.subtitle}</span>
+            </>
+          ) : (
+            content.subtitle
+          )}
         </p>
       )}
 
@@ -220,10 +285,7 @@ export default function HeroBanner({ banners }: HeroBannerProps) {
   if (!banners.length) {
     return (
       <section
-        className="relative overflow-hidden bg-neutral-950"
-        style={{
-          minHeight: 'clamp(500px, 68vh, 680px)',
-        }}
+        className="relative overflow-hidden bg-neutral-950 min-h-[520px] xs:min-h-[580px] sm:min-h-[600px] lg:h-[calc(100vh-112px)] lg:min-h-[640px] lg:max-h-[960px]"
       >
         {/* Industrial Pattern Overlay */}
         <div
@@ -252,32 +314,37 @@ export default function HeroBanner({ banners }: HeroBannerProps) {
   const structured = parseBannerContent(activeBanner);
   const showOverlay = structured.show_overlay !== false;
 
-  // Determine vertical alignment container class
+  // Determine vertical alignment container class:
+  // On mobile (<sm), flex-col justify-end forces all content (headlines, features, CTA) to sit strictly in the lower half
+  // On desktop (sm:), honor the configured top/center/bottom vertical_position
   const verticalContainerClass =
     structured.vertical_position === 'top'
-      ? 'items-start pt-14 sm:pt-20 pb-20'
+      ? 'justify-end sm:justify-start sm:pt-20 pb-12 sm:pb-20'
       : structured.vertical_position === 'bottom'
-      ? 'items-end pt-20 pb-14 sm:pb-20'
-      : 'items-center py-16 sm:py-20 lg:py-24';
+      ? 'justify-end pb-12 sm:pb-20 sm:pt-20'
+      : 'justify-end sm:justify-center pb-12 sm:pb-0 sm:py-20 lg:py-24';
 
-  // Dynamic gradient overlay depending on content horizontal position
-  const gradientOverlay =
+  // Dynamic gradient overlay depending on content horizontal position for desktop
+  const desktopGradientOverlay =
     structured.horizontal_position === 'right'
       ? 'linear-gradient(to left, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.5) 60%, rgba(0,0,0,0.15) 100%)'
       : structured.horizontal_position === 'center'
       ? 'linear-gradient(to bottom, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.75) 100%)'
       : 'linear-gradient(to right, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.5) 58%, rgba(0,0,0,0.15) 100%)';
 
+  // Bottom-up dark gradient for mobile to keep top product photo clear and bottom text crisp
+  const mobileGradientOverlay =
+    'linear-gradient(to top, rgba(0,0,0,0.96) 0%, rgba(0,0,0,0.75) 48%, rgba(0,0,0,0.1) 80%, transparent 100%)';
+
   const bannerLink = activeBanner.button_link || structured.button_link || '/shop';
 
   return (
     <section
-      className="relative overflow-hidden bg-neutral-950"
-      style={{ minHeight: 'clamp(500px, 68vh, 680px)' }}
+      className="relative overflow-hidden bg-neutral-950 min-h-[520px] xs:min-h-[580px] sm:min-h-[600px] lg:h-[calc(100vh-112px)] lg:min-h-[640px] lg:max-h-[960px] flex flex-col"
     >
       {/* Background Image Layer */}
       <div
-        className="absolute inset-0 transition-opacity duration-300"
+        className="absolute inset-0 transition-opacity duration-300 pointer-events-none"
         style={{ opacity: transitioning ? 0.3 : 1 }}
       >
         {activeBanner.mobile_image_url ? (
@@ -324,15 +391,19 @@ export default function HeroBanner({ banners }: HeroBannerProps) {
 
         {/* Dynamic Dark Gradient Overlay for Readability (Only shown if overlay content is enabled) */}
         {showOverlay && (
-          <div className="absolute inset-0" style={{ background: gradientOverlay }} />
+          <>
+            {/* Mobile Gradient */}
+            <div className="absolute inset-0 sm:hidden pointer-events-none" style={{ background: mobileGradientOverlay }} />
+            {/* Desktop Gradient */}
+            <div className="absolute inset-0 hidden sm:block pointer-events-none" style={{ background: desktopGradientOverlay }} />
+          </>
         )}
       </div>
 
       {/* HTML Content Overlay Layer OR Clickable Area */}
       {showOverlay ? (
         <div
-          className={`container-site relative z-10 flex ${verticalContainerClass}`}
-          style={{ minHeight: 'inherit' }}
+          className={`container-site relative z-10 flex-1 flex flex-col ${verticalContainerClass}`}
         >
           <div
             className="w-full"
@@ -359,17 +430,19 @@ export default function HeroBanner({ banners }: HeroBannerProps) {
         <>
           <button
             onClick={prev}
-            className="absolute left-3 sm:left-5 top-1/2 -translate-y-1/2 z-20 w-9 h-9 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-all bg-black/50 hover:bg-orange-500 text-white backdrop-blur-xs border border-white/10 cursor-pointer shadow-lg"
+            className="absolute left-3 sm:left-5 top-[25%] sm:top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-all opacity-30 hover:opacity-100 bg-black/40 hover:bg-orange-500 text-white backdrop-blur-xs border border-white/10 cursor-pointer shadow-md active:scale-95"
             aria-label="Previous slide"
           >
-            <ChevronLeft size={20} />
+            <ChevronLeft size={18} className="sm:hidden" />
+            <ChevronLeft size={20} className="hidden sm:block" />
           </button>
           <button
             onClick={next}
-            className="absolute right-3 sm:right-5 top-1/2 -translate-y-1/2 z-20 w-9 h-9 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-all bg-black/50 hover:bg-orange-500 text-white backdrop-blur-xs border border-white/10 cursor-pointer shadow-lg"
+            className="absolute right-3 sm:right-5 top-[25%] sm:top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-all opacity-30 hover:opacity-100 bg-black/40 hover:bg-orange-500 text-white backdrop-blur-xs border border-white/10 cursor-pointer shadow-md active:scale-95"
             aria-label="Next slide"
           >
-            <ChevronRight size={20} />
+            <ChevronRight size={18} className="sm:hidden" />
+            <ChevronRight size={20} className="hidden sm:block" />
           </button>
 
           {/* Dots Indicator */}

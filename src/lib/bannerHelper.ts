@@ -5,6 +5,7 @@ export type BannerHeadingWeight = 'normal' | 'semibold' | 'bold' | 'extrabold' |
 export type BannerHorizontalPosition = 'left' | 'center' | 'right';
 export type BannerVerticalPosition = 'top' | 'center' | 'bottom';
 export type BannerButtonStyle = 'primary' | 'secondary' | 'dark' | 'outline-white';
+export type BannerFontFamily = 'bebas' | 'anton' | 'barlow' | 'montserrat' | 'inter';
 export type BannerFeatureIcon =
   | 'shield'
   | 'wrench'
@@ -23,9 +24,12 @@ export type BannerFeatureIcon =
 export interface BannerHeadingLine {
   id: string;
   text: string;
+  mobile_text?: string;
   color: string;
   size: BannerHeadingSize;
+  mobile_size?: BannerHeadingSize | 'auto';
   weight: BannerHeadingWeight;
+  font_family?: BannerFontFamily;
 }
 
 export interface BannerFeatureItem {
@@ -37,11 +41,13 @@ export interface BannerFeatureItem {
 
 export interface BannerStructuredContent {
   version: 2;
+  font_family?: BannerFontFamily;
   show_overlay?: boolean;
   badge?: string;
   badge_color?: string;
   heading_lines: BannerHeadingLine[];
   subtitle?: string;
+  mobile_subtitle?: string;
   subtitle_color?: string;
   description?: string;
   description_color?: string;
@@ -79,8 +85,17 @@ export const BANNER_ICON_OPTIONS: { value: BannerFeatureIcon; label: string }[] 
   { value: 'sparkles', label: 'Sparkles (New / Featured)' },
 ];
 
+export const BANNER_FONT_OPTIONS: { value: BannerFontFamily; label: string; previewFont: string }[] = [
+  { value: 'bebas', label: 'Bebas Neue (Industrial Elongated)', previewFont: "'Bebas Neue', 'Impact', sans-serif" },
+  { value: 'anton', label: 'Anton (Ultra Heavy Impact)', previewFont: "'Anton', 'Impact', sans-serif" },
+  { value: 'barlow', label: 'Barlow Condensed (Technical Bold)', previewFont: "'Barlow Condensed', sans-serif" },
+  { value: 'montserrat', label: 'Montserrat (Modern Bold Sans)', previewFont: "'Montserrat', sans-serif" },
+  { value: 'inter', label: 'Inter (Clean Technical)', previewFont: "'Inter', sans-serif" },
+];
+
 export const DEFAULT_BANNER_TEMPLATE: BannerStructuredContent = {
   version: 2,
+  font_family: 'bebas',
   show_overlay: true,
   badge: 'Professional Tools Store',
   badge_color: '#f97316',
@@ -88,19 +103,24 @@ export const DEFAULT_BANNER_TEMPLATE: BannerStructuredContent = {
     {
       id: 'h-1',
       text: 'BUILT FOR',
+      mobile_text: '',
       color: '#ffffff',
       size: 'extra-large',
+      mobile_size: 'extra-large',
       weight: 'black',
     },
     {
       id: 'h-2',
       text: 'THE JOB.',
+      mobile_text: '',
       color: '#f97316',
       size: 'extra-large',
+      mobile_size: 'extra-large',
       weight: 'black',
     },
   ],
   subtitle: 'Professional tools. Serious performance.',
+  mobile_subtitle: '',
   subtitle_color: '#d4d4d4',
   description: '',
   description_color: '#a3a3a3',
@@ -135,6 +155,13 @@ export function parseBannerContent(banner: Partial<Banner> | null | undefined): 
         return {
           ...DEFAULT_BANNER_TEMPLATE,
           ...parsed,
+          font_family: parsed.font_family || 'bebas',
+          heading_lines: (parsed.heading_lines || []).map((line) => ({
+            ...line,
+            mobile_text: line.mobile_text || '',
+            mobile_size: line.mobile_size || line.size || 'extra-large',
+            font_family: line.font_family || parsed.font_family || 'bebas',
+          })),
           show_overlay: parsed.show_overlay ?? true,
           button_text: banner.button_text ?? parsed.button_text ?? 'SHOP NOW',
           button_link: banner.button_link ?? parsed.button_link ?? '/shop',
@@ -156,8 +183,10 @@ export function parseBannerContent(banner: Partial<Banner> | null | undefined): 
       lines = rawTitle.split('\n').filter(Boolean).map((t, idx) => ({
         id: `h-${idx + 1}`,
         text: t.trim(),
+        mobile_text: '',
         color: idx === 0 ? '#ffffff' : '#f97316',
         size: 'extra-large' as BannerHeadingSize,
+        mobile_size: 'extra-large' as BannerHeadingSize,
         weight: 'black' as BannerHeadingWeight,
       }));
     } else {
@@ -165,8 +194,10 @@ export function parseBannerContent(banner: Partial<Banner> | null | undefined): 
         {
           id: 'h-1',
           text: rawTitle,
+          mobile_text: '',
           color: '#ffffff',
           size: 'extra-large' as BannerHeadingSize,
+          mobile_size: 'extra-large' as BannerHeadingSize,
           weight: 'black' as BannerHeadingWeight,
         },
       ];
