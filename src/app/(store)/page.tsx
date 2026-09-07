@@ -12,6 +12,7 @@ import { getActiveBanners } from '@/services/banners';
 import { getActiveCategories } from '@/services/categories';
 import { getActiveBrands } from '@/services/brands';
 import { getFeaturedProducts, getBestSellerProducts, getNewArrivalProducts } from '@/services/products';
+import { getActiveTestimonials } from '@/services/testimonials';
 
 export const revalidate = 60; // ISR 1 minute
 
@@ -24,18 +25,21 @@ export default async function HomePage() {
     featuredProducts,
     bestSellers,
     newArrivals,
+    testimonials,
   ] = await Promise.all([
     getActiveBanners('hero'),
     getActiveBanners('promo'),
     getActiveCategories(),
     getActiveBrands(),
-    getFeaturedProducts(8),
-    getBestSellerProducts(8),
-    getNewArrivalProducts(8),
+    getFeaturedProducts(10),
+    getBestSellerProducts(10),
+    getNewArrivalProducts(5),
+    getActiveTestimonials(),
   ]);
 
-  // Combine top picks: prioritize bestSellers or featured
-  const topPicks = bestSellers.length > 0 ? bestSellers : featuredProducts;
+  // Combine top picks: prioritize bestSellers or featured, maximum 10 products
+  const topPicks = (bestSellers.length > 0 ? bestSellers : featuredProducts).slice(0, 10);
+  const displayNewArrivals = newArrivals.slice(0, 5);
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -71,9 +75,9 @@ export default async function HomePage() {
           </div>
 
           {topPicks.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-5 gap-3 sm:gap-4 lg:gap-5">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 lg:gap-5">
               {topPicks.map((product, idx) => (
-                <ProductCard key={product.id} product={product} priority={idx < 4} />
+                <ProductCard key={product.id} product={product} priority={idx < 5} />
               ))}
             </div>
           ) : (
@@ -95,7 +99,7 @@ export default async function HomePage() {
       <PromoMidBanner banners={promoBanners} />
 
       {/* 6. New Arrivals Section (if available) */}
-      {newArrivals.length > 0 && (
+      {displayNewArrivals.length > 0 && (
         <section className="py-8 sm:py-12 lg:py-14 bg-neutral-50 border-b border-neutral-200/70">
           <div className="container-site">
             <div className="flex items-end justify-between mb-6 sm:mb-8">
@@ -117,8 +121,8 @@ export default async function HomePage() {
               </Link>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-5 gap-3 sm:gap-4 lg:gap-5">
-              {newArrivals.map((product) => (
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 lg:gap-5">
+              {displayNewArrivals.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
             </div>
@@ -133,7 +137,7 @@ export default async function HomePage() {
       <WhyChooseSection />
 
       {/* 9. Customer Reviews */}
-      <TestimonialsSection />
+      <TestimonialsSection testimonials={testimonials} />
     </div>
   );
 }

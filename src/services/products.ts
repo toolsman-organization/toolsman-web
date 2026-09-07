@@ -63,6 +63,19 @@ export async function getProductBySlug(slug: string): Promise<ProductFullDetail 
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const product = data as any;
+
+  // If category has a parent_id, fetch the parent category for breadcrumbs
+  if (product.category && product.category.parent_id) {
+    const { data: parentCat } = await supabase
+      .from('categories')
+      .select('*')
+      .eq('id', product.category.parent_id)
+      .single();
+    if (parentCat) {
+      product.category.parent = parentCat;
+    }
+  }
+
   const rawImages = (product.images || []) as Array<{ id: string; is_primary: boolean; image_url: string; sort_order: number }>;
   const sortedImages = rawImages.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
   const primaryImage = sortedImages.find((img) => img.is_primary) || sortedImages[0];
@@ -88,12 +101,35 @@ export async function getProductBySlug(slug: string): Promise<ProductFullDetail 
 
 export async function getProductsByCategory(categorySlug: string, limit = 8): Promise<ProductWithDetails[]> {
   const supabase = await createClient();
-  const { data, error } = await supabase
+
+  // Check if category is a main category
+  const { data: catData } = await supabase
+    .from('categories')
+    .select('id, parent_id')
+    .eq('slug', categorySlug)
+    .single();
+
+  let query = supabase
     .from('product_with_details')
     .select('*')
-    .eq('is_active', true)
-    .eq('category_slug', categorySlug)
-    .limit(limit);
+    .eq('is_active', true);
+
+  if (catData && !catData.parent_id) {
+    const { data: subcats } = await supabase
+      .from('categories')
+      .select('id')
+      .eq('parent_id', catData.id);
+    const subIds = (subcats || []).map((s) => s.id);
+    if (subIds.length > 0) {
+      query = query.in('category_id', subIds);
+    } else {
+      query = query.eq('category_id', catData.id);
+    }
+  } else {
+    query = query.eq('category_slug', categorySlug);
+  }
+
+  const { data, error } = await query.limit(limit);
 
   if (error) { console.error('[Products] getProductsByCategory:', error); return []; }
   return (data ?? []) as ProductWithDetails[];
@@ -134,7 +170,31 @@ export async function getProducts(
     .select('*', { count: 'exact' })
     .eq('is_active', true);
 
-  if (filters.category) query = query.eq('category_slug', filters.category);
+  if (filters.category) {
+    // Check if category is a main category with subcategories
+    const { data: catData } = await supabase
+      .from('categories')
+      .select('id, parent_id')
+      .eq('slug', filters.category)
+      .single();
+
+    if (catData && !catData.parent_id) {
+      // Main category: find all subcategories
+      const { data: subcats } = await supabase
+        .from('categories')
+        .select('id')
+        .eq('parent_id', catData.id);
+      const subIds = (subcats || []).map((s) => s.id);
+      if (subIds.length > 0) {
+        query = query.in('category_id', subIds);
+      } else {
+        query = query.eq('category_id', catData.id);
+      }
+    } else {
+      query = query.eq('category_slug', filters.category);
+    }
+  }
+
   if (filters.brand) query = query.eq('brand_slug', filters.brand);
   if (filters.minPrice !== undefined) query = query.gte('selling_price', filters.minPrice);
   if (filters.maxPrice !== undefined) query = query.lte('selling_price', filters.maxPrice);
@@ -150,11 +210,19 @@ export async function getProducts(
   }
 
   switch (filters.sort) {
-    case 'price-low':  query = query.order('selling_price', { ascending: true }); break;
-    case 'price-high': query = query.order('selling_price', { ascending: false }); break;
-    case 'newest':     query = query.order('created_at', { ascending: false }); break;
-    case 'popular':    query = query.order('is_best_seller', { ascending: false }); break;
-    default:           query = query.order('created_at', { ascending: false });
+    case 'price-low':
+      query = query.order('selling_price', { ascending: true }).order('created_at', { ascending: false });
+      break;
+    case 'price-high':
+      query = query.order('selling_price', { ascending: false }).order('created_at', { ascending: false });
+      break;
+    case 'popular':
+      query = query.order('is_best_seller', { ascending: false }).order('created_at', { ascending: false });
+      break;
+    case 'newest':
+    default:
+      query = query.order('created_at', { ascending: false });
+      break;
   }
 
   const { data, error, count } = await query.range(offset, offset + limit - 1);

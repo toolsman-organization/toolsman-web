@@ -59,6 +59,7 @@ export default function ProductActions({ product }: ProductActionsProps) {
         </span>
         <div className="flex items-center border border-neutral-300 rounded-lg bg-white overflow-hidden shadow-xs">
           <button
+            type="button"
             onClick={() => setQuantity((q) => Math.max(1, q - 1))}
             disabled={quantity <= 1 || isOutOfStock}
             className="w-9 h-9 flex items-center justify-center text-neutral-600 hover:bg-neutral-100 disabled:opacity-40 transition-colors"
@@ -70,6 +71,7 @@ export default function ProductActions({ product }: ProductActionsProps) {
             {quantity}
           </span>
           <button
+            type="button"
             onClick={() => setQuantity((q) => Math.min(product.stock_quantity, q + 1))}
             disabled={quantity >= product.stock_quantity || isOutOfStock}
             className="w-9 h-9 flex items-center justify-center text-neutral-600 hover:bg-neutral-100 disabled:opacity-40 transition-colors"
@@ -89,6 +91,7 @@ export default function ProductActions({ product }: ProductActionsProps) {
       {/* Buttons: Add to Cart, Buy Now, Wishlist */}
       <div className="flex items-center gap-2 sm:gap-3 w-full">
         <button
+          type="button"
           onClick={handleAddToCart}
           disabled={isOutOfStock || adding}
           className={`flex-1 min-w-0 h-11 sm:h-12 rounded-lg font-bold text-xs sm:text-sm tracking-tight sm:tracking-normal flex items-center justify-center gap-1.5 sm:gap-2 transition-all duration-200 shadow-md ${
@@ -115,6 +118,7 @@ export default function ProductActions({ product }: ProductActionsProps) {
         </button>
 
         <button
+          type="button"
           onClick={handleBuyNow}
           disabled={isOutOfStock || buyingNow}
           className="flex-1 min-w-0 h-11 sm:h-12 rounded-lg font-bold text-xs sm:text-sm tracking-tight sm:tracking-normal bg-orange-500 hover:bg-orange-600 text-white flex items-center justify-center gap-1.5 sm:gap-2 transition-all duration-200 shadow-lg shadow-orange-500/25 active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -130,6 +134,7 @@ export default function ProductActions({ product }: ProductActionsProps) {
         </button>
 
         <button
+          type="button"
           onClick={() => toggleWishlist(product.id)}
           className={`w-11 h-11 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center border transition-all duration-200 shrink-0 ${
             isWishlisted

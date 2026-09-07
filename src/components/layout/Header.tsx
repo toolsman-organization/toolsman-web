@@ -148,7 +148,7 @@ export default function Header({ categories }: HeaderProps) {
           <div className="container-site">
             <nav className="flex items-center justify-center gap-1 sm:gap-2" aria-label="Main navigation">
 
-              {/* All Categories Dropdown */}
+              {/* Hierarchical Categories Dropdown */}
               <div className="relative group">
                 <button
                   className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white hover:bg-orange-500 rounded transition-colors whitespace-nowrap"
@@ -158,30 +158,61 @@ export default function Header({ categories }: HeaderProps) {
                   All Categories
                   <ChevronDown size={13} className="group-hover:rotate-180 transition-transform duration-200 ml-0.5" />
                 </button>
-                {/* Mega dropdown */}
-                <div className="absolute top-full left-0 w-56 bg-white shadow-xl rounded-b-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 border-t-2 border-orange-500 text-left">
-                  {categories.map((cat) => (
-                    <Link
-                      key={cat.id}
-                      href={`/shop?category=${cat.slug}`}
-                      className="block px-4 py-2.5 text-sm text-gray-800 hover:bg-orange-50 hover:text-orange-600 transition-colors border-b border-gray-100 last:border-0"
-                    >
-                      {cat.name}
-                    </Link>
-                  ))}
+
+                {/* Hierarchical Mega Flyout */}
+                <div className="absolute top-full left-0 w-64 bg-white shadow-2xl rounded-b-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 border-t-2 border-orange-500 text-left py-1 divide-y divide-gray-100">
+                  {categories
+                    .filter((cat) => !cat.parent_id)
+                    .map((mainCat) => {
+                      const subs = categories.filter((c) => c.parent_id === mainCat.id);
+                      return (
+                        <div key={mainCat.id} className="relative group/item">
+                          <Link
+                            href={`/shop?category=${mainCat.slug}`}
+                            className="flex items-center justify-between px-4 py-2.5 text-sm font-bold text-gray-900 hover:bg-orange-50 hover:text-orange-600 transition-colors"
+                          >
+                            <span>{mainCat.name}</span>
+                            {subs.length > 0 && (
+                              <ChevronDown size={13} className="-rotate-90 text-gray-400 group-hover/item:text-orange-600" />
+                            )}
+                          </Link>
+
+                          {/* Flyout Submenu for Subcategories */}
+                          {subs.length > 0 && (
+                            <div className="absolute top-0 left-full w-56 bg-white shadow-2xl rounded-r-md opacity-0 invisible group-hover/item:opacity-100 group-hover/item:visible transition-all duration-150 border-l border-t border-b border-gray-100 text-left py-1">
+                              <div className="px-3.5 py-1.5 bg-neutral-50 border-b border-neutral-100 text-[11px] font-black text-orange-600 uppercase tracking-wider">
+                                {mainCat.name}
+                              </div>
+                              {subs.map((sub) => (
+                                <Link
+                                  key={sub.id}
+                                  href={`/shop?category=${sub.slug}`}
+                                  className="block px-4 py-2 text-xs font-semibold text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-colors"
+                                >
+                                  {sub.name}
+                                </Link>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                 </div>
               </div>
 
-              {/* Quick nav links */}
-              {['Power Tools', 'Hand Tools', 'Accessories'].map((label) => (
-                <Link
-                  key={label}
-                  href={`/shop?search=${encodeURIComponent(label)}`}
-                  className="px-4 py-2.5 text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 rounded transition-colors whitespace-nowrap"
-                >
-                  {label}
-                </Link>
-              ))}
+              {/* Dynamic Quick Main Categories nav links */}
+              {categories
+                .filter((cat) => !cat.parent_id)
+                .slice(0, 4)
+                .map((mainCat) => (
+                  <Link
+                    key={mainCat.id}
+                    href={`/shop?category=${mainCat.slug}`}
+                    className="px-4 py-2.5 text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 rounded transition-colors whitespace-nowrap"
+                  >
+                    {mainCat.name}
+                  </Link>
+                ))}
 
               <Link
                 href="/shop"
