@@ -11,15 +11,15 @@ interface LogoProps {
 
 export default function Logo({
   className = '',
-  size = 40,
+  size = 48,
   showText = true,
   inverted = false,
   href = '/',
 }: LogoProps) {
   const content = (
-    <div className={`flex items-center gap-2.5 ${className}`}>
+    <div className={`flex items-center gap-3 ${className}`}>
       <div 
-        className="relative flex items-center justify-center shrink-0 rounded-full bg-white p-1"
+        className="relative flex items-center justify-center shrink-0"
         style={{ width: size, height: size }}
       >
         <Image
@@ -27,19 +27,14 @@ export default function Logo({
           alt="TOOLSMAN"
           width={size}
           height={size}
-          className="object-contain"
+          className="w-full h-full object-contain"
           priority
         />
       </div>
       {showText && (
-        <div className="flex flex-col">
-          <span className={`font-black tracking-wider leading-none text-lg ${inverted ? 'text-white' : 'text-gray-950'}`} style={{ fontFamily: 'var(--font-sans)' }}>
-            TOOLSMAN
-          </span>
-          <span className="text-[10px] font-bold tracking-widest text-orange-500 uppercase mt-0.5">
-            SALES • SERVICE • RENT
-          </span>
-        </div>
+        <span className={`font-black tracking-wider leading-none text-xl ${inverted ? 'text-white' : 'text-gray-950'}`} style={{ fontFamily: 'var(--font-sans)' }}>
+          TOOLSMAN
+        </span>
       )}
     </div>
   );
