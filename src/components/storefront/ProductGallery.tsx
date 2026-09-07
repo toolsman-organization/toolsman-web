@@ -55,7 +55,7 @@ export default function ProductGallery({ images, productName }: ProductGalleryPr
       )}
 
       {/* Main Large Image */}
-      <div className="relative flex-1 aspect-square max-h-[300px] xs:max-h-[340px] sm:max-h-[400px] lg:max-h-[460px] w-full bg-white rounded-xl sm:rounded-2xl border border-neutral-200/80 p-3 sm:p-5 flex items-center justify-center overflow-hidden shadow-2xs">
+      <div className="relative flex-1 aspect-square max-h-[300px] xs:max-h-[340px] sm:max-h-[400px] lg:max-h-[460px] w-full rounded-xl sm:rounded-2xl p-3 sm:p-5 flex items-center justify-center overflow-hidden ">
         <Image
           src={currentImage.image_url}
           alt={currentImage.alt_text || productName}

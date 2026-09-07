@@ -107,7 +107,7 @@ export default async function AdminDashboardPage() {
         {statCards.map((c, i) => (
           <div
             key={i}
-            className={`p-5 rounded-2xl border bg-white shadow-xs flex items-center justify-between`}
+            className={`p-5 rounded-2xl bg-white shadow-xs flex items-center justify-between`}
           >
             <div>
               <span className="text-xs font-bold text-neutral-500 uppercase tracking-wider block">

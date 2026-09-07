@@ -157,19 +157,29 @@ export default function CartPage() {
                       {/* Quantity Controls */}
                       <div className="flex items-center border border-neutral-200 rounded-md bg-white">
                         <button
-                          onClick={() => updateQuantity(product.id, item.quantity - 1)}
-                          className="w-7 h-7 flex items-center justify-center text-neutral-600 hover:bg-neutral-100"
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            updateQuantity(product.id, item.quantity - 1);
+                          }}
+                          className="w-7 h-7 flex items-center justify-center text-neutral-600 hover:bg-neutral-100 transition-colors"
                           aria-label="Decrease quantity"
                         >
                           <Minus size={13} />
                         </button>
-                        <span className="w-8 text-center text-xs font-bold text-neutral-900">
+                        <span className="w-8 text-center text-xs font-bold text-neutral-900 select-none">
                           {item.quantity}
                         </span>
                         <button
-                          onClick={() => updateQuantity(product.id, item.quantity + 1)}
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            updateQuantity(product.id, item.quantity + 1);
+                          }}
                           disabled={item.quantity >= product.stock_quantity}
-                          className="w-7 h-7 flex items-center justify-center text-neutral-600 hover:bg-neutral-100 disabled:opacity-40"
+                          className="w-7 h-7 flex items-center justify-center text-neutral-600 hover:bg-neutral-100 disabled:opacity-40 transition-colors"
                           aria-label="Increase quantity"
                         >
                           <Plus size={13} />
@@ -190,7 +200,12 @@ export default function CartPage() {
                         </div>
 
                         <button
-                          onClick={() => removeFromCart(product.id)}
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            removeFromCart(product.id);
+                          }}
                           className="text-neutral-400 hover:text-red-500 p-1.5 rounded-md hover:bg-red-50 transition-colors"
                           aria-label="Remove item"
                         >
@@ -217,8 +232,12 @@ export default function CartPage() {
                 <div className="flex items-center justify-between p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold">
                   <span>Coupon &quot;{appliedCoupon}&quot; Applied!</span>
                   <button
-                    onClick={handleRemoveCoupon}
-                    className="text-red-600 hover:underline ml-2"
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleRemoveCoupon();
+                    }}
+                    className="text-red-600 hover:underline ml-2 font-bold"
                   >
                     Remove
                   </button>

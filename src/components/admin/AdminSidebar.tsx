@@ -14,6 +14,7 @@ import {
   Image as ImageIcon,
   Megaphone,
   TicketPercent,
+  MessageSquareQuote,
   Settings,
   ExternalLink,
   LogOut,
@@ -36,6 +37,7 @@ const navItems = [
   { href: '/admin/customers', label: 'Customers', icon: <Users size={18} /> },
   { href: '/admin/banners', label: 'Hero Banners', icon: <ImageIcon size={18} /> },
   { href: '/admin/announcements', label: 'Announcements', icon: <Megaphone size={18} /> },
+  { href: '/admin/testimonials', label: 'Testimonials', icon: <MessageSquareQuote size={18} /> },
   { href: '/admin/coupons', label: 'Coupons', icon: <TicketPercent size={18} /> },
   { href: '/admin/settings', label: 'Site Settings', icon: <Settings size={18} /> },
 ];

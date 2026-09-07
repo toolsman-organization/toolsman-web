@@ -80,6 +80,7 @@ CREATE TABLE IF NOT EXISTS public.categories (
   description          TEXT,
   image_url            TEXT,
   cloudinary_public_id TEXT,
+  parent_id            UUID REFERENCES public.categories(id) ON DELETE RESTRICT,
   is_active            BOOLEAN NOT NULL DEFAULT TRUE,
   sort_order           INTEGER NOT NULL DEFAULT 0,
   created_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -295,6 +296,7 @@ CREATE TABLE IF NOT EXISTS public.site_settings (
 -- 5. INDEXES
 -- ============================================================
 CREATE INDEX IF NOT EXISTS idx_categories_slug ON public.categories(slug);
+CREATE INDEX IF NOT EXISTS idx_categories_parent_id ON public.categories(parent_id);
 CREATE INDEX IF NOT EXISTS idx_categories_is_active ON public.categories(is_active);
 CREATE INDEX IF NOT EXISTS idx_categories_sort_order ON public.categories(sort_order);
 
@@ -454,6 +456,10 @@ SELECT
   pi.alt_text AS primary_image_alt,
   c.name AS category_name,
   c.slug AS category_slug,
+  c.parent_id AS category_parent_id,
+  pc.id AS parent_category_id,
+  pc.name AS parent_category_name,
+  pc.slug AS parent_category_slug,
   b.name AS brand_name,
   b.slug AS brand_slug,
   b.logo_url AS brand_logo_url,
@@ -465,6 +471,7 @@ SELECT
 FROM public.products p
 LEFT JOIN public.product_images pi ON pi.product_id = p.id AND pi.is_primary = TRUE
 LEFT JOIN public.categories c ON c.id = p.category_id
+LEFT JOIN public.categories pc ON pc.id = c.parent_id
 LEFT JOIN public.brands b ON b.id = p.brand_id;
 
 -- ============================================================

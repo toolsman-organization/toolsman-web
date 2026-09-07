@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { X, Home, ShoppingBag, Heart, User, LogOut, ChevronRight, Phone, Grid3X3 } from 'lucide-react';
@@ -27,6 +27,11 @@ export default function MobileNav({
   wishlistCount,
 }: MobileNavProps) {
   const router = useRouter();
+  const [expandedMains, setExpandedMains] = useState<Record<string, boolean>>({});
+
+  const toggleMain = (id: string) => {
+    setExpandedMains((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
 
   // Prevent body scroll when open
   useEffect(() => {
@@ -126,22 +131,63 @@ export default function MobileNav({
             </Link>
           ))}
 
-          {/* Categories */}
+          {/* Hierarchical Categories */}
           <div className="px-4 py-2 mt-1" style={{ borderTop: '1px solid #2d2d2d' }}>
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: '#f97316' }}>
               <Grid3X3 size={13} />
               Categories
             </div>
-            {categories.map((cat) => (
-              <Link
-                key={cat.id}
-                href={`/shop?category=${cat.slug}`}
-                onClick={onClose}
-                className="block py-2 text-sm text-gray-400 hover:text-white transition-colors"
-              >
-                {cat.name}
-              </Link>
-            ))}
+
+            <div className="space-y-1">
+              {categories
+                .filter((cat) => !cat.parent_id)
+                .map((mainCat) => {
+                  const subs = categories.filter((c) => c.parent_id === mainCat.id);
+                  const isExpanded = expandedMains[mainCat.id] ?? false;
+
+                  return (
+                    <div key={mainCat.id} className="rounded-lg overflow-hidden">
+                      <div className="flex items-center justify-between text-sm text-gray-300 hover:text-white py-2 px-2 hover:bg-white/5 rounded transition-colors">
+                        <Link
+                          href={`/shop?category=${mainCat.slug}`}
+                          onClick={onClose}
+                          className="font-bold flex-1 text-white"
+                        >
+                          {mainCat.name}
+                        </Link>
+                        {subs.length > 0 && (
+                          <button
+                            onClick={() => toggleMain(mainCat.id)}
+                            className="p-1 text-gray-400 hover:text-white"
+                            aria-label={`Toggle ${mainCat.name} subcategories`}
+                          >
+                            <ChevronRight
+                              size={16}
+                              className={`transition-transform duration-200 ${isExpanded ? 'rotate-90 text-orange-500' : ''}`}
+                            />
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Subcategories list */}
+                      {subs.length > 0 && isExpanded && (
+                        <div className="pl-4 pr-2 py-1 space-y-1 bg-white/5 rounded-md my-1 border-l-2 border-orange-500/70">
+                          {subs.map((sub) => (
+                            <Link
+                              key={sub.id}
+                              href={`/shop?category=${sub.slug}`}
+                              onClick={onClose}
+                              className="block py-1.5 text-xs font-medium text-gray-300 hover:text-orange-400 transition-colors"
+                            >
+                              {sub.name}
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+            </div>
           </div>
         </nav>
 

@@ -61,10 +61,18 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
           <Link href="/" className="hover:text-orange-600 transition-colors">Home</Link>
           <ChevronRight size={13} />
           <Link href="/shop" className="hover:text-orange-600 transition-colors">Shop</Link>
+          {product.category?.parent && (
+            <>
+              <ChevronRight size={13} />
+              <Link href={`/shop?category=${product.category.parent.slug}`} className="hover:text-orange-600 transition-colors font-medium">
+                {product.category.parent.name}
+              </Link>
+            </>
+          )}
           {product.category && (
             <>
               <ChevronRight size={13} />
-              <Link href={`/shop?category=${product.category.slug}`} className="hover:text-orange-600 transition-colors">
+              <Link href={`/shop?category=${product.category.slug}`} className="hover:text-orange-600 transition-colors font-medium">
                 {product.category.name}
               </Link>
             </>

@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { ChevronRight, SlidersHorizontal } from 'lucide-react';
 import ProductCard from '@/components/storefront/ProductCard';
 import FilterSidebar from '@/components/storefront/FilterSidebar';
+import SortDropdown from '@/components/storefront/SortDropdown';
 import { getProducts } from '@/services/products';
 import { getActiveCategories } from '@/services/categories';
 import { getActiveBrands } from '@/services/brands';
@@ -57,20 +58,45 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
 
   const { data: products, total, totalPages } = productsResult;
 
+  const activeCatObj = params.category
+    ? categories.find((c) => c.slug === params.category)
+    : null;
+  const parentCatObj = activeCatObj?.parent_id
+    ? categories.find((c) => c.id === activeCatObj.parent_id)
+    : null;
+
   return (
     <div className="bg-white min-h-screen py-6 sm:py-10 border-b border-neutral-200">
       <div className="container-site">
         {/* Breadcrumb */}
-        <nav className="flex items-center gap-1.5 text-xs text-neutral-500 mb-6" aria-label="Breadcrumb">
+        <nav className="flex items-center gap-1.5 text-xs text-neutral-500 mb-6 flex-wrap" aria-label="Breadcrumb">
           <Link href="/" className="hover:text-orange-600 transition-colors">Home</Link>
           <ChevronRight size={13} />
-          <span className="text-neutral-900 font-semibold">Shop Catalog</span>
-          {params.category && (
+          <Link href="/shop" className="hover:text-orange-600 transition-colors font-semibold">Shop Catalog</Link>
+
+          {parentCatObj && (
+            <>
+              <ChevronRight size={13} />
+              <Link href={`/shop?category=${parentCatObj.slug}`} className="hover:text-orange-600 transition-colors font-semibold">
+                {parentCatObj.name}
+              </Link>
+            </>
+          )}
+
+          {activeCatObj && (
+            <>
+              <ChevronRight size={13} />
+              <span className="text-orange-600 font-bold">{activeCatObj.name}</span>
+            </>
+          )}
+
+          {!activeCatObj && params.category && (
             <>
               <ChevronRight size={13} />
               <span className="text-orange-600 font-bold capitalize">{params.category.replace(/-/g, ' ')}</span>
             </>
           )}
+
           {params.brand && (
             <>
               <ChevronRight size={13} />
@@ -83,7 +109,13 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-4 border-b border-neutral-200">
           <div>
             <h1 className="text-2xl sm:text-3xl font-black text-neutral-950 uppercase tracking-tight">
-              {params.search ? `Search Results: "${params.search}"` : params.category ? params.category.replace(/-/g, ' ') : 'All Professional Tools'}
+              {params.search
+                ? `Search Results: "${params.search}"`
+                : activeCatObj
+                ? activeCatObj.name
+                : params.category
+                ? params.category.replace(/-/g, ' ')
+                : 'All Professional Tools'}
             </h1>
             <p className="text-xs sm:text-sm text-neutral-500 mt-1">
               Showing <span className="font-bold text-neutral-900">{products.length}</span> of{' '}
@@ -91,30 +123,8 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
             </p>
           </div>
 
-          {/* Sort Controller */}
-          <div className="flex items-center gap-3">
-            <span className="text-xs font-bold text-neutral-600 uppercase tracking-wider hidden sm:inline">
-              Sort By:
-            </span>
-            <form method="GET" action="/shop" className="relative">
-              {/* Preserve existing params */}
-              {params.category && <input type="hidden" name="category" value={params.category} />}
-              {params.brand && <input type="hidden" name="brand" value={params.brand} />}
-              {params.search && <input type="hidden" name="search" value={params.search} />}
-              {params.inStock && <input type="hidden" name="inStock" value={params.inStock} />}
-
-              <select
-                name="sort"
-                defaultValue={params.sort || 'newest'}
-                className="bg-white border border-neutral-300 text-xs sm:text-sm font-semibold rounded-lg px-3 py-2 text-neutral-800 focus:outline-none focus:border-orange-500 shadow-sm cursor-pointer"
-              >
-                <option value="newest">Newest Arrivals</option>
-                <option value="popular">Best Sellers</option>
-                <option value="price-low">Price: Low to High</option>
-                <option value="price-high">Price: High to Low</option>
-              </select>
-            </form>
-          </div>
+          {/* Interactive Reactive Sort Controller */}
+          <SortDropdown currentSort={params.sort} />
         </div>
 
         {/* Main Content: Sidebar + Products Grid */}
@@ -140,6 +150,9 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
                       if (params.category) query.set('category', params.category);
                       if (params.brand) query.set('brand', params.brand);
                       if (params.search) query.set('search', params.search);
+                      if (params.minPrice) query.set('minPrice', params.minPrice);
+                      if (params.maxPrice) query.set('maxPrice', params.maxPrice);
+                      if (params.inStock) query.set('inStock', params.inStock);
                       if (params.sort) query.set('sort', params.sort);
                       query.set('page', p.toString());
 

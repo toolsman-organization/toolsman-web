@@ -30,10 +30,14 @@ export interface Category {
   description: string | null;
   image_url: string | null;
   cloudinary_public_id: string | null;
+  parent_id?: string | null;
   is_active: boolean;
   sort_order: number;
   created_at: string;
   updated_at: string;
+  // Optional virtual / nested properties
+  subcategories?: Category[];
+  parent?: Category | null;
 }
 
 export interface Brand {
@@ -77,6 +81,10 @@ export interface ProductWithDetails extends Product {
   primary_image_alt: string | null;
   category_name: string | null;
   category_slug: string | null;
+  category_parent_id?: string | null;
+  parent_category_id?: string | null;
+  parent_category_name?: string | null;
+  parent_category_slug?: string | null;
   brand_name: string | null;
   brand_slug: string | null;
   brand_logo_url: string | null;
@@ -127,6 +135,19 @@ export interface AnnouncementBar {
   message: string;
   link_text: string | null;
   link_url: string | null;
+  is_active: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Testimonial {
+  id: string;
+  name: string;
+  role: string | null;
+  comment: string;
+  rating: number;
+  verified: boolean;
   is_active: boolean;
   sort_order: number;
   created_at: string;
