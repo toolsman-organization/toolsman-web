@@ -31,6 +31,7 @@ import {
   serializeBannerContent,
   BANNER_COLOR_PRESETS,
   BANNER_ICON_OPTIONS,
+  BANNER_FONT_OPTIONS,
   DEFAULT_BANNER_TEMPLATE,
   type BannerStructuredContent,
   type BannerHeadingLine,
@@ -41,6 +42,7 @@ import {
   type BannerHorizontalPosition,
   type BannerVerticalPosition,
   type BannerButtonStyle,
+  type BannerFontFamily,
 } from '@/lib/bannerHelper';
 import { BannerContentView } from '@/components/storefront/HeroBanner';
 
@@ -97,15 +99,19 @@ export default function AdminBannersPage() {
         {
           id: `h-${Date.now()}-1`,
           text: 'BUILT FOR',
+          mobile_text: '',
           color: '#ffffff',
           size: 'extra-large',
+          mobile_size: 'extra-large',
           weight: 'black',
         },
         {
           id: `h-${Date.now()}-2`,
           text: 'THE JOB.',
+          mobile_text: '',
           color: '#f97316',
           size: 'extra-large',
+          mobile_size: 'extra-large',
           weight: 'black',
         },
       ],
@@ -140,8 +146,10 @@ export default function AdminBannersPage() {
     const newLine: BannerHeadingLine = {
       id: `h-${Date.now()}`,
       text: 'NEW HEADLINE',
+      mobile_text: '',
       color: '#ffffff',
       size: 'extra-large',
+      mobile_size: 'extra-large',
       weight: 'black',
     };
     setStructuredContent({
@@ -559,6 +567,36 @@ export default function AdminBannersPage() {
                 {/* TAB 1: Headlines & Subtitles */}
                 {isOverlayActive && activeTab === 'content' && (
                   <div className="space-y-4 text-xs">
+                    {/* Heading Font Style Selector */}
+                    <div className="p-4 rounded-xl bg-neutral-950 border border-neutral-800 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label className="font-bold text-neutral-200 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                          <Type size={13} className="text-orange-500" />
+                          <span>Heading Font Style (Family)</span>
+                        </label>
+                        <span className="text-[10px] text-orange-400 font-medium">Uniform headline font</span>
+                      </div>
+                      <select
+                        value={structuredContent.font_family || 'bebas'}
+                        onChange={(e) =>
+                          setStructuredContent({
+                            ...structuredContent,
+                            font_family: e.target.value as BannerFontFamily,
+                          })
+                        }
+                        className="w-full px-3 py-2 rounded-lg bg-neutral-900 border border-neutral-700 text-white text-xs font-semibold focus:outline-none focus:border-orange-500"
+                      >
+                        {BANNER_FONT_OPTIONS.map((f) => (
+                          <option key={f.value} value={f.value}>
+                            {f.label}
+                          </option>
+                        ))}
+                      </select>
+                      <p className="text-[10px] text-neutral-400 leading-relaxed">
+                        💡 Select the same font style on all your banners to ensure a consistent, branded look.
+                      </p>
+                    </div>
+
                     {/* Top Tagline Badge */}
                     <div className="p-4 rounded-xl bg-neutral-950 border border-neutral-800 space-y-2">
                       <div className="flex items-center justify-between">
@@ -644,17 +682,44 @@ export default function AdminBannersPage() {
                             </div>
                           </div>
 
-                          {/* Line Text Input */}
-                          <input
-                            type="text"
-                            value={line.text}
-                            onChange={(e) => updateHeadingLine(index, { text: e.target.value })}
-                            className="w-full px-3 py-2 rounded-lg bg-neutral-900 border border-neutral-700 text-white text-sm focus:outline-none focus:border-orange-500 font-black tracking-wide uppercase"
-                            placeholder="e.g. BUILT FOR"
-                          />
+                          {/* Line Text Inputs (Desktop & Mobile) */}
+                          <div className="space-y-2">
+                            <div>
+                              <div className="flex items-center justify-between mb-1">
+                                <label className="text-[10px] text-neutral-300 font-bold uppercase tracking-wider flex items-center gap-1">
+                                  <Monitor size={12} className="text-orange-500" />
+                                  <span>Desktop Heading Text</span>
+                                </label>
+                              </div>
+                              <input
+                                type="text"
+                                value={line.text}
+                                onChange={(e) => updateHeadingLine(index, { text: e.target.value })}
+                                className="w-full px-3 py-2 rounded-lg bg-neutral-900 border border-neutral-700 text-white text-sm focus:outline-none focus:border-orange-500 font-black tracking-wide uppercase"
+                                placeholder="e.g. BUILT FOR"
+                              />
+                            </div>
 
-                          {/* Line Style Controls (Color, Size, Weight) */}
-                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
+                            <div>
+                              <div className="flex items-center justify-between mb-1">
+                                <label className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider flex items-center gap-1">
+                                  <Smartphone size={12} className="text-orange-400" />
+                                  <span>Mobile Heading Text (Optional Override)</span>
+                                </label>
+                                <span className="text-[9px] text-neutral-500">Same as desktop if blank</span>
+                              </div>
+                              <input
+                                type="text"
+                                value={line.mobile_text || ''}
+                                onChange={(e) => updateHeadingLine(index, { mobile_text: e.target.value })}
+                                className="w-full px-3 py-1.5 rounded-lg bg-neutral-900 border border-neutral-700 text-white text-xs focus:outline-none focus:border-orange-500 font-black tracking-wide uppercase"
+                                placeholder="e.g. BUILT FOR (Mobile Text)"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Line Style Controls (Color, Weight, Desktop Size, Mobile Size) */}
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
                             {/* Color Selector */}
                             <div>
                               <span className="block text-[10px] text-neutral-400 uppercase font-bold mb-1">
@@ -668,7 +733,7 @@ export default function AdminBannersPage() {
                                   className="w-7 h-7 rounded border border-neutral-700 bg-transparent cursor-pointer p-0.5"
                                 />
                                 <div className="flex items-center gap-1">
-                                  {BANNER_COLOR_PRESETS.slice(0, 4).map((p) => (
+                                  {BANNER_COLOR_PRESETS.slice(0, 3).map((p) => (
                                     <button
                                       key={p.value}
                                       type="button"
@@ -680,26 +745,6 @@ export default function AdminBannersPage() {
                                   ))}
                                 </div>
                               </div>
-                            </div>
-
-                            {/* Size Selector */}
-                            <div>
-                              <span className="block text-[10px] text-neutral-400 uppercase font-bold mb-1">
-                                Font Size
-                              </span>
-                              <select
-                                value={line.size}
-                                onChange={(e) =>
-                                  updateHeadingLine(index, { size: e.target.value as BannerHeadingSize })
-                                }
-                                className="w-full px-2 py-1.5 rounded-lg bg-neutral-900 border border-neutral-700 text-white text-xs font-semibold focus:outline-none"
-                              >
-                                <option value="small">Small</option>
-                                <option value="medium">Medium</option>
-                                <option value="large">Large</option>
-                                <option value="extra-large">Extra Large</option>
-                                <option value="massive">Massive (Hero)</option>
-                              </select>
                             </div>
 
                             {/* Weight Selector */}
@@ -714,11 +759,53 @@ export default function AdminBannersPage() {
                                 }
                                 className="w-full px-2 py-1.5 rounded-lg bg-neutral-900 border border-neutral-700 text-white text-xs font-semibold focus:outline-none"
                               >
-                                <option value="normal">Normal (400)</option>
-                                <option value="semibold">Semibold (600)</option>
-                                <option value="bold">Bold (700)</option>
-                                <option value="extrabold">Extra Bold (800)</option>
-                                <option value="black">Ultra Black (900)</option>
+                                <option value="normal">Normal</option>
+                                <option value="semibold">Semibold</option>
+                                <option value="bold">Bold</option>
+                                <option value="extrabold">Extra Bold</option>
+                                <option value="black">Ultra Black</option>
+                              </select>
+                            </div>
+
+                            {/* Desktop Font Size */}
+                            <div>
+                              <span className="block text-[10px] text-neutral-400 uppercase font-bold mb-1 flex items-center gap-1">
+                                <Monitor size={11} className="text-orange-500" />
+                                <span>Desktop Size</span>
+                              </span>
+                              <select
+                                value={line.size}
+                                onChange={(e) =>
+                                  updateHeadingLine(index, { size: e.target.value as BannerHeadingSize })
+                                }
+                                className="w-full px-2 py-1.5 rounded-lg bg-neutral-900 border border-neutral-700 text-white text-xs font-semibold focus:outline-none"
+                              >
+                                <option value="small">Small</option>
+                                <option value="medium">Medium</option>
+                                <option value="large">Large</option>
+                                <option value="extra-large">Extra Large</option>
+                                <option value="massive">Massive</option>
+                              </select>
+                            </div>
+
+                            {/* Mobile Font Size */}
+                            <div>
+                              <span className="block text-[10px] text-neutral-400 uppercase font-bold mb-1 flex items-center gap-1">
+                                <Smartphone size={11} className="text-orange-400" />
+                                <span>Mobile Size</span>
+                              </span>
+                              <select
+                                value={line.mobile_size || 'extra-large'}
+                                onChange={(e) =>
+                                  updateHeadingLine(index, { mobile_size: e.target.value as BannerHeadingSize })
+                                }
+                                className="w-full px-2 py-1.5 rounded-lg bg-neutral-900 border border-neutral-700 text-white text-xs font-semibold focus:outline-none"
+                              >
+                                <option value="small">Small (24px)</option>
+                                <option value="medium">Medium (32px)</option>
+                                <option value="large">Large (40px)</option>
+                                <option value="extra-large">Extra Large (50px)</option>
+                                <option value="massive">Massive (64px - Hero Impact)</option>
                               </select>
                             </div>
                           </div>
@@ -727,10 +814,11 @@ export default function AdminBannersPage() {
                     </div>
 
                     {/* Subtitle Field */}
-                    <div className="p-4 rounded-xl bg-neutral-950 border border-neutral-800 space-y-2">
+                    <div className="p-4 rounded-xl bg-neutral-950 border border-neutral-800 space-y-3">
                       <div className="flex items-center justify-between">
-                        <label className="font-bold text-neutral-300 uppercase tracking-wider text-[11px]">
-                          Subtitle / Supporting Line
+                        <label className="font-bold text-neutral-300 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                          <Monitor size={12} className="text-orange-500" />
+                          <span>Desktop Subtitle</span>
                         </label>
                         <div className="flex items-center gap-1">
                           {BANNER_COLOR_PRESETS.map((p) => (
@@ -752,6 +840,23 @@ export default function AdminBannersPage() {
                         className="w-full px-3 py-2 rounded-lg bg-neutral-900 border border-neutral-700 text-white text-xs focus:outline-none focus:border-orange-500"
                         placeholder="e.g. Heavy-duty tools for professionals and tradespeople"
                       />
+
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider flex items-center gap-1">
+                            <Smartphone size={12} className="text-orange-400" />
+                            <span>Mobile Subtitle (Optional Override)</span>
+                          </label>
+                          <span className="text-[9px] text-neutral-500">Same as desktop if blank</span>
+                        </div>
+                        <input
+                          type="text"
+                          value={structuredContent.mobile_subtitle || ''}
+                          onChange={(e) => setStructuredContent({ ...structuredContent, mobile_subtitle: e.target.value })}
+                          className="w-full px-3 py-1.5 rounded-lg bg-neutral-900 border border-neutral-700 text-white text-xs focus:outline-none focus:border-orange-500"
+                          placeholder="e.g. Shorter mobile tagline..."
+                        />
+                      </div>
                     </div>
                   </div>
                 )}
@@ -1147,7 +1252,9 @@ export default function AdminBannersPage() {
                           className="absolute inset-0 pointer-events-none"
                           style={{
                             background:
-                              structuredContent.horizontal_position === 'right'
+                              previewMode === 'mobile'
+                                ? 'linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 50%, rgba(0,0,0,0.15) 80%, transparent 100%)'
+                                : structuredContent.horizontal_position === 'right'
                                 ? 'linear-gradient(to left, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 60%, rgba(0,0,0,0.1) 100%)'
                                 : structuredContent.horizontal_position === 'center'
                                 ? 'linear-gradient(to bottom, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.7) 100%)'
@@ -1157,16 +1264,22 @@ export default function AdminBannersPage() {
 
                         {/* Content Overlay */}
                         <div
-                          className={`absolute inset-0 p-4 sm:p-6 flex ${
-                            structuredContent.vertical_position === 'top'
-                              ? 'items-start'
+                          className={`absolute inset-0 p-4 sm:p-6 flex flex-col ${
+                            previewMode === 'mobile'
+                              ? 'justify-end pb-7'
+                              : structuredContent.vertical_position === 'top'
+                              ? 'justify-start'
                               : structuredContent.vertical_position === 'bottom'
-                              ? 'items-end'
-                              : 'items-center'
+                              ? 'justify-end'
+                              : 'justify-center'
                           }`}
                         >
-                          <div className={`w-full ${previewMode === 'mobile' ? 'scale-85 origin-top-left' : 'scale-95 origin-top-left'}`}>
-                            <BannerContentView content={structuredContent} isLive={true} />
+                          <div className={`w-full ${previewMode === 'mobile' ? 'p-1' : 'scale-95 origin-top-left'}`}>
+                            <BannerContentView
+                              content={structuredContent}
+                              isLive={true}
+                              isMobilePreview={previewMode === 'mobile'}
+                            />
                           </div>
                         </div>
                       </>

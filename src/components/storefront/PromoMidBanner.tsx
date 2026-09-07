@@ -99,14 +99,28 @@ export default function PromoMidBanner({ banners = [] }: PromoMidBannerProps) {
                         color: line.color || '#ffffff',
                       }}
                     >
-                      {line.text}
+                      {line.mobile_text && line.mobile_text.trim() ? (
+                        <>
+                          <span className="sm:hidden">{line.mobile_text}</span>
+                          <span className="hidden sm:inline">{line.text}</span>
+                        </>
+                      ) : (
+                        line.text
+                      )}
                     </h2>
                   ))}
                 </div>
 
-                {structured.subtitle && (
+                {(structured.subtitle || structured.mobile_subtitle) && (
                   <p className="text-sm sm:text-base text-neutral-300 mb-6 leading-relaxed max-w-lg">
-                    {structured.subtitle}
+                    {structured.mobile_subtitle && structured.mobile_subtitle.trim() ? (
+                      <>
+                        <span className="sm:hidden">{structured.mobile_subtitle}</span>
+                        <span className="hidden sm:inline">{structured.subtitle}</span>
+                      </>
+                    ) : (
+                      structured.subtitle
+                    )}
                   </p>
                 )}
 
