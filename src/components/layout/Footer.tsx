@@ -31,15 +31,12 @@ export default function Footer({ settings }: FooterProps) {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-7 sm:gap-8 lg:gap-10">
           {/* Brand Column */}
           <div className="lg:col-span-1">
-            <Link href="/" className="inline-flex items-center gap-2.5 sm:gap-3 mb-3 sm:mb-4" aria-label="TOOLSMAN Home">
-              <div className="w-9 h-9 sm:w-10 sm:h-10 bg-white rounded-full flex items-center justify-center p-1 shrink-0">
-                <Image src="/logo.png" alt="TOOLSMAN" width={30} height={30} className="object-contain" />
+            <Link href="/" className="inline-flex items-center gap-3 mb-3 sm:mb-4 group" aria-label="TOOLSMAN Home">
+              <div className="w-12 h-12 flex items-center justify-center shrink-0">
+                <Image src="/logo.png" alt="TOOLSMAN" width={48} height={48} className="w-full h-full object-contain" />
               </div>
-              <div>
-                <div className="text-white font-black text-base sm:text-lg tracking-wider leading-none uppercase">TOOLSMAN</div>
-                <div className="text-[9px] sm:text-[10px] mt-0.5 font-bold tracking-widest uppercase" style={{ color: '#f97316' }}>
-                  SALES • SERVICE • RENT
-                </div>
+              <div className="text-white font-black text-xl sm:text-2xl tracking-wider leading-none uppercase">
+                TOOLSMAN
               </div>
             </Link>
             <p className="text-xs sm:text-sm leading-relaxed mb-3 sm:mb-4 text-neutral-400">

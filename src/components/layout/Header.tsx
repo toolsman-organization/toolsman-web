@@ -51,23 +51,20 @@ export default function Header({ categories }: HeaderProps) {
         <div className="container-site hidden md:flex items-center justify-between gap-5 py-3">
 
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-3 shrink-0" aria-label="TOOLSMAN Home">
-            <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center p-1 shrink-0">
+          <Link href="/" className="flex items-center gap-3.5 shrink-0 group" aria-label="TOOLSMAN Home">
+            <div className="relative w-14 h-14 flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105">
               <Image
                 src="/logo.png"
                 alt="TOOLSMAN Logo"
-                width={34}
-                height={34}
-                className="object-contain"
+                width={56}
+                height={56}
+                className="w-full h-full object-contain"
                 priority
               />
             </div>
-            <div className="hidden lg:flex flex-col leading-none">
-              <span className="text-white font-black text-[17px] tracking-widest uppercase">TOOLSMAN</span>
-              <span className="text-[9px] font-bold tracking-widest uppercase mt-0.5" style={{ color: '#f97316' }}>
-                SALES • SERVICE • RENT
-              </span>
-            </div>
+            <span className="text-white font-black text-2xl tracking-wider uppercase leading-none select-none">
+              TOOLSMAN
+            </span>
           </Link>
 
           {/* Search Bar */}
@@ -244,16 +241,13 @@ export default function Header({ categories }: HeaderProps) {
           </button>
 
           {/* Center: Brand Logo */}
-          <Link href="/" className="flex items-center gap-2 min-w-0" aria-label="TOOLSMAN Home">
-            <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center p-1 shrink-0 shadow-xs">
-              <Image src="/logo.png" alt="TOOLSMAN" width={24} height={24} className="object-contain" priority />
+          <Link href="/" className="flex items-center gap-2.5 min-w-0" aria-label="TOOLSMAN Home">
+            <div className="relative w-9 h-9 flex items-center justify-center shrink-0">
+              <Image src="/logo.png" alt="TOOLSMAN" width={36} height={36} className="w-full h-full object-contain" priority />
             </div>
-            <div className="flex flex-col leading-none">
-              <span className="text-white font-black text-[15px] tracking-wider uppercase">TOOLSMAN</span>
-              <span className="text-[7.5px] font-bold tracking-widest uppercase text-orange-500 mt-0.5">
-                POWER TOOLS
-              </span>
-            </div>
+            <span className="text-white font-black text-lg tracking-wider uppercase leading-none">
+              TOOLSMAN
+            </span>
           </Link>
 
           {/* Right: Search & Cart Action Icons */}

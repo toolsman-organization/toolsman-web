@@ -1,3 +1,6 @@
+'use client';
+
+import { useState, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Wrench, Hammer, Disc, Battery, Sparkles } from 'lucide-react';
@@ -18,8 +21,37 @@ const fallbackCategoryIcons: Record<string, React.ReactNode> = {
 };
 
 export default function CategorySection({ categories }: CategorySectionProps) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+
   const mainCategories = categories.filter((c) => !c.parent_id);
   const displayCategories = mainCategories.length > 0 ? mainCategories : categories;
+
+  const handleScroll = () => {
+    if (!scrollRef.current) return;
+    const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+    const maxScroll = scrollWidth - clientWidth;
+    if (maxScroll <= 0) {
+      setActiveIndex(0);
+      return;
+    }
+    const progress = Math.min(Math.max(scrollLeft / maxScroll, 0), 1);
+    const index = Math.round(progress * (displayCategories.length - 1));
+    setActiveIndex(index);
+  };
+
+  const scrollToCategory = (index: number) => {
+    if (!scrollRef.current) return;
+    const container = scrollRef.current;
+    const items = container.querySelectorAll<HTMLElement>('[data-category-item]');
+    if (items[index]) {
+      items[index].scrollIntoView({
+        behavior: 'smooth',
+        inline: 'center',
+        block: 'nearest',
+      });
+    }
+  };
 
   if (!displayCategories || displayCategories.length === 0) return null;
 
@@ -38,10 +70,15 @@ export default function CategorySection({ categories }: CategorySectionProps) {
         </div>
 
         {/* Circular Category Gallery — Centered Alignment & Balanced Dimensions */}
-        <div className="flex sm:flex-wrap items-center justify-start sm:justify-center gap-4 sm:gap-6 md:gap-8 lg:gap-10 overflow-x-auto sm:overflow-visible snap-x snap-mandatory scrollbar-none pb-3 sm:pb-0 -mx-4 px-4 sm:mx-0 sm:px-0">
+        <div
+          ref={scrollRef}
+          onScroll={handleScroll}
+          className="flex sm:flex-wrap items-center justify-start sm:justify-center gap-4 sm:gap-6 md:gap-8 lg:gap-10 overflow-x-auto sm:overflow-visible snap-x snap-mandatory scrollbar-none pb-2 sm:pb-0 -mx-4 px-4 sm:mx-0 sm:px-0"
+        >
           {displayCategories.map((category) => (
             <Link
               key={category.id}
+              data-category-item
               href={`/shop?category=${category.slug}`}
               className="group flex-none w-28 xs:w-32 sm:w-36 snap-start flex flex-col items-center justify-start text-center transition-transform duration-300"
             >
@@ -75,6 +112,27 @@ export default function CategorySection({ categories }: CategorySectionProps) {
           {/* Right trailing buffer for smooth mobile swipe */}
           <div className="flex-none w-2 sm:hidden pointer-events-none" aria-hidden="true" />
         </div>
+
+        {/* Mobile Sliding Indicator Dots (Hidden on tablet/laptop/desktop) */}
+        {displayCategories.length > 1 && (
+          <div className="flex sm:hidden items-center justify-center gap-1.5 mt-2.5 pt-1" aria-hidden="true">
+            {displayCategories.map((cat, idx) => {
+              const isActive = idx === activeIndex;
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => scrollToCategory(idx)}
+                  className={`transition-all duration-300 rounded-full ${
+                    isActive
+                      ? 'w-5 h-2 bg-orange-500 shadow-xs'
+                      : 'w-2 h-2 bg-neutral-300 hover:bg-neutral-400'
+                  }`}
+                  aria-label={`Go to category ${idx + 1}`}
+                />
+              );
+            })}
+          </div>
+        )}
 
       </div>
     </section>

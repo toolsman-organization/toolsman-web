@@ -69,11 +69,11 @@ export default function MobileNav({
       >
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-4" style={{ borderBottom: '1px solid #2d2d2d' }}>
-          <Link href="/" onClick={onClose} className="flex items-center gap-2">
-            <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center p-1 shrink-0">
-              <Image src="/logo.png" alt="TOOLSMAN" width={28} height={28} className="object-contain" />
+          <Link href="/" onClick={onClose} className="flex items-center gap-2.5">
+            <div className="w-10 h-10 flex items-center justify-center shrink-0">
+              <Image src="/logo.png" alt="TOOLSMAN" width={40} height={40} className="w-full h-full object-contain" />
             </div>
-            <span className="text-white font-bold text-base">TOOLSMAN</span>
+            <span className="text-white font-black text-lg tracking-wider">TOOLSMAN</span>
           </Link>
           <button
             onClick={onClose}
