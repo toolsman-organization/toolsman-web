@@ -1,13 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Trash2, Minus, Plus, ArrowRight, ShieldCheck, ShoppingBag, Tag, Loader2 } from 'lucide-react';
+import { Trash2, Minus, Plus, ArrowRight, ShieldCheck, ShoppingBag, Tag, Loader2, Scale } from 'lucide-react';
 import { useCart } from '@/hooks/useCart';
 import { formatCurrency } from '@/lib/utils';
+import { calculateTotalCartWeight, calculateDeliveryCharge } from '@/lib/delivery';
+import { createClient } from '@/lib/supabase/client';
 
 export default function CartPage() {
+  const supabase = createClient();
   const { items, cartCount, cartTotal, updateQuantity, removeFromCart, loading } = useCart();
   const [couponCode, setCouponCode] = useState('');
   const [couponDiscount, setCouponDiscount] = useState(0);
@@ -15,8 +18,38 @@ export default function CartPage() {
   const [couponLoading, setCouponLoading] = useState(false);
   const [couponError, setCouponError] = useState('');
 
-  const shippingThreshold = 999;
-  const shippingFee = cartTotal >= shippingThreshold || cartTotal === 0 ? 0 : 99;
+  // Delivery settings
+  const [baseCharge, setBaseCharge] = useState(100);
+  const [additionalCharge, setAdditionalCharge] = useState(50);
+
+  useEffect(() => {
+    supabase
+      .from('site_settings')
+      .select('setting_key, setting_value')
+      .in('setting_key', ['delivery_base_charge', 'delivery_additional_kg_charge', 'shipping_charge'])
+      .then(({ data }) => {
+        if (data) {
+          data.forEach((s) => {
+            if (s.setting_key === 'delivery_base_charge' && s.setting_value) {
+              setBaseCharge(parseFloat(s.setting_value) || 100);
+            } else if (s.setting_key === 'delivery_additional_kg_charge' && s.setting_value) {
+              setAdditionalCharge(parseFloat(s.setting_value) || 50);
+            } else if (s.setting_key === 'shipping_charge' && s.setting_value && !baseCharge) {
+              setBaseCharge(parseFloat(s.setting_value) || 100);
+            }
+          });
+        }
+      });
+  }, [supabase, baseCharge]);
+
+  // Weight-based calculation
+  const totalCartWeightKg = calculateTotalCartWeight(items);
+  const deliveryCalc = calculateDeliveryCharge(
+    totalCartWeightKg,
+    baseCharge,
+    additionalCharge
+  );
+  const shippingFee = deliveryCalc.deliveryCharge;
   const grandTotal = Math.max(0, cartTotal - couponDiscount + shippingFee);
 
   const handleApplyCoupon = async (e: React.FormEvent) => {
@@ -73,10 +106,11 @@ export default function CartPage() {
           </div>
           <h1 className="text-2xl font-black text-neutral-900 mb-2">YOUR CART IS EMPTY</h1>
           <p className="text-xs sm:text-sm text-neutral-500 mb-6">
-            Looks like you haven&apos;t added any power tools or accessories to your cart yet.
+            Explore our heavy-duty professional drills, grinders, and power tools.
           </p>
-          <Link href="/shop" className="btn-primary w-full py-3 text-sm">
-            Start Shopping Now
+          <Link href="/shop" className="btn-primary inline-flex items-center gap-2 py-3 px-6 text-sm font-bold">
+            <span>START SHOPPING</span>
+            <ArrowRight size={16} />
           </Link>
         </div>
       </div>
@@ -150,53 +184,51 @@ export default function CartPage() {
                       >
                         {product.name}
                       </Link>
+
+                      {product.weight && (
+                        <div className="flex items-center gap-1.5 text-[11px] text-neutral-500 mt-1 font-medium">
+                          <Scale size={13} className="text-neutral-400" />
+                          <span>Weight: <strong className="text-neutral-700">{product.weight}</strong></span>
+                        </div>
+                      )}
                     </div>
 
-                    {/* Price & Quantity Bottom */}
                     <div className="flex items-center justify-between mt-4 pt-3 border-t border-neutral-100">
-                      {/* Quantity Controls */}
-                      <div className="flex items-center border border-neutral-200 rounded-md bg-white">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            updateQuantity(product.id, item.quantity - 1);
-                          }}
-                          className="w-7 h-7 flex items-center justify-center text-neutral-600 hover:bg-neutral-100 transition-colors"
-                          aria-label="Decrease quantity"
-                        >
-                          <Minus size={13} />
-                        </button>
-                        <span className="w-8 text-center text-xs font-bold text-neutral-900 select-none">
-                          {item.quantity}
+                      {/* Price */}
+                      <div className="flex items-baseline gap-2">
+                        <span className="font-black text-lg text-neutral-950">
+                          {formatCurrency(product.selling_price * item.quantity)}
                         </span>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            updateQuantity(product.id, item.quantity + 1);
-                          }}
-                          disabled={item.quantity >= product.stock_quantity}
-                          className="w-7 h-7 flex items-center justify-center text-neutral-600 hover:bg-neutral-100 disabled:opacity-40 transition-colors"
-                          aria-label="Increase quantity"
-                        >
-                          <Plus size={13} />
-                        </button>
+                        {item.quantity > 1 && (
+                          <span className="text-xs text-neutral-400">
+                            ({formatCurrency(product.selling_price)} each)
+                          </span>
+                        )}
                       </div>
 
-                      {/* Line Item Total & Delete */}
-                      <div className="flex items-center gap-4">
-                        <div className="text-right">
-                          <div className="font-black text-sm sm:text-base text-neutral-950">
-                            {formatCurrency(product.selling_price * item.quantity)}
-                          </div>
-                          {item.quantity > 1 && (
-                            <div className="text-[10px] text-neutral-400">
-                              {formatCurrency(product.selling_price)} each
-                            </div>
-                          )}
+                      {/* Controls */}
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center border border-neutral-200 rounded-lg overflow-hidden bg-neutral-50">
+                          <button
+                            type="button"
+                            onClick={() => updateQuantity(product.id, item.quantity - 1)}
+                            className="p-2 text-neutral-600 hover:bg-neutral-200 transition-colors"
+                            aria-label="Decrease quantity"
+                          >
+                            <Minus size={14} />
+                          </button>
+                          <span className="px-3 text-xs font-black text-neutral-900">
+                            {item.quantity}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => updateQuantity(product.id, item.quantity + 1)}
+                            disabled={item.quantity >= product.stock_quantity}
+                            className="p-2 text-neutral-600 hover:bg-neutral-200 transition-colors disabled:opacity-30"
+                            aria-label="Increase quantity"
+                          >
+                            <Plus size={14} />
+                          </button>
                         </div>
 
                         <button
@@ -278,6 +310,16 @@ export default function CartPage() {
                   <span className="font-bold text-neutral-900">{formatCurrency(cartTotal)}</span>
                 </div>
 
+                <div className="flex justify-between text-neutral-600">
+                  <span className="flex items-center gap-1">
+                    <Scale size={13} className="text-neutral-400" />
+                    <span>Total Weight</span>
+                  </span>
+                  <span className="font-bold font-mono text-neutral-800">
+                    {totalCartWeightKg} KG
+                  </span>
+                </div>
+
                 {couponDiscount > 0 && (
                   <div className="flex justify-between text-emerald-600 font-bold">
                     <span>Coupon Discount</span>
@@ -286,19 +328,9 @@ export default function CartPage() {
                 )}
 
                 <div className="flex justify-between">
-                  <span>Delivery Across Kerala</span>
-                  {shippingFee === 0 ? (
-                    <span className="font-bold text-emerald-600 uppercase text-xs">FREE</span>
-                  ) : (
-                    <span className="font-bold text-neutral-900">{formatCurrency(shippingFee)}</span>
-                  )}
+                  <span>Delivery Charge</span>
+                  <span className="font-bold text-neutral-900">{formatCurrency(shippingFee)}</span>
                 </div>
-
-                {cartTotal < shippingThreshold && (
-                  <p className="text-[11px] text-amber-700 bg-amber-50 p-2 rounded border border-amber-200/60">
-                    Add {formatCurrency(shippingThreshold - cartTotal)} more to qualify for <strong>FREE Delivery</strong>
-                  </p>
-                )}
               </div>
 
               <div className="pt-3 border-t border-neutral-200 flex justify-between items-baseline">
