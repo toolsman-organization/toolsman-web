@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Plus, Trash2, Loader2, Star, Sparkles, Flame, Check, Upload } from 'lucide-react';
+import { Plus, Trash2, Loader2, Star, Sparkles, Flame, Check, Upload, AlertCircle, Folder, Layers } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { slugify } from '@/lib/utils';
 import type { Category, Brand, ProductFullDetail } from '@/types/database';
@@ -21,13 +21,32 @@ export default function ProductForm({ categories, brands, initialData }: Product
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
+  // Split categories into Main Categories (parent_id is null) vs Subcategories
+  const mainCategories = useMemo(() => {
+    return categories.filter((c) => !c.parent_id);
+  }, [categories]);
+
+  // Initial resolve: if initialData has category_id, find if it's a subcategory
+  const initialCategory = categories.find((c) => c.id === initialData?.category_id);
+  const initialMainCatId = initialCategory?.parent_id || (initialCategory && !initialCategory.parent_id ? initialCategory.id : '');
+
+  const [selectedMainCategoryId, setSelectedMainCategoryId] = useState<string>(initialMainCatId);
+  const [subcategoryId, setSubcategoryId] = useState<string>(
+    initialCategory?.parent_id ? initialCategory.id : (initialData?.category_id || '')
+  );
+
+  // Available subcategories based on selected Main Category
+  const availableSubcategories = useMemo(() => {
+    if (!selectedMainCategoryId) return [];
+    return categories.filter((c) => c.parent_id === selectedMainCategoryId);
+  }, [categories, selectedMainCategoryId]);
+
   // Form State
   const [name, setName] = useState(initialData?.name || '');
   const [slug, setSlug] = useState(initialData?.slug || '');
   const [productCode, setProductCode] = useState(initialData?.product_code || '');
   const [shortDescription, setShortDescription] = useState(initialData?.short_description || '');
   const [description, setDescription] = useState(initialData?.description || '');
-  const [categoryId, setCategoryId] = useState(initialData?.category_id || '');
   const [brandId, setBrandId] = useState(initialData?.brand_id || '');
   const [originalPrice, setOriginalPrice] = useState(initialData?.original_price?.toString() || '');
   const [sellingPrice, setSellingPrice] = useState(initialData?.selling_price?.toString() || '');
@@ -161,6 +180,11 @@ export default function ProductForm({ categories, brands, initialData }: Product
       return;
     }
 
+    if (!subcategoryId) {
+      setErrorMsg('Please select a Subcategory. Products must belong to a Subcategory.');
+      return;
+    }
+
     setLoading(true);
     setErrorMsg('');
 
@@ -171,7 +195,7 @@ export default function ProductForm({ categories, brands, initialData }: Product
         product_code: productCode.trim().toUpperCase(),
         short_description: shortDescription || null,
         description: description || null,
-        category_id: categoryId || null,
+        category_id: subcategoryId || null,
         brand_id: brandId || null,
         original_price: parseFloat(originalPrice) || parseFloat(sellingPrice),
         selling_price: parseFloat(sellingPrice),
@@ -300,20 +324,63 @@ export default function ProductForm({ categories, brands, initialData }: Product
             />
           </div>
 
+          {/* 1. Main Category (Grouping only) */}
           <div>
-            <label className="block font-bold text-neutral-700 uppercase tracking-wider mb-1">
-              Category
+            <label className="block font-bold text-neutral-700 uppercase tracking-wider mb-1 flex items-center justify-between">
+              <span>Main Category *</span>
+              <span className="text-[10px] text-orange-600 font-bold lowercase">(parent group)</span>
             </label>
             <select
-              value={categoryId}
-              onChange={(e) => setCategoryId(e.target.value)}
-              className="w-full px-3 py-2.5 rounded-lg border border-neutral-300 bg-white focus:outline-none focus:border-orange-500"
+              required
+              value={selectedMainCategoryId}
+              onChange={(e) => {
+                const newMainId = e.target.value;
+                setSelectedMainCategoryId(newMainId);
+                setSubcategoryId(''); // Reset subcategory when parent changes
+              }}
+              className="w-full px-3 py-2.5 rounded-lg border border-neutral-300 bg-white font-semibold text-neutral-900 focus:outline-none focus:border-orange-500"
             >
-              <option value="">Select Category</option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
+              <option value="">Select Main Category</option>
+              {mainCategories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
               ))}
             </select>
+          </div>
+
+          {/* 2. Subcategory (Product assignment) */}
+          <div>
+            <label className="block font-bold text-neutral-700 uppercase tracking-wider mb-1 flex items-center justify-between">
+              <span>Subcategory *</span>
+              <span className="text-[10px] text-emerald-600 font-bold lowercase">(product category)</span>
+            </label>
+            <select
+              required
+              disabled={!selectedMainCategoryId}
+              value={subcategoryId}
+              onChange={(e) => setSubcategoryId(e.target.value)}
+              className="w-full px-3 py-2.5 rounded-lg border border-neutral-300 bg-white font-semibold text-neutral-900 focus:outline-none focus:border-orange-500 disabled:bg-neutral-100 disabled:text-neutral-400 disabled:cursor-not-allowed"
+            >
+              <option value="">
+                {!selectedMainCategoryId
+                  ? '← Select Main Category First'
+                  : availableSubcategories.length === 0
+                  ? 'No Subcategories Available'
+                  : 'Select Subcategory'}
+              </option>
+              {availableSubcategories.map((sc) => (
+                <option key={sc.id} value={sc.id}>
+                  {sc.name}
+                </option>
+              ))}
+            </select>
+            {selectedMainCategoryId && availableSubcategories.length === 0 && (
+              <p className="text-[11px] text-amber-600 font-bold mt-1 flex items-center gap-1">
+                <AlertCircle size={13} />
+                No subcategories under this main category. Add one in Category Management.
+              </p>
+            )}
           </div>
 
           <div>

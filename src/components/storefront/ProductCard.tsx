@@ -71,6 +71,7 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
           </div>
 
           <button
+            type="button"
             onClick={handleToggleWishlist}
             className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-all duration-200 shadow-xs shrink-0 ${
               isWishlisted
@@ -166,6 +167,7 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
         </div>
 
         <button
+          type="button"
           onClick={handleAddToCart}
           disabled={isOutOfStock || adding}
           className={`h-7.5 xs:h-8 sm:h-9 px-2 xs:px-2.5 sm:px-3.5 rounded-lg shrink-0 flex items-center justify-center gap-1 text-[11px] sm:text-xs font-bold transition-all duration-200 shadow-xs ${
