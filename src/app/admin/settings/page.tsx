@@ -17,8 +17,9 @@ export default function AdminSettingsPage() {
     store_phone: '+91 79944 10167',
     store_email: 'info@toolsman.in',
     store_address: 'Tirur, Puthanathani, Malappuram, Kerala - 676552',
-    free_shipping_above: '999',
-    shipping_charge: '99',
+    delivery_base_charge: '100',
+    delivery_additional_kg_charge: '50',
+    shipping_charge: '100',
     cod_enabled: 'true',
     currency_symbol: '₹',
     currency_code: 'INR',
@@ -190,37 +191,56 @@ export default function AdminSettingsPage() {
 
       {/* 2. Shipping & Checkout Rules */}
       <div className="bg-white rounded-2xl border border-neutral-200 p-6 shadow-sm">
-        <div className="flex items-center gap-2 pb-3 mb-4 border-b border-neutral-100 font-bold text-sm text-neutral-900 uppercase tracking-wider">
-          <Truck size={18} className="text-orange-600" />
-          <span>Shipping & Logistics Rules</span>
+        <div className="flex items-center justify-between pb-3 mb-4 border-b border-neutral-100 font-bold text-sm text-neutral-900 uppercase tracking-wider">
+          <div className="flex items-center gap-2">
+            <Truck size={18} className="text-orange-600" />
+            <span>Shipping & Logistics Rules (Weight-Based)</span>
+          </div>
+          <a
+            href="/admin/delivery-charge"
+            className="text-xs text-orange-600 hover:text-orange-700 font-bold underline underline-offset-2"
+          >
+            Open Calculator & Simulator →
+          </a>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
             <label className="block font-bold text-neutral-700 uppercase tracking-wider mb-1">
-              Free Shipping Above (₹)
+              Base Delivery Charge — 1 KG (₹)
             </label>
             <input
               type="number"
-              value={settings.free_shipping_above}
-              onChange={(e) => handleChange('free_shipping_above', e.target.value)}
+              min="0"
+              step="any"
+              value={settings.delivery_base_charge || '100'}
+              onChange={(e) => {
+                handleChange('delivery_base_charge', e.target.value);
+                handleChange('shipping_charge', e.target.value);
+              }}
               className="w-full px-3 py-2.5 rounded-lg border border-neutral-300 font-bold focus:outline-none focus:border-orange-500"
+              placeholder="100"
             />
+            <span className="text-[10px] text-neutral-400 mt-1 block">Charge for the first 1 KG</span>
           </div>
 
           <div>
             <label className="block font-bold text-neutral-700 uppercase tracking-wider mb-1">
-              Standard Shipping Charge (₹)
+              Additional 1 KG Charge (₹)
             </label>
             <input
               type="number"
-              value={settings.shipping_charge}
-              onChange={(e) => handleChange('shipping_charge', e.target.value)}
+              min="0"
+              step="any"
+              value={settings.delivery_additional_kg_charge || '50'}
+              onChange={(e) => handleChange('delivery_additional_kg_charge', e.target.value)}
               className="w-full px-3 py-2.5 rounded-lg border border-neutral-300 font-bold focus:outline-none focus:border-orange-500"
+              placeholder="50"
             />
+            <span className="text-[10px] text-neutral-400 mt-1 block">Charge per additional whole KG</span>
           </div>
 
-          <div className="flex items-end pb-3">
+          <div className="flex items-center pb-1">
             <label className="flex items-center gap-2 font-bold text-neutral-800 cursor-pointer">
               <input
                 type="checkbox"

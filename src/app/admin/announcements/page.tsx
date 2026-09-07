@@ -196,7 +196,7 @@ export default function AdminAnnouncementsPage() {
                   value={form.message}
                   onChange={(e) => setForm({ ...form, message: e.target.value })}
                   className="w-full px-3 py-2 rounded-lg border border-neutral-300 text-sm focus:outline-none focus:border-orange-500"
-                  placeholder="e.g. Free Delivery Above ₹999 Across Kerala"
+                  placeholder="e.g. Fast & Reliable Doorstep Delivery Across Kerala"
                 />
               </div>
 
