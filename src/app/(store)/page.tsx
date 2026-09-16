@@ -6,7 +6,6 @@ import CategorySection from '@/components/storefront/CategorySection';
 import BrandSection from '@/components/storefront/BrandSection';
 import ProductCard from '@/components/storefront/ProductCard';
 import TrustSection from '@/components/storefront/TrustSection';
-import WhyChooseSection from '@/components/storefront/WhyChooseSection';
 import TestimonialsSection from '@/components/storefront/TestimonialsSection';
 import { getActiveBanners } from '@/services/banners';
 import { getActiveCategories } from '@/services/categories';
@@ -133,10 +132,7 @@ export default async function HomePage() {
       {/* 7. Trust & Service Section */}
       <TrustSection />
 
-      {/* 8. Why Choose TOOLSMAN */}
-      <WhyChooseSection />
-
-      {/* 9. Customer Reviews */}
+      {/* 8. Customer Reviews */}
       <TestimonialsSection testimonials={testimonials} />
     </div>
   );
