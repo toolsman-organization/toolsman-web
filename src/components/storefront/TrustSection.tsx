@@ -9,7 +9,7 @@ const trustFeatures = [
   {
     icon: <CreditCard className="w-7 h-7 text-orange-500 shrink-0" />,
     title: 'Secure Payments',
-    description: 'Safe & multiple payment options including Razorpay, UPI & COD.',
+    description: 'Safe & instant payment options via Razorpay, UPI, Cards & NetBanking.',
   },
   {
     icon: <Truck className="w-7 h-7 text-orange-500 shrink-0" />,

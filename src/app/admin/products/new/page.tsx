@@ -29,7 +29,7 @@ export default async function AddProductPage() {
           Catalog Creation
         </span>
         <h1 className="text-2xl sm:text-3xl font-black text-neutral-950 uppercase tracking-tight">
-          Add New Power Tool
+          Add New Product
         </h1>
       </div>
 

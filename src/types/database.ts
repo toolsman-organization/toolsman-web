@@ -7,9 +7,10 @@ export type Json =
   | Json[];
 
 export type UserRole = 'customer' | 'admin';
-export type PaymentMethod = 'razorpay' | 'cod';
-export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded';
-export type OrderStatus = 'pending' | 'confirmed' | 'processing' | 'packed' | 'shipped' | 'delivered' | 'cancelled';
+export type PaymentMethod = 'razorpay';
+export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'expired' | 'refunded';
+export type FulfillmentStatus = 'awaiting_payment' | 'confirmed' | 'processing' | 'packed' | 'shipped' | 'delivered' | 'cancelled';
+export type OrderStatus = FulfillmentStatus | 'pending';
 export type DiscountType = 'percentage' | 'fixed';
 export type BannerPosition = 'hero' | 'promo' | 'sidebar';
 
@@ -304,9 +305,6 @@ export interface SiteSettings {
   shipping_charge: string;
   delivery_base_charge: string;
   delivery_additional_kg_charge: string;
-  cod_enabled: string;
-  cod_min_order: string;
-  cod_max_order: string;
   currency_symbol: string;
   currency_code: string;
   meta_title: string;

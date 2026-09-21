@@ -41,7 +41,7 @@ export default function TermsPage() {
               2. Orders & Payments
             </h2>
             <p>
-              Orders placed through our website are subject to acceptance and stock availability. We accept secure payments via Razorpay (UPI, Credit/Debit cards, Net Banking) as well as Cash on Delivery (COD) for eligible pin codes across Kerala.
+              Orders placed through our website are subject to acceptance and stock availability. We accept secure online payments via Razorpay (UPI, Credit/Debit cards, Net Banking) for eligible pin codes across Kerala.
             </p>
 
             <h2 className="text-base font-bold text-neutral-950 uppercase tracking-wider pt-2">

@@ -10,11 +10,17 @@ export const metadata: Metadata = {
     'Buy genuine power tools, hand tools and accessories at TOOLSMAN. Fast delivery across Kerala. 100% authentic brands.',
   keywords: ['power tools', 'hand tools', 'INGCO', 'Bosch', 'Makita', 'DeWalt', 'Kerala', 'tools'],
   authors: [{ name: 'TOOLSMAN' }],
+  icons: {
+    icon: '/logo.png',
+    shortcut: '/logo.png',
+    apple: '/logo.png',
+  },
   openGraph: {
     type: 'website',
     siteName: 'TOOLSMAN',
     title: 'TOOLSMAN — Professional Power Tools',
     description: 'Buy genuine power tools at TOOLSMAN. Fast delivery across Kerala.',
+    images: [{ url: '/logo.png' }],
   },
   robots: { index: true, follow: true },
 };

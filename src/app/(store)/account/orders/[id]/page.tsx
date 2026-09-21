@@ -4,7 +4,14 @@ import Image from 'next/image';
 import { ArrowLeft, Clock, MapPin, CreditCard, ShieldCheck } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { getOrderById } from '@/services/orders';
-import { formatCurrency, formatDateTime, getOrderStatusColor, getPaymentStatusColor } from '@/lib/utils';
+import {
+  formatCurrency,
+  formatDateTime,
+  getOrderStatusColor,
+  getPaymentStatusColor,
+  formatFulfillmentStatusLabel,
+  formatPaymentStatusLabel,
+} from '@/lib/utils';
 
 interface OrderDetailPageProps {
   params: Promise<{
@@ -50,8 +57,9 @@ export default async function CustomerOrderDetailPage({ params }: OrderDetailPag
     landmark?: string;
   };
 
-  const steps = ['pending', 'confirmed', 'processing', 'packed', 'shipped', 'delivered'];
-  const currentStepIndex = steps.indexOf(order.order_status);
+  const steps = ['awaiting_payment', 'confirmed', 'processing', 'packed', 'shipped', 'delivered'];
+  const normalizedStatus = order.order_status === 'pending' ? 'awaiting_payment' : order.order_status;
+  const currentStepIndex = steps.indexOf(normalizedStatus);
 
   return (
     <div className="bg-neutral-50/50 min-h-screen py-8 sm:py-12 border-b border-neutral-200">
@@ -77,14 +85,21 @@ export default async function CustomerOrderDetailPage({ params }: OrderDetailPag
             </div>
 
             <div className="flex items-center gap-2">
-              <span className={`status-pill ${getOrderStatusColor(order.order_status)} text-xs px-3 py-1`}>
-                {order.order_status}
+              <span className={`status-pill ${getPaymentStatusColor(order.payment_status)} text-xs px-3 py-1 font-semibold`}>
+                Payment: {formatPaymentStatusLabel(order.payment_status)}
               </span>
-              <span className={`status-pill ${getPaymentStatusColor(order.payment_status)} text-xs px-3 py-1`}>
-                Payment: {order.payment_status}
+              <span className={`status-pill ${getOrderStatusColor(order.order_status)} text-xs px-3 py-1 font-bold`}>
+                Fulfillment: {formatFulfillmentStatusLabel(order.order_status)}
               </span>
             </div>
           </div>
+
+          {order.payment_status !== 'paid' && (
+            <div className="mt-4 p-3.5 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-900">
+              <span className="font-bold">Payment Status: {formatPaymentStatusLabel(order.payment_status)}.</span>{' '}
+              Your order is safely recorded and awaiting payment verification. Fulfillment will proceed upon payment confirmation.
+            </div>
+          )}
 
           {/* Status Progress Bar (if not cancelled) */}
           {order.order_status !== 'cancelled' && currentStepIndex !== -1 && (

@@ -3,7 +3,14 @@ import { redirect } from 'next/navigation';
 import { Package, ArrowLeft, ChevronRight } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { getUserOrders } from '@/services/orders';
-import { formatCurrency, formatDate, getOrderStatusColor, getPaymentStatusColor } from '@/lib/utils';
+import {
+  formatCurrency,
+  formatDate,
+  getOrderStatusColor,
+  getPaymentStatusColor,
+  formatFulfillmentStatusLabel,
+  formatPaymentStatusLabel,
+} from '@/lib/utils';
 
 export default async function CustomerOrdersPage() {
   const supabase = await createClient();
@@ -50,11 +57,11 @@ export default async function CustomerOrdersPage() {
                       <span className="font-mono font-bold text-sm sm:text-base text-neutral-950">
                         {order.order_number}
                       </span>
-                      <span className={`status-pill ${getOrderStatusColor(order.order_status)}`}>
-                        {order.order_status}
+                      <span className={`status-pill ${getPaymentStatusColor(order.payment_status)} font-semibold text-[10px]`}>
+                        {formatPaymentStatusLabel(order.payment_status)}
                       </span>
-                      <span className={`status-pill ${getPaymentStatusColor(order.payment_status)}`}>
-                        {order.payment_status}
+                      <span className={`status-pill ${getOrderStatusColor(order.order_status)} font-bold text-[10px]`}>
+                        {formatFulfillmentStatusLabel(order.order_status)}
                       </span>
                     </div>
                     <p className="text-xs text-neutral-500 mt-1">

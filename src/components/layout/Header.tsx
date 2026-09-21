@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Search, ShoppingCart, Heart, User, Menu, X, ChevronDown } from 'lucide-react';
+import { Search, ShoppingCart, Heart, User, Menu, X, ChevronDown, Truck } from 'lucide-react';
 import type { Category } from '@/types/database';
 import { useCart } from '@/hooks/useCart';
 import { useWishlist } from '@/hooks/useWishlist';
@@ -219,28 +219,20 @@ export default function Header({ categories }: HeaderProps) {
               </Link>
 
               <Link
-                href="/shop?sort=price-low"
-                className="px-4 py-2.5 text-sm font-semibold hover:bg-white/10 rounded transition-colors"
-                style={{ color: '#f97316' }}
+                href="/track-order"
+                className="px-4 py-2.5 text-sm font-medium text-orange-400 hover:text-white hover:bg-orange-600/30 rounded transition-colors whitespace-nowrap flex items-center gap-1.5 ml-auto"
               >
-                Offers
+                <Truck size={15} />
+                <span>Track Order</span>
               </Link>
+
             </nav>
           </div>
         </div>
 
         {/* Mobile Header Row */}
         <div className="flex md:hidden items-center justify-between gap-2 px-3.5 py-2.5">
-          {/* Left: Menu Drawer Toggle */}
-          <button
-            onClick={() => setMobileNavOpen(true)}
-            className="w-10 h-10 flex items-center justify-center text-white rounded-lg hover:bg-white/10 active:bg-white/15 transition-colors shrink-0"
-            aria-label="Open navigation menu"
-          >
-            <Menu size={22} />
-          </button>
-
-          {/* Center: Brand Logo */}
+          {/* Left: Brand Logo */}
           <Link href="/" className="flex items-center gap-2.5 min-w-0" aria-label="TOOLSMAN Home">
             <div className="relative w-9 h-9 flex items-center justify-center shrink-0">
               <Image src="/logo.png" alt="TOOLSMAN" width={36} height={36} className="w-full h-full object-contain" priority />
@@ -250,12 +242,12 @@ export default function Header({ categories }: HeaderProps) {
             </span>
           </Link>
 
-          {/* Right: Search & Cart Action Icons */}
-          <div className="flex items-center gap-0.5 shrink-0">
+          {/* Right: Action Icons (Search, Cart & Menu Drawer Toggle) */}
+          <div className="flex items-center gap-1 shrink-0">
             {/* Search Toggle Button */}
             <button
               onClick={() => setShowSearch(!showSearch)}
-              className={`w-10 h-10 flex items-center justify-center rounded-lg transition-colors ${
+              className={`w-9 h-9 flex items-center justify-center rounded-lg transition-colors ${
                 showSearch ? 'bg-orange-500 text-white' : 'text-white hover:bg-white/10 active:bg-white/15'
               }`}
               aria-label="Toggle search"
@@ -266,19 +258,28 @@ export default function Header({ categories }: HeaderProps) {
             {/* Cart Button */}
             <Link
               href="/cart"
-              className="w-10 h-10 flex items-center justify-center text-white rounded-lg hover:bg-white/10 active:bg-white/15 transition-colors relative"
+              className="w-9 h-9 flex items-center justify-center text-white rounded-lg hover:bg-white/10 active:bg-white/15 transition-colors relative"
               aria-label={`Cart (${cartCount} items)`}
             >
               <ShoppingCart size={19} />
               {cartCount > 0 && (
                 <span
-                  className="absolute top-1.5 right-1.5 text-white rounded-full min-w-4 h-4 px-1 flex items-center justify-center font-black leading-none shadow-xs"
+                  className="absolute top-1 right-1 text-white rounded-full min-w-4 h-4 px-1 flex items-center justify-center font-black leading-none shadow-xs"
                   style={{ backgroundColor: '#f97316', fontSize: '9px' }}
                 >
                   {cartCount > 99 ? '99+' : cartCount}
                 </span>
               )}
             </Link>
+
+            {/* Menu Drawer Toggle */}
+            <button
+              onClick={() => setMobileNavOpen(true)}
+              className="w-9 h-9 flex items-center justify-center text-white rounded-lg hover:bg-white/10 active:bg-white/15 transition-colors"
+              aria-label="Open navigation menu"
+            >
+              <Menu size={22} />
+            </button>
           </div>
         </div>
 

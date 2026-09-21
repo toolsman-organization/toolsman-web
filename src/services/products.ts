@@ -171,31 +171,57 @@ export async function getProducts(
     .eq('is_active', true);
 
   if (filters.category) {
-    // Check if category is a main category with subcategories
-    const { data: catData } = await supabase
-      .from('categories')
-      .select('id, parent_id')
-      .eq('slug', filters.category)
-      .single();
+    const categorySlugs = filters.category
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
 
-    if (catData && !catData.parent_id) {
-      // Main category: find all subcategories
-      const { data: subcats } = await supabase
+    if (categorySlugs.length > 0) {
+      const { data: matchedCats } = await supabase
         .from('categories')
-        .select('id')
-        .eq('parent_id', catData.id);
-      const subIds = (subcats || []).map((s) => s.id);
-      if (subIds.length > 0) {
-        query = query.in('category_id', subIds);
+        .select('id, slug, parent_id')
+        .in('slug', categorySlugs);
+
+      if (matchedCats && matchedCats.length > 0) {
+        const targetCategoryIds = new Set<string>();
+        const mainCatIds: string[] = [];
+
+        for (const cat of matchedCats) {
+          targetCategoryIds.add(cat.id);
+          if (!cat.parent_id) {
+            mainCatIds.push(cat.id);
+          }
+        }
+
+        if (mainCatIds.length > 0) {
+          const { data: subcats } = await supabase
+            .from('categories')
+            .select('id')
+            .in('parent_id', mainCatIds);
+
+          if (subcats) {
+            for (const sub of subcats) {
+              targetCategoryIds.add(sub.id);
+            }
+          }
+        }
+
+        query = query.in('category_id', Array.from(targetCategoryIds));
       } else {
-        query = query.eq('category_id', catData.id);
+        query = query.in('category_slug', categorySlugs);
       }
-    } else {
-      query = query.eq('category_slug', filters.category);
     }
   }
 
-  if (filters.brand) query = query.eq('brand_slug', filters.brand);
+  if (filters.brand) {
+    const brandSlugs = filters.brand
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (brandSlugs.length > 0) {
+      query = query.in('brand_slug', brandSlugs);
+    }
+  }
   if (filters.minPrice !== undefined) query = query.gte('selling_price', filters.minPrice);
   if (filters.maxPrice !== undefined) query = query.lte('selling_price', filters.maxPrice);
   if (filters.inStock) query = query.gt('stock_quantity', 0);
