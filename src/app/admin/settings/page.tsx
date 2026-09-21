@@ -20,7 +20,6 @@ export default function AdminSettingsPage() {
     delivery_base_charge: '100',
     delivery_additional_kg_charge: '50',
     shipping_charge: '100',
-    cod_enabled: 'true',
     currency_symbol: '₹',
     currency_code: 'INR',
     meta_title: 'TOOLSMAN — Professional Power Tools',
@@ -238,18 +237,6 @@ export default function AdminSettingsPage() {
               placeholder="50"
             />
             <span className="text-[10px] text-neutral-400 mt-1 block">Charge per additional whole KG</span>
-          </div>
-
-          <div className="flex items-center pb-1">
-            <label className="flex items-center gap-2 font-bold text-neutral-800 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={settings.cod_enabled === 'true'}
-                onChange={(e) => handleChange('cod_enabled', e.target.checked ? 'true' : 'false')}
-                className="w-4 h-4 text-orange-600 rounded"
-              />
-              <span>Enable Cash on Delivery (COD)</span>
-            </label>
           </div>
         </div>
       </div>

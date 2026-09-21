@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
-import { Filter, X, Check, RotateCcw, ArrowUpDown } from 'lucide-react';
+import { Filter, X, Check, Minus, RotateCcw, ArrowUpDown, ChevronRight } from 'lucide-react';
 import type { Category, Brand } from '@/types/database';
 
 interface FilterSidebarProps {
@@ -34,6 +34,9 @@ export default function FilterSidebar({ categories, brands }: FilterSidebarProps
   const [minPriceInput, setMinPriceInput] = useState(currentMinPrice);
   const [maxPriceInput, setMaxPriceInput] = useState(currentMaxPrice);
 
+  // Accordion expanded state for main categories
+  const [expandedMains, setExpandedMains] = useState<Record<string, boolean>>({});
+
   useEffect(() => {
     setMinPriceInput(currentMinPrice);
   }, [currentMinPrice]);
@@ -41,6 +44,66 @@ export default function FilterSidebar({ categories, brands }: FilterSidebarProps
   useEffect(() => {
     setMaxPriceInput(currentMaxPrice);
   }, [currentMaxPrice]);
+
+  // Main Categories and Subcategories tree
+  const mainCategories = useMemo(
+    () => categories.filter((c) => !c.parent_id),
+    [categories]
+  );
+
+  const subcategoriesMap = useMemo(() => {
+    const map: Record<string, Category[]> = {};
+    for (const cat of categories) {
+      if (cat.parent_id) {
+        if (!map[cat.parent_id]) map[cat.parent_id] = [];
+        map[cat.parent_id].push(cat);
+      }
+    }
+    return map;
+  }, [categories]);
+
+  // Active category slugs array from URL
+  const activeCategorySlugs = useMemo(() => {
+    if (!currentCategory) return [];
+    return currentCategory.split(',').map((s) => s.trim()).filter(Boolean);
+  }, [currentCategory]);
+
+  // Active brand slugs array from URL
+  const activeBrandSlugs = useMemo(() => {
+    if (!currentBrand) return [];
+    return currentBrand.split(',').map((s) => s.trim()).filter(Boolean);
+  }, [currentBrand]);
+
+  const handleBrandToggle = (brandSlug: string) => {
+    const isChecked = activeBrandSlugs.includes(brandSlug);
+    updateFilters('brand', isChecked ? null : brandSlug);
+  };
+
+  // Auto expand Main Categories that have an active category or active subcategory
+  useEffect(() => {
+    setExpandedMains((prev) => {
+      const next = { ...prev };
+      let updated = false;
+
+      mainCategories.forEach((main) => {
+        const subs = subcategoriesMap[main.id] || [];
+        const isMainActive = activeCategorySlugs.includes(main.slug);
+        const hasActiveSub = subs.some((s) => activeCategorySlugs.includes(s.slug));
+
+        if ((isMainActive || hasActiveSub) && !next[main.id]) {
+          next[main.id] = true;
+          updated = true;
+        }
+      });
+
+      return updated ? next : prev;
+    });
+  }, [activeCategorySlugs, mainCategories, subcategoriesMap]);
+
+  const toggleExpand = (mainId: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setExpandedMains((prev) => ({ ...prev, [mainId]: !prev[mainId] }));
+  };
 
   const updateFilters = (key: string, value: string | null) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -51,6 +114,33 @@ export default function FilterSidebar({ categories, brands }: FilterSidebarProps
     }
     params.delete('page'); // Reset to page 1 on filter change
     router.push(`${pathname}?${params.toString()}`);
+  };
+
+  const isSubcategoryChecked = (sub: Category) => {
+    return activeCategorySlugs.includes(sub.slug);
+  };
+
+  const handleSubcategoryToggle = (sub: Category, main: Category) => {
+    const subs = subcategoriesMap[main.id] || [];
+    const subSlugs = subs.map((s) => s.slug);
+
+    const isChecked = activeCategorySlugs.includes(sub.slug);
+
+    // Remove main.slug and any other subcategory of this main category
+    const cleanSlugs = activeCategorySlugs.filter(
+      (slug) => slug !== main.slug && !subSlugs.includes(slug)
+    );
+
+    let nextSlugs: string[] = [];
+    if (!isChecked) {
+      // Select single subcategory
+      nextSlugs = [...cleanSlugs, sub.slug];
+    } else {
+      // Uncheck it
+      nextSlugs = cleanSlugs;
+    }
+
+    updateFilters('category', nextSlugs.length > 0 ? nextSlugs.join(',') : null);
   };
 
   const applyPriceFilter = (e?: React.FormEvent) => {
@@ -81,7 +171,6 @@ export default function FilterSidebar({ categories, brands }: FilterSidebarProps
     currentCategory || currentBrand || currentInStock || currentMinPrice || currentMaxPrice || (currentSort && currentSort !== 'newest')
   );
 
-  const activeCategoryObj = categories.find((c) => c.slug === currentCategory);
   const activeBrandObj = brands.find((b) => b.slug === currentBrand);
 
   const filterContent = (
@@ -89,13 +178,13 @@ export default function FilterSidebar({ categories, brands }: FilterSidebarProps
       {/* Header */}
       <div className="flex items-center justify-between pb-3.5 border-b border-neutral-200">
         <div className="flex items-center gap-2">
-          <Filter size={18} className="text-orange-600" />
+          <Filter size={18} className="text-neutral-700" />
           <h3 className="font-black text-neutral-900 text-base uppercase tracking-wider">Filters</h3>
         </div>
         {hasActiveFilters && (
           <button
             onClick={clearAllFilters}
-            className="flex items-center gap-1 text-xs font-bold text-orange-600 hover:text-orange-700 transition-colors"
+            className="flex items-center gap-1 text-xs font-bold text-neutral-500 hover:text-neutral-900 transition-colors"
           >
             <RotateCcw size={12} />
             <span>Reset All</span>
@@ -106,24 +195,35 @@ export default function FilterSidebar({ categories, brands }: FilterSidebarProps
       {/* Active Filter Badges */}
       {hasActiveFilters && (
         <div className="flex flex-wrap gap-1.5 pb-2">
-          {currentCategory && (
-            <button
-              onClick={() => updateFilters('category', null)}
-              className="inline-flex items-center gap-1 text-[11px] font-bold bg-orange-100 text-orange-900 px-2 py-0.5 rounded-full hover:bg-orange-200 transition-colors"
-            >
-              <span>{activeCategoryObj?.name || currentCategory}</span>
-              <X size={11} />
-            </button>
-          )}
-          {currentBrand && (
-            <button
-              onClick={() => updateFilters('brand', null)}
-              className="inline-flex items-center gap-1 text-[11px] font-bold bg-neutral-900 text-white px-2 py-0.5 rounded-full hover:bg-neutral-800 transition-colors"
-            >
-              <span>{activeBrandObj?.name || currentBrand}</span>
-              <X size={11} />
-            </button>
-          )}
+          {activeCategorySlugs.map((slug) => {
+            const catObj = categories.find((c) => c.slug === slug);
+            return (
+              <button
+                key={slug}
+                onClick={() => {
+                  const updated = activeCategorySlugs.filter((s) => s !== slug);
+                  updateFilters('category', updated.length > 0 ? updated.join(',') : null);
+                }}
+                className="inline-flex items-center gap-1 text-[11px] font-bold bg-neutral-100 text-neutral-800 border border-neutral-200 px-2 py-0.5 rounded-full hover:bg-neutral-200 transition-colors"
+              >
+                <span>{catObj?.name || slug}</span>
+                <X size={11} />
+              </button>
+            );
+          })}
+          {activeBrandSlugs.map((slug) => {
+            const bObj = brands.find((b) => b.slug === slug);
+            return (
+              <button
+                key={slug}
+                onClick={() => handleBrandToggle(slug)}
+                className="inline-flex items-center gap-1 text-[11px] font-bold bg-neutral-900 text-white px-2 py-0.5 rounded-full hover:bg-neutral-800 transition-colors"
+              >
+                <span>{bObj?.name || slug}</span>
+                <X size={11} />
+              </button>
+            );
+          })}
           {(currentMinPrice || currentMaxPrice) && (
             <button
               onClick={() => {
@@ -178,150 +278,246 @@ export default function FilterSidebar({ categories, brands }: FilterSidebarProps
 
       {/* Hierarchical Categories Filter */}
       <div>
-        <h4 className="font-extrabold text-xs sm:text-sm text-neutral-900 uppercase tracking-wider mb-2.5">
-          Category
-        </h4>
-        <div className="flex flex-col gap-1 max-h-72 overflow-y-auto pr-1">
-          <button
-            onClick={() => updateFilters('category', null)}
-            className={`flex items-center justify-between text-left text-xs sm:text-sm py-1.5 px-2.5 rounded-lg transition-colors ${
-              !currentCategory
-                ? 'bg-orange-50 font-black text-orange-600'
-                : 'text-neutral-700 hover:bg-neutral-100'
-            }`}
-          >
-            <span>All Categories</span>
-            {!currentCategory && <Check size={14} />}
-          </button>
+        <div className="flex items-center justify-between mb-2.5">
+          <h4 className="font-extrabold text-xs sm:text-sm text-neutral-900 uppercase tracking-wider">
+            Category
+          </h4>
+          {activeCategorySlugs.length > 0 && (
+            <button
+              onClick={() => updateFilters('category', null)}
+              className="text-[11px] font-bold text-neutral-500 hover:text-neutral-900 transition-colors"
+            >
+              Clear
+            </button>
+          )}
+        </div>
 
-          {categories
-            .filter((cat) => !cat.parent_id)
-            .map((mainCat) => {
-              const subs = categories.filter((c) => c.parent_id === mainCat.id);
-              const isMainActive = currentCategory === mainCat.slug;
-              const hasActiveSub = subs.some((s) => s.slug === currentCategory);
+        <div className="flex flex-col gap-1 max-h-80 overflow-y-auto no-scrollbar scrollbar-none pr-1">
+          {mainCategories.map((mainCat) => {
+            const subs = subcategoriesMap[mainCat.id] || [];
+            const isExpanded = expandedMains[mainCat.id] ?? false;
+            const isMainActive = activeCategorySlugs.includes(mainCat.slug);
+            const hasSubActive = subs.some((s) => activeCategorySlugs.includes(s.slug));
 
+            if (subs.length > 0) {
               return (
-                <div key={mainCat.id} className="flex flex-col">
-                  {/* Main Category Row */}
-                  <button
-                    onClick={() => updateFilters('category', isMainActive ? null : mainCat.slug)}
-                    className={`flex items-center justify-between text-left text-xs sm:text-sm py-1.5 px-2.5 rounded-lg transition-colors ${
-                      isMainActive
-                        ? 'bg-orange-50 font-black text-orange-600'
-                        : hasActiveSub
-                        ? 'font-bold text-neutral-900 hover:bg-neutral-100'
-                        : 'font-semibold text-neutral-800 hover:bg-neutral-100'
-                    }`}
+                <div key={mainCat.id} className="flex flex-col rounded-lg py-0.5">
+                  {/* Main Category Row (No Checkbox) */}
+                  <div
+                    onClick={() => toggleExpand(mainCat.id)}
+                    className="flex items-center justify-between py-1.5 px-2 rounded-lg select-none cursor-pointer hover:bg-neutral-100 group transition-colors"
                   >
-                    <span className="truncate">{mainCat.name}</span>
-                    {isMainActive && <Check size={14} className="text-orange-600" />}
-                  </button>
+                    <span
+                      className={`text-xs sm:text-sm truncate transition-colors ${
+                        isMainActive || hasSubActive
+                          ? 'font-bold text-neutral-900'
+                          : 'font-medium text-neutral-700 group-hover:text-neutral-900'
+                      }`}
+                    >
+                      {mainCat.name}
+                    </span>
 
-                  {/* Subcategories (Indented) */}
-                  {subs.length > 0 && (
-                    <div className="pl-3.5 my-0.5 space-y-0.5 border-l-2 border-neutral-200 ml-2.5">
+                    <ChevronRight
+                      size={15}
+                      className={`transition-transform duration-200 text-neutral-400 group-hover:text-neutral-700 shrink-0 ml-1 ${
+                        isExpanded ? 'rotate-90 text-neutral-900 font-bold' : ''
+                      }`}
+                    />
+                  </div>
+
+                  {/* Subcategories Indented List */}
+                  {isExpanded && (
+                    <div className="pl-6 pr-1 py-1 space-y-1 border-l-2 border-neutral-200 ml-3.5 my-0.5">
                       {subs.map((sub) => {
-                        const isSubActive = currentCategory === sub.slug;
+                        const isSubChecked = isSubcategoryChecked(sub);
                         return (
-                          <button
+                          <label
                             key={sub.id}
-                            onClick={() => updateFilters('category', isSubActive ? null : sub.slug)}
-                            className={`w-full flex items-center justify-between text-left text-[11px] sm:text-xs py-1 px-2 rounded-md transition-colors ${
-                              isSubActive
-                                ? 'bg-orange-500 text-white font-bold shadow-2xs'
-                                : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100'
-                            }`}
+                            className="flex items-center gap-2 py-1 px-1.5 rounded-md hover:bg-neutral-100 cursor-pointer select-none transition-colors group/sub"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              handleSubcategoryToggle(sub, mainCat);
+                            }}
                           >
-                            <span className="truncate">{sub.name}</span>
-                            {isSubActive && <Check size={12} className="text-white" />}
-                          </button>
+                            <div
+                              className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 transition-colors ${
+                                isSubChecked
+                                  ? 'bg-neutral-900 border-neutral-900 text-white'
+                                  : 'border-neutral-300 bg-white group-hover/sub:border-neutral-400'
+                              }`}
+                            >
+                              {isSubChecked && <Check size={10} strokeWidth={3} />}
+                            </div>
+                            <span
+                              className={`text-xs truncate transition-colors ${
+                                isSubChecked
+                                  ? 'font-bold text-neutral-900'
+                                  : 'font-normal text-neutral-600 group-hover/sub:text-neutral-900'
+                              }`}
+                            >
+                              {sub.name}
+                            </span>
+                          </label>
                         );
                       })}
                     </div>
                   )}
                 </div>
               );
-            })}
+            }
+
+            // Category without subcategories
+            const isChecked = activeCategorySlugs.includes(mainCat.slug);
+            return (
+              <div key={mainCat.id} className="flex flex-col rounded-lg py-0.5">
+                <label
+                  className="flex items-center gap-2.5 py-1.5 px-2 rounded-lg hover:bg-neutral-100 cursor-pointer select-none transition-colors group"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    let nextSlugs: string[] = [];
+                    if (isChecked) {
+                      nextSlugs = activeCategorySlugs.filter((s) => s !== mainCat.slug);
+                    } else {
+                      nextSlugs = [...activeCategorySlugs, mainCat.slug];
+                    }
+                    updateFilters('category', nextSlugs.length > 0 ? nextSlugs.join(',') : null);
+                  }}
+                >
+                  <div
+                    className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-colors ${
+                      isChecked
+                        ? 'bg-neutral-900 border-neutral-900 text-white'
+                        : 'border-neutral-300 bg-white group-hover:border-neutral-400'
+                    }`}
+                  >
+                    {isChecked && <Check size={12} strokeWidth={3} />}
+                  </div>
+                  <span
+                    className={`text-xs sm:text-sm truncate transition-colors ${
+                      isChecked
+                        ? 'font-bold text-neutral-900'
+                        : 'font-medium text-neutral-700 group-hover:text-neutral-900'
+                    }`}
+                  >
+                    {mainCat.name}
+                  </span>
+                </label>
+              </div>
+            );
+          })}
         </div>
       </div>
 
       {/* Brands */}
       <div>
-        <h4 className="font-extrabold text-xs sm:text-sm text-neutral-900 uppercase tracking-wider mb-2.5">
-          Brand
-        </h4>
-        <div className="flex flex-col gap-1 max-h-56 overflow-y-auto pr-1">
-          <button
-            onClick={() => updateFilters('brand', null)}
-            className={`flex items-center justify-between text-left text-xs sm:text-sm py-1.5 px-2.5 rounded-lg transition-colors ${
-              !currentBrand
-                ? 'bg-orange-50 font-black text-orange-600'
-                : 'text-neutral-700 hover:bg-neutral-100'
-            }`}
-          >
-            <span>All Brands</span>
-            {!currentBrand && <Check size={14} />}
-          </button>
-          {brands.map((b) => (
+        <div className="flex items-center justify-between mb-2.5">
+          <h4 className="font-extrabold text-xs sm:text-sm text-neutral-900 uppercase tracking-wider">
+            Brand
+          </h4>
+          {activeBrandSlugs.length > 0 && (
             <button
-              key={b.id}
-              onClick={() => updateFilters('brand', currentBrand === b.slug ? null : b.slug)}
-              className={`flex items-center justify-between text-left text-xs sm:text-sm py-1.5 px-2.5 rounded-lg transition-colors ${
-                currentBrand === b.slug
-                  ? 'bg-orange-50 font-black text-orange-600'
-                  : 'text-neutral-700 hover:bg-neutral-100'
-              }`}
+              onClick={() => updateFilters('brand', null)}
+              className="text-[11px] font-bold text-neutral-500 hover:text-neutral-900 transition-colors"
             >
-              <span className="truncate">{b.name}</span>
-              {currentBrand === b.slug && <Check size={14} />}
+              Clear
             </button>
-          ))}
+          )}
+        </div>
+
+        <div className="flex flex-col gap-1 max-h-56 overflow-y-auto no-scrollbar scrollbar-none pr-1">
+          {brands.map((b) => {
+            const isChecked = activeBrandSlugs.includes(b.slug);
+            return (
+              <label
+                key={b.id}
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleBrandToggle(b.slug);
+                }}
+                className="flex items-center gap-2.5 py-1.5 px-2 rounded-lg hover:bg-neutral-50 cursor-pointer select-none transition-colors group/brand"
+              >
+                <div
+                  className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-colors ${
+                    isChecked
+                      ? 'bg-neutral-900 border-neutral-900 text-white'
+                      : 'border-neutral-300 bg-white group-hover/brand:border-neutral-400'
+                  }`}
+                >
+                  {isChecked && <Check size={12} strokeWidth={3} />}
+                </div>
+                <span
+                  className={`text-xs sm:text-sm truncate transition-colors ${
+                    isChecked
+                      ? 'font-bold text-neutral-900'
+                      : 'font-normal text-neutral-700 hover:text-neutral-900'
+                  }`}
+                >
+                  {b.name}
+                </span>
+              </label>
+            );
+          })}
         </div>
       </div>
 
-      {/* Price Range with Enter Key and Apply Button */}
-      <div>
-        <h4 className="font-extrabold text-xs sm:text-sm text-neutral-900 uppercase tracking-wider mb-2.5">
-          Price Range (₹)
-        </h4>
-        <form onSubmit={applyPriceFilter} className="flex flex-col gap-2">
-          <div className="flex items-center gap-2">
-            <input
-              type="number"
-              placeholder="Min"
-              min="0"
-              value={minPriceInput}
-              onChange={(e) => setMinPriceInput(e.target.value)}
-              className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-neutral-300 focus:outline-none focus:border-orange-500 shadow-2xs"
-            />
-            <span className="text-neutral-400 text-xs">-</span>
-            <input
-              type="number"
-              placeholder="Max"
-              min="0"
-              value={maxPriceInput}
-              onChange={(e) => setMaxPriceInput(e.target.value)}
-              className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-neutral-300 focus:outline-none focus:border-orange-500 shadow-2xs"
-            />
-          </div>
-          <button
-            type="submit"
-            className="w-full py-1.5 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-bold transition-colors shadow-2xs"
-          >
-            Apply Price
-          </button>
-        </form>
+      {/* Price Range matching referral image */}
+      <div className="flex flex-col gap-3">
+        {/* Header row: MAX PRICE on left, value on right */}
+        <div className="flex items-center justify-between">
+          <span className="font-black text-xs sm:text-sm text-neutral-900 uppercase tracking-wider">
+            MAX PRICE
+          </span>
+          <span className="font-black text-sm sm:text-base text-neutral-900">
+            ₹{(maxPriceInput ? parseFloat(maxPriceInput) : 50000).toLocaleString('en-IN')}
+          </span>
+        </div>
+
+        {/* Range Slider matching referral image track & thumb */}
+        <div className="py-1">
+          <input
+            type="range"
+            min="0"
+            max="50000"
+            step="500"
+            value={maxPriceInput ? parseFloat(maxPriceInput) : 50000}
+            onChange={(e) => setMaxPriceInput(e.target.value)}
+            onMouseUp={() => applyPriceFilter()}
+            onPointerUp={() => applyPriceFilter()}
+            onTouchEnd={() => applyPriceFilter()}
+            className="price-slider"
+            style={{
+              background: `linear-gradient(to right, #f97316 0%, #f97316 ${Math.min(
+                Math.max(
+                  (((maxPriceInput ? parseFloat(maxPriceInput) : 50000) - 0) / 50000) * 100,
+                  0
+                ),
+                100
+              )}%, #e5e5e5 ${Math.min(
+                Math.max(
+                  (((maxPriceInput ? parseFloat(maxPriceInput) : 50000) - 0) / 50000) * 100,
+                  0
+                ),
+                100
+              )}%, #e5e5e5 100%)`,
+            }}
+          />
+        </div>
+
+        {/* Range bounds below slider */}
+        <div className="flex items-center justify-between text-xs font-extrabold text-neutral-400 select-none">
+          <span>₹0</span>
+          <span>₹50,000</span>
+        </div>
       </div>
 
       {/* Stock Availability */}
       <div className="pt-2 border-t border-neutral-200">
-        <label className="flex items-center gap-2.5 cursor-pointer text-xs sm:text-sm font-bold text-neutral-800 hover:text-orange-600 transition-colors">
+        <label className="flex items-center gap-2.5 cursor-pointer text-xs sm:text-sm font-bold text-neutral-800 hover:text-neutral-900 transition-colors">
           <input
             type="checkbox"
             checked={currentInStock}
             onChange={(e) => updateFilters('inStock', e.target.checked ? 'true' : null)}
-            className="w-4 h-4 rounded text-orange-600 focus:ring-orange-500 border-neutral-300 cursor-pointer accent-orange-600"
+            className="w-4 h-4 rounded text-neutral-900 focus:ring-neutral-900 border-neutral-300 cursor-pointer accent-neutral-900"
           />
           <span>In Stock Only</span>
         </label>
@@ -348,7 +544,7 @@ export default function FilterSidebar({ categories, brands }: FilterSidebarProps
       </div>
 
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:block w-64 shrink-0 bg-white p-5 rounded-2xl border border-neutral-200/90 shadow-2xs self-start sticky top-24">
+      <aside className="hidden lg:block w-64 shrink-0 bg-white p-5 rounded-2xl border border-neutral-200/90 shadow-2xs self-start sticky top-[120px] max-h-[calc(100vh-135px)] overflow-y-auto overscroll-contain overscroll-y-contain no-scrollbar scrollbar-none">
         {filterContent}
       </aside>
 
@@ -359,7 +555,7 @@ export default function FilterSidebar({ categories, brands }: FilterSidebarProps
             className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity"
             onClick={() => setMobileOpen(false)}
           />
-          <div className="fixed inset-y-0 right-0 w-full max-w-xs bg-white p-5 shadow-2xl flex flex-col justify-between overflow-y-auto z-50 animate-in slide-in-from-right duration-200">
+          <div className="fixed inset-y-0 right-0 w-full max-w-xs bg-white p-5 shadow-2xl flex flex-col justify-between overflow-y-auto no-scrollbar scrollbar-none z-50 animate-in slide-in-from-right duration-200">
             <div>
               <div className="flex items-center justify-between pb-3.5 mb-4 border-b border-neutral-200">
                 <div className="flex items-center gap-2">
@@ -400,4 +596,3 @@ export default function FilterSidebar({ categories, brands }: FilterSidebarProps
     </>
   );
 }
-

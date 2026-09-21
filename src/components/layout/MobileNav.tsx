@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { X, Home, ShoppingBag, Heart, User, LogOut, ChevronRight, Phone, Grid3X3 } from 'lucide-react';
+import { X, Home, ShoppingBag, Heart, User, LogOut, ChevronRight, Phone, Grid3X3, Truck, Package } from 'lucide-react';
 import type { Category } from '@/types/database';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/client';
@@ -37,10 +37,15 @@ export default function MobileNav({
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
+      document.documentElement.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
     }
-    return () => { document.body.style.overflow = ''; };
+    return () => {
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+    };
   }, [isOpen]);
 
   const handleLogout = async () => {
@@ -54,14 +59,15 @@ export default function MobileNav({
     <>
       {/* Backdrop */}
       <div
-        className={`fixed inset-0 bg-black/60 z-50 transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        className={`fixed inset-0 bg-black/60 z-50 transition-opacity duration-300 touch-none ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
         onClick={onClose}
+        onTouchMove={(e) => e.preventDefault()}
         aria-hidden="true"
       />
 
       {/* Drawer */}
       <aside
-        className={`fixed top-0 left-0 bottom-0 w-80 max-w-[90vw] z-50 flex flex-col shadow-2xl transition-transform duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}
+        className={`fixed top-0 right-0 bottom-0 w-80 max-w-[90vw] z-50 flex flex-col shadow-2xl transition-transform duration-300 overscroll-contain ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
         style={{ backgroundColor: '#111111' }}
         aria-label="Navigation menu"
         role="dialog"
@@ -84,41 +90,14 @@ export default function MobileNav({
           </button>
         </div>
 
-        {/* User info */}
-        {user ? (
-          <div className="px-4 py-3" style={{ borderBottom: '1px solid #2d2d2d' }}>
-            <Link href="/account" onClick={onClose} className="flex items-center gap-3 group">
-              <div
-                className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm"
-                style={{ backgroundColor: '#f97316', color: '#fff' }}
-              >
-                {user.email?.charAt(0).toUpperCase()}
-              </div>
-              <div>
-                <div className="text-white text-sm font-semibold">{user.email?.split('@')[0]}</div>
-                <div className="text-gray-400 text-xs">View Profile</div>
-              </div>
-              <ChevronRight size={16} className="text-gray-500 ml-auto group-hover:text-orange-400" />
-            </Link>
-          </div>
-        ) : (
-          <div className="px-4 py-3 flex gap-2" style={{ borderBottom: '1px solid #2d2d2d' }}>
-            <Link href="/login" onClick={onClose} className="btn-primary flex-1 py-2 text-sm justify-center">
-              Sign In
-            </Link>
-            <Link href="/register" onClick={onClose} className="btn-secondary flex-1 py-2 text-sm justify-center">
-              Register
-            </Link>
-          </div>
-        )}
-
         {/* Navigation links */}
         <nav className="flex-1 overflow-y-auto py-2">
           {[
             { href: '/', label: 'Home', icon: <Home size={18} /> },
             { href: '/shop', label: 'Shop All', icon: <ShoppingBag size={18} /> },
+            { href: '/track-order', label: 'Track Order', icon: <Truck size={18} /> },
+            { href: user ? '/account/orders' : '/login?redirect=/account/orders', label: 'My Orders', icon: <Package size={18} /> },
             { href: '/account/wishlist', label: `Wishlist${wishlistCount > 0 ? ` (${wishlistCount})` : ''}`, icon: <Heart size={18} /> },
-            { href: '/cart', label: `Cart${cartCount > 0 ? ` (${cartCount})` : ''}`, icon: null },
           ].map((item) => (
             <Link
               key={item.href}
@@ -131,7 +110,7 @@ export default function MobileNav({
             </Link>
           ))}
 
-          {/* Hierarchical Categories */}
+          {/* Hierarchical Categories Accordion */}
           <div className="px-4 py-2 mt-1" style={{ borderTop: '1px solid #2d2d2d' }}>
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: '#f97316' }}>
               <Grid3X3 size={13} />
@@ -145,45 +124,55 @@ export default function MobileNav({
                   const subs = categories.filter((c) => c.parent_id === mainCat.id);
                   const isExpanded = expandedMains[mainCat.id] ?? false;
 
-                  return (
-                    <div key={mainCat.id} className="rounded-lg overflow-hidden">
-                      <div className="flex items-center justify-between text-sm text-gray-300 hover:text-white py-2 px-2 hover:bg-white/5 rounded transition-colors">
-                        <Link
-                          href={`/shop?category=${mainCat.slug}`}
-                          onClick={onClose}
-                          className="font-bold flex-1 text-white"
+                  if (subs.length > 0) {
+                    return (
+                      <div key={mainCat.id} className="rounded-lg overflow-hidden">
+                        <div
+                          onClick={() => toggleMain(mainCat.id)}
+                          className="flex items-center justify-between text-sm py-2 px-2.5 rounded-lg cursor-pointer hover:bg-white/5 transition-colors text-white font-bold select-none"
                         >
-                          {mainCat.name}
-                        </Link>
-                        {subs.length > 0 && (
-                          <button
-                            onClick={() => toggleMain(mainCat.id)}
-                            className="p-1 text-gray-400 hover:text-white"
-                            aria-label={`Toggle ${mainCat.name} subcategories`}
-                          >
-                            <ChevronRight
-                              size={16}
-                              className={`transition-transform duration-200 ${isExpanded ? 'rotate-90 text-orange-500' : ''}`}
-                            />
-                          </button>
+                          <span>{mainCat.name}</span>
+                          <ChevronRight
+                            size={16}
+                            className={`transition-transform duration-200 text-gray-400 ${isExpanded ? 'rotate-90 text-orange-500' : ''}`}
+                          />
+                        </div>
+
+                        {/* Subcategories Accordion Content */}
+                        {isExpanded && (
+                          <div className="pl-3 pr-2 py-1.5 my-1 space-y-1 bg-white/5 rounded-lg border-l-2 border-orange-500">
+                            <Link
+                              href={`/shop?category=${mainCat.slug}`}
+                              onClick={onClose}
+                              className="block py-1.5 px-2 text-xs font-black text-orange-400 hover:text-orange-300 transition-colors uppercase tracking-wider"
+                            >
+                              All {mainCat.name} →
+                            </Link>
+                            {subs.map((sub) => (
+                              <Link
+                                key={sub.id}
+                                href={`/shop?category=${sub.slug}`}
+                                onClick={onClose}
+                                className="block py-1.5 px-2 text-xs font-semibold text-gray-300 hover:text-white hover:bg-white/5 rounded transition-colors"
+                              >
+                                {sub.name}
+                              </Link>
+                            ))}
+                          </div>
                         )}
                       </div>
+                    );
+                  }
 
-                      {/* Subcategories list */}
-                      {subs.length > 0 && isExpanded && (
-                        <div className="pl-4 pr-2 py-1 space-y-1 bg-white/5 rounded-md my-1 border-l-2 border-orange-500/70">
-                          {subs.map((sub) => (
-                            <Link
-                              key={sub.id}
-                              href={`/shop?category=${sub.slug}`}
-                              onClick={onClose}
-                              className="block py-1.5 text-xs font-medium text-gray-300 hover:text-orange-400 transition-colors"
-                            >
-                              {sub.name}
-                            </Link>
-                          ))}
-                        </div>
-                      )}
+                  return (
+                    <div key={mainCat.id}>
+                      <Link
+                        href={`/shop?category=${mainCat.slug}`}
+                        onClick={onClose}
+                        className="flex items-center justify-between text-sm py-2 px-2.5 rounded-lg hover:bg-white/5 transition-colors text-white font-bold"
+                      >
+                        <span>{mainCat.name}</span>
+                      </Link>
                     </div>
                   );
                 })}

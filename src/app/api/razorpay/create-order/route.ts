@@ -8,10 +8,6 @@ export async function POST(request: Request) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const {
       customerName,
       customerPhone,
@@ -19,10 +15,57 @@ export async function POST(request: Request) {
       shippingAddress,
       items,
       couponCode,
+      existingOrderId,
     } = await request.json();
 
-    if (!customerName || !customerPhone || !shippingAddress || !items || !Array.isArray(items) || items.length === 0) {
-      return NextResponse.json({ error: 'Invalid order parameters' }, { status: 400 });
+    const finalEmail = (customerEmail || user?.email || '').trim().toLowerCase() || null;
+
+    // Handle payment retry for existing unpaid order
+    if (existingOrderId) {
+      const { data: existingOrder, error: fetchErr } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('id', existingOrderId)
+        .single();
+
+      if (!fetchErr && existingOrder) {
+        if (existingOrder.payment_status === 'paid') {
+          return NextResponse.json({ error: 'This order has already been paid.' }, { status: 400 });
+        }
+
+        const razorpayOrder = await createRazorpayOrder({
+          amount: Number(existingOrder.total_amount),
+          currency: 'INR',
+          receipt: existingOrder.order_number,
+          notes: {
+            order_id: existingOrder.id,
+            user_id: user ? user.id : 'guest',
+            order_number: existingOrder.order_number,
+          },
+        });
+
+        await supabase
+          .from('orders')
+          .update({
+            razorpay_order_id: razorpayOrder.id,
+            payment_status: 'pending',
+            order_status: 'awaiting_payment',
+          })
+          .eq('id', existingOrder.id);
+
+        return NextResponse.json({
+          orderId: existingOrder.id,
+          orderNumber: existingOrder.order_number,
+          razorpayOrderId: razorpayOrder.id,
+          amount: Number(existingOrder.total_amount),
+          currency: 'INR',
+          keyId: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || '',
+        });
+      }
+    }
+
+    if (!customerName || !customerPhone || !shippingAddress || !shippingAddress.address_line_1 || !shippingAddress.city || !shippingAddress.state || !shippingAddress.pincode || !items || !Array.isArray(items) || items.length === 0) {
+      return NextResponse.json({ error: 'Please provide all mandatory details (Full Name, Phone, Address, City, State, PIN code)' }, { status: 400 });
     }
 
     // 1. Authoritative verification of products & weights from database
@@ -132,14 +175,14 @@ export async function POST(request: Request) {
 
     const serverGrandTotal = Math.max(0, serverSubtotal - serverDiscountAmount + serverShippingFee);
 
-    // 6. Create order record in Supabase
+    // 6. Create order record in Supabase with initial statuses
     const { data: order, error: orderError } = await supabase
       .from('orders')
       .insert({
-        user_id: user.id,
+        user_id: user ? user.id : null,
         customer_name: customerName,
         customer_phone: customerPhone,
-        customer_email: customerEmail || user.email,
+        customer_email: finalEmail,
         shipping_address: shippingAddress,
         subtotal: serverSubtotal,
         discount_amount: serverDiscountAmount,
@@ -148,7 +191,7 @@ export async function POST(request: Request) {
         coupon_code: validCouponCode,
         payment_method: 'razorpay',
         payment_status: 'pending',
-        order_status: 'pending',
+        order_status: 'awaiting_payment',
       })
       .select()
       .single();
@@ -180,7 +223,7 @@ export async function POST(request: Request) {
         receipt: order.order_number,
         notes: {
           order_id: order.id,
-          user_id: user.id,
+          user_id: user ? user.id : 'guest',
           order_number: order.order_number,
         },
       });
@@ -197,19 +240,14 @@ export async function POST(request: Request) {
         razorpayOrderId: razorpayOrder.id,
         amount: serverGrandTotal,
         currency: 'INR',
-        keyId: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_placeholder',
+        keyId: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || '',
       });
     } catch (rzpErr) {
       console.error('Razorpay order creation error:', rzpErr);
-      // Fallback if Razorpay credentials are test/unconfigured
-      return NextResponse.json({
-        orderId: order.id,
-        orderNumber: order.order_number,
-        razorpayOrderId: `test_rzp_${Date.now()}`,
-        amount: serverGrandTotal,
-        currency: 'INR',
-        keyId: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_placeholder',
-      });
+      return NextResponse.json(
+        { error: 'Failed to initiate payment session with Razorpay. Please check payment configuration or try again.' },
+        { status: 502 }
+      );
     }
   } catch (err) {
     console.error('Razorpay create-order route error:', err);

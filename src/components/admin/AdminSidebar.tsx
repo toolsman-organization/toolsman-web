@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
@@ -20,6 +21,7 @@ import {
   ExternalLink,
   LogOut,
   X,
+  Loader2,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
@@ -47,12 +49,20 @@ const navItems = [
 export default function AdminSidebar({ mobileOpen = false, onClose }: AdminSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleLogout = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.push('/login');
-    router.refresh();
+    setIsLoggingOut(true);
+    try {
+      const supabase = createClient();
+      await supabase.auth.signOut();
+      router.push('/login');
+      router.refresh();
+    } catch (error) {
+      console.error('Logout error:', error);
+      setIsLoggingOut(false);
+    }
   };
 
   const content = (
@@ -80,7 +90,7 @@ export default function AdminSidebar({ mobileOpen = false, onClose }: AdminSideb
       </div>
 
       {/* Nav List */}
-      <nav className="flex-1 overflow-y-auto p-3 space-y-1">
+      <nav className="flex-1 overflow-y-auto scrollbar-none p-3 space-y-1">
         {navItems.map((item) => {
           const isActive =
             item.href === '/admin'
@@ -116,8 +126,11 @@ export default function AdminSidebar({ mobileOpen = false, onClose }: AdminSideb
           <ExternalLink size={14} />
         </Link>
         <button
-          onClick={handleLogout}
-          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-red-400 hover:text-red-300 hover:bg-red-950/40 transition-colors"
+          onClick={() => {
+            if (onClose) onClose();
+            setShowLogoutModal(true);
+          }}
+          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-red-400 hover:text-red-300 hover:bg-red-950/40 transition-colors cursor-pointer"
         >
           <LogOut size={15} />
           <span>Sign Out</span>
@@ -142,6 +155,57 @@ export default function AdminSidebar({ mobileOpen = false, onClose }: AdminSideb
           </div>
         </div>
       )}
+
+      {/* Logout Confirmation Modal */}
+      {showLogoutModal && (
+        <div 
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs animate-in fade-in duration-200"
+          onClick={() => !isLoggingOut && setShowLogoutModal(false)}
+        >
+          <div 
+            className="bg-neutral-900 border border-neutral-800 text-white rounded-2xl p-6 max-w-sm w-full shadow-2xl space-y-4 animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-12 h-12 rounded-full bg-red-500/10 border border-red-500/20 text-red-500 flex items-center justify-center mx-auto">
+              <LogOut size={22} />
+            </div>
+            
+            <div className="text-center space-y-1.5">
+              <h3 className="text-base font-bold text-white">Sign Out of Admin?</h3>
+              <p className="text-xs text-neutral-400 leading-relaxed">
+                Are you sure you want to end your session? You will need to sign in again to access the admin dashboard.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                type="button"
+                disabled={isLoggingOut}
+                onClick={() => setShowLogoutModal(false)}
+                className="flex-1 px-4 py-2.5 rounded-xl border border-neutral-700 bg-neutral-800 text-neutral-300 hover:bg-neutral-700 hover:text-white text-xs font-bold transition-all disabled:opacity-50 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isLoggingOut}
+                onClick={handleLogout}
+                className="flex-1 px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-lg shadow-red-600/20 disabled:opacity-50 cursor-pointer"
+              >
+                {isLoggingOut ? (
+                  <>
+                    <Loader2 size={14} className="animate-spin" />
+                    <span>Signing out...</span>
+                  </>
+                ) : (
+                  <span>Yes, Sign Out</span>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
+

@@ -12,53 +12,76 @@ export async function POST(request: Request) {
       razorpay_signature,
     } = await request.json();
 
-    if (!orderId || !razorpay_payment_id) {
-      return NextResponse.json({ error: 'Missing payment verification details' }, { status: 400 });
+    if (!orderId || !razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+      return NextResponse.json(
+        { error: 'Missing payment verification details (orderId, razorpay_order_id, razorpay_payment_id, razorpay_signature required)' },
+        { status: 400 }
+      );
     }
 
     const supabase = await createClient();
 
-    // Verify signature if secret is provided and not a test bypass
-    if (process.env.RAZORPAY_KEY_SECRET && razorpay_signature) {
-      const isValid = verifyRazorpaySignature({
-        razorpay_order_id,
-        razorpay_payment_id,
-        razorpay_signature,
-      });
+    // 1. Fetch existing order to check status and prevent duplicate updates (Idempotency)
+    const { data: existingOrder, error: fetchError } = await supabase
+      .from('orders')
+      .select('*, order_items(*)')
+      .eq('id', orderId)
+      .single();
 
-      if (!isValid) {
-        // Mark payment failed
-        await supabase
-          .from('orders')
-          .update({
-            payment_status: 'failed',
-            notes: 'Signature verification failed',
-          })
-          .eq('id', orderId);
-
-        return NextResponse.json({ error: 'Invalid payment signature' }, { status: 400 });
-      }
+    if (fetchError || !existingOrder) {
+      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
     }
 
-    // Update order status in Supabase to confirmed and paid
+    // If order is already verified and paid, return success idempotently
+    if (existingOrder.payment_status === 'paid') {
+      return NextResponse.json({
+        success: true,
+        orderNumber: existingOrder.order_number,
+        alreadyProcessed: true,
+      });
+    }
+
+    // 2. Authoritatively verify HMAC SHA256 signature
+    const isValid = verifyRazorpaySignature({
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
+    });
+
+    if (!isValid) {
+      // Mark payment failed without confirming fulfillment
+      await supabase
+        .from('orders')
+        .update({
+          payment_status: 'failed',
+          order_status: 'awaiting_payment',
+          notes: 'Payment signature verification failed',
+        })
+        .eq('id', orderId);
+
+      return NextResponse.json({ error: 'Invalid payment signature' }, { status: 400 });
+    }
+
+    // 3. Mark payment as PAID and fulfillment as CONFIRMED
     const { data: updatedOrder, error: updateError } = await supabase
       .from('orders')
       .update({
         payment_status: 'paid',
         order_status: 'confirmed',
         razorpay_payment_id,
-        razorpay_signature: razorpay_signature || 'verified',
+        razorpay_signature,
+        notes: null,
       })
       .eq('id', orderId)
       .select('*, order_items(*)')
       .single();
 
     if (updateError || !updatedOrder) {
-      console.error('Failed to update verified order:', updateError);
+      console.error('Failed to update verified order in DB:', updateError);
       return NextResponse.json({ error: 'Failed to update order state' }, { status: 500 });
     }
 
-    // Send email notification asynchronously
+    // 4. Send email notification asynchronously
     if (updatedOrder.customer_email) {
       const address = updatedOrder.shipping_address as { address_line_1?: string; city?: string; state?: string; pincode?: string };
       const formattedAddress = `${address.address_line_1 || ''}, ${address.city || ''}, ${address.state || ''} - ${address.pincode || ''}`;
@@ -77,7 +100,7 @@ export async function POST(request: Request) {
       }).catch((e) => console.error('Email dispatch error:', e));
     }
 
-    // Clear the customer's cart
+    // 5. Clear the customer's cart
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       await supabase.from('cart_items').delete().eq('user_id', user.id);
@@ -92,3 +115,4 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Server error processing payment verification' }, { status: 500 });
   }
 }
+

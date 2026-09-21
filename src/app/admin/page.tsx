@@ -12,7 +12,7 @@ import {
   PlusCircle,
 } from 'lucide-react';
 import { getDashboardStats, getRecentOrders } from '@/services/orders';
-import { formatCurrency, formatDate, getOrderStatusColor } from '@/lib/utils';
+import { formatCurrency, formatDate, getOrderStatusColor, getPaymentStatusColor, formatFulfillmentStatusLabel, formatPaymentStatusLabel } from '@/lib/utils';
 
 export default async function AdminDashboardPage() {
   const [stats, recentOrders] = await Promise.all([
@@ -192,13 +192,13 @@ export default async function AdminDashboardPage() {
                       {formatCurrency(order.total_amount)}
                     </td>
                     <td className="py-3.5 px-4">
-                      <span className="font-bold uppercase text-[11px] text-neutral-700">
-                        {order.payment_method} ({order.payment_status})
+                      <span className={`status-pill ${getPaymentStatusColor(order.payment_status)} text-[10px] font-semibold`}>
+                        {formatPaymentStatusLabel(order.payment_status)}
                       </span>
                     </td>
                     <td className="py-3.5 px-4">
-                      <span className={`status-pill ${getOrderStatusColor(order.order_status)}`}>
-                        {order.order_status}
+                      <span className={`status-pill ${getOrderStatusColor(order.order_status)} text-[10px] font-bold`}>
+                        {formatFulfillmentStatusLabel(order.order_status)}
                       </span>
                     </td>
                     <td className="py-3.5 px-4 text-right">

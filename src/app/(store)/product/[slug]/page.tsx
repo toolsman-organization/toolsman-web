@@ -43,7 +43,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
     notFound();
   }
 
-  const relatedProducts = await getRelatedProducts(product.id, product.category_id, 4);
+  const relatedProducts = await getRelatedProducts(product.id, product.category_id, 5);
   const discount = calculateDiscount(product.original_price, product.selling_price);
 
   const includedComponentsList = product.included_components
@@ -252,24 +252,29 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
           </div>
         </div>
 
-        {/* Related Products Carousel / Grid */}
+        {/* Related Products Section */}
         {relatedProducts.length > 0 && (
-          <section className="mt-8">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl sm:text-2xl font-black text-neutral-950 tracking-tight uppercase">
-                Related Tools & Accessories
-              </h2>
+          <section className="mt-10 sm:mt-14 pt-8 border-t border-neutral-200/90">
+            <div className="flex items-center justify-between mb-5">
+              <div>
+                <span className="text-[11px] font-bold text-orange-600 uppercase tracking-widest block mb-0.5">
+                  Complete Your Setup
+                </span>
+                <h2 className="text-lg sm:text-xl font-black text-neutral-950 tracking-tight uppercase">
+                  Related Tools & Accessories
+                </h2>
+              </div>
               <Link
                 href={`/shop?category=${product.category?.slug || ''}`}
-                className="text-xs sm:text-sm font-bold text-orange-600 hover:text-orange-700"
+                className="text-xs font-bold text-orange-600 hover:text-orange-700 transition-colors"
               >
-                View Category
+                View Category &rarr;
               </Link>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
               {relatedProducts.map((p) => (
-                <ProductCard key={p.id} product={p} />
+                <ProductCard key={p.id} product={p} compact={true} />
               ))}
             </div>
           </section>

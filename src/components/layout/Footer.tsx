@@ -12,10 +12,10 @@ interface FooterProps {
 
 const quickLinks = [
   { label: 'Shop All Products', href: '/shop' },
+  { label: 'Track Your Order', href: '/track-order' },
   { label: 'Power Tools', href: '/shop?search=power+tools' },
   { label: 'Hand Tools', href: '/shop?search=hand+tools' },
   { label: 'Accessories', href: '/shop?search=accessories' },
-  { label: 'Special Offers', href: '/shop?sort=price-low' },
 ];
 
 const companyLinks = [
@@ -28,9 +28,9 @@ const companyLinks = [
 const accountLinks = [
   { label: 'My Account', href: '/account' },
   { label: 'My Orders', href: '/account/orders' },
+  { label: 'Track Live Order', href: '/track-order' },
   { label: 'Wishlist', href: '/account/wishlist' },
   { label: 'Saved Addresses', href: '/account/addresses' },
-  { label: 'Shopping Cart', href: '/cart' },
 ];
 
 export default function Footer({ settings }: FooterProps) {
