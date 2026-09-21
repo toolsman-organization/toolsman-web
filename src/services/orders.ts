@@ -67,7 +67,13 @@ export async function getAllOrdersAdmin(params: {
     .from('orders')
     .select('*', { count: 'exact' });
 
-  if (status) query = query.eq('order_status', status);
+  if (status) {
+    if (status === 'awaiting_payment' || status === 'pending') {
+      query = query.in('order_status', ['awaiting_payment', 'pending']);
+    } else {
+      query = query.eq('order_status', status);
+    }
+  }
   if (search) {
     query = query.or(
       `order_number.ilike.%${search}%,customer_name.ilike.%${search}%,customer_phone.ilike.%${search}%`
@@ -102,7 +108,7 @@ export async function getDashboardStats() {
     totalRevenue,
     totalProducts: productsResult.count ?? 0,
     totalCustomers: customersResult.count ?? 0,
-    pendingOrders: orders.filter((o) => o.order_status === 'pending').length,
+    pendingOrders: orders.filter((o) => ['awaiting_payment', 'pending'].includes(o.order_status) && o.payment_status !== 'paid').length,
     processingOrders: orders.filter((o) => ['confirmed', 'processing', 'packed', 'shipped'].includes(o.order_status)).length,
     deliveredOrders: orders.filter((o) => o.order_status === 'delivered').length,
     lowStockProducts: lowStockResult.count ?? 0,

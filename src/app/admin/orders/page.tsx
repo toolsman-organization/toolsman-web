@@ -1,7 +1,14 @@
 import Link from 'next/link';
 import { Search, Filter, ShoppingBag, Eye } from 'lucide-react';
 import { getAllOrdersAdmin } from '@/services/orders';
-import { formatCurrency, formatDate, getOrderStatusColor, getPaymentStatusColor } from '@/lib/utils';
+import {
+  formatCurrency,
+  formatDate,
+  getOrderStatusColor,
+  getPaymentStatusColor,
+  formatFulfillmentStatusLabel,
+  formatPaymentStatusLabel,
+} from '@/lib/utils';
 
 interface AdminOrdersPageProps {
   searchParams: Promise<{
@@ -12,7 +19,14 @@ interface AdminOrdersPageProps {
 }
 
 const statusOptions = [
-  'all', 'pending', 'confirmed', 'processing', 'packed', 'shipped', 'delivered', 'cancelled'
+  { value: 'all', label: 'All' },
+  { value: 'awaiting_payment', label: 'Awaiting Payment' },
+  { value: 'confirmed', label: 'Confirmed' },
+  { value: 'processing', label: 'Processing' },
+  { value: 'packed', label: 'Packed' },
+  { value: 'shipped', label: 'Shipped' },
+  { value: 'delivered', label: 'Delivered' },
+  { value: 'cancelled', label: 'Cancelled' },
 ];
 
 export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageProps) {
@@ -39,18 +53,18 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
       {/* Status Filter Tabs */}
       <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
         {statusOptions.map((s) => {
-          const isSelected = (params.status || 'all') === s;
+          const isSelected = (params.status || 'all') === s.value || (params.status === 'pending' && s.value === 'awaiting_payment');
           return (
             <Link
-              key={s}
-              href={`/admin/orders${s !== 'all' ? `?status=${s}` : ''}`}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-colors capitalize ${
+              key={s.value}
+              href={`/admin/orders${s.value !== 'all' ? `?status=${s.value}` : ''}`}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-colors ${
                 isSelected
                   ? 'bg-neutral-900 text-white shadow-xs'
                   : 'bg-white border border-neutral-200 text-neutral-600 hover:border-neutral-400'
               }`}
             >
-              {s}
+              {s.label}
             </Link>
           );
         })}
@@ -93,14 +107,14 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
                         <span className="font-bold text-[10px] uppercase text-neutral-700">
                           {order.payment_method}
                         </span>
-                        <span className={`status-pill ${getPaymentStatusColor(order.payment_status)}`}>
-                          {order.payment_status}
+                        <span className={`status-pill ${getPaymentStatusColor(order.payment_status)} font-semibold text-[10px]`}>
+                          {formatPaymentStatusLabel(order.payment_status)}
                         </span>
                       </div>
                     </td>
                     <td className="py-3.5 px-4">
-                      <span className={`status-pill ${getOrderStatusColor(order.order_status)} font-bold`}>
-                        {order.order_status}
+                      <span className={`status-pill ${getOrderStatusColor(order.order_status)} font-bold text-[11px]`}>
+                        {formatFulfillmentStatusLabel(order.order_status)}
                       </span>
                     </td>
                     <td className="py-3.5 px-4 text-right">

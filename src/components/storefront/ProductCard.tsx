@@ -12,9 +12,10 @@ import { formatCurrency, calculateDiscount } from '@/lib/utils';
 interface ProductCardProps {
   product: ProductWithDetails;
   priority?: boolean;
+  compact?: boolean;
 }
 
-export default function ProductCard({ product, priority = false }: ProductCardProps) {
+export default function ProductCard({ product, priority = false, compact = false }: ProductCardProps) {
   const { addToCart } = useCart();
   const { isInWishlist, toggleWishlist } = useWishlist();
   const [adding, setAdding] = useState(false);
@@ -46,6 +47,119 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
     e.stopPropagation();
     await toggleWishlist(product.id);
   };
+
+  if (compact) {
+    return (
+      <div className="product-card group flex flex-col justify-between h-full bg-white rounded-xl border border-neutral-200/90 hover:border-orange-500/80 shadow-2xs hover:shadow-md transition-all duration-250 overflow-hidden">
+        <div>
+          {/* Top Badges & Wishlist */}
+          <div className="relative p-2 pb-0 flex items-center justify-between z-10 gap-1">
+            <div className="flex items-center gap-1">
+              {discount > 0 ? (
+                <span className="bg-red-600 text-white font-black text-[8px] sm:text-[9px] px-1.5 py-0.5 rounded tracking-wide shadow-xs">
+                  {discount}% OFF
+                </span>
+              ) : product.is_new ? (
+                <span className="bg-emerald-600 text-white font-bold text-[8px] sm:text-[9px] px-1.5 py-0.5 rounded tracking-wide shadow-xs">
+                  NEW
+                </span>
+              ) : null}
+            </div>
+
+            <button
+              type="button"
+              onClick={handleToggleWishlist}
+              className={`w-6 h-6 rounded-full flex items-center justify-center transition-all duration-200 shadow-xs shrink-0 ${
+                isWishlisted
+                  ? 'bg-red-50 text-red-500 hover:bg-red-100 scale-105'
+                  : 'bg-white/90 text-neutral-400 hover:text-red-500 hover:bg-white border border-neutral-200'
+              }`}
+              aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+            >
+              <Heart size={11} className={isWishlisted ? 'fill-current' : ''} />
+            </button>
+          </div>
+
+          {/* Product Image */}
+          <Link
+            href={`/product/${product.slug}`}
+            className="relative block w-full aspect-[4/3] p-1.5 overflow-hidden group-hover:scale-105 transition-transform duration-300"
+          >
+            {product.primary_image_url ? (
+              <Image
+                src={product.primary_image_url}
+                alt={product.primary_image_alt || product.name}
+                fill
+                priority={priority}
+                sizes="(max-width: 640px) 33vw, 20vw"
+                className="object-contain p-1"
+              />
+            ) : (
+              <div className="w-full h-full flex flex-col items-center justify-center bg-neutral-100 rounded-md text-neutral-400">
+                <span className="text-xl">🛠️</span>
+              </div>
+            )}
+          </Link>
+
+          {/* Product Details */}
+          <div className="p-2.5 pt-0.5 flex flex-col gap-0.5">
+            <span className="font-extrabold text-neutral-900 tracking-wider uppercase text-[9px] truncate">
+              {product.brand_name || 'TOOLSMAN'}
+            </span>
+
+            <Link
+              href={`/product/${product.slug}`}
+              className="font-bold text-neutral-950 text-xs leading-snug line-clamp-2 min-h-[2rem] hover:text-orange-600 transition-colors"
+              title={product.name}
+            >
+              {product.name}
+            </Link>
+
+            <div className="flex items-center gap-1 text-[10px] text-amber-800 font-bold mt-0.5">
+              <Star size={9} className="fill-amber-500 text-amber-500" />
+              <span>4.8</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Pricing & Compact Cart Button */}
+        <div className="p-2 sm:p-2.5 pt-1.5 border-t border-neutral-100 flex items-center justify-between gap-1 bg-neutral-50/60 rounded-b-xl">
+          <div className="min-w-0">
+            <span className="text-xs sm:text-sm font-black text-neutral-950 block truncate">
+              {formatCurrency(product.selling_price)}
+            </span>
+            {product.original_price > product.selling_price && (
+              <span className="text-[8.5px] text-neutral-400 line-through block truncate">
+                {formatCurrency(product.original_price)}
+              </span>
+            )}
+          </div>
+
+          <button
+            type="button"
+            onClick={handleAddToCart}
+            disabled={isOutOfStock || adding}
+            className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg shrink-0 flex items-center justify-center transition-all duration-200 shadow-xs ${
+              added
+                ? 'bg-emerald-600 text-white'
+                : isOutOfStock
+                ? 'bg-neutral-200 text-neutral-400 cursor-not-allowed'
+                : 'bg-orange-500 hover:bg-orange-600 active:scale-95 text-white shadow-orange-500/20'
+            }`}
+            aria-label={`Add ${product.name} to cart`}
+          >
+            {adding ? (
+              <Loader2 size={11} className="animate-spin" />
+            ) : added ? (
+              <Check size={11} className="stroke-[3]" />
+            ) : (
+              <ShoppingCart size={11} />
+            )}
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="product-card group flex flex-col justify-between h-full bg-white rounded-xl sm:rounded-2xl border border-neutral-200/90 hover:border-orange-500/80 shadow-2xs hover:shadow-xl transition-all duration-300 overflow-hidden">

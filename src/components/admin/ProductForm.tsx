@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Plus, Trash2, Loader2, Star, Sparkles, Flame, Check, Upload, AlertCircle, Folder, Layers } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
-import { slugify } from '@/lib/utils';
+import { slugify, compressImageFile } from '@/lib/utils';
 import type { Category, Brand, ProductFullDetail } from '@/types/database';
 
 interface ProductFormProps {
@@ -19,6 +19,7 @@ export default function ProductForm({ categories, brands, initialData }: Product
   const supabase = createClient();
 
   const [loading, setLoading] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
   // Split categories into Main Categories (parent_id is null) vs Subcategories
@@ -60,7 +61,7 @@ export default function ProductForm({ categories, brands, initialData }: Product
   const [isBestSeller, setIsBestSeller] = useState(initialData?.is_best_seller || false);
   const [isNew, setIsNew] = useState(initialData?.is_new || false);
 
-  // Images State
+  // Images State (Max 5)
   const [images, setImages] = useState<Array<{
     id?: string;
     image_url: string;
@@ -103,39 +104,60 @@ export default function ProductForm({ categories, brands, initialData }: Product
     }
   };
 
-  // Image Upload handler
+  // Image Upload handler with client-side compression and max 5 limit
   const handleAddImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
 
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = async () => {
-      const base64 = reader.result as string;
-      try {
+    if (images.length >= 5) {
+      alert('Maximum limit of 5 images per product reached.');
+      return;
+    }
+
+    const availableSlots = 5 - images.length;
+    const selectedFiles = files.slice(0, availableSlots);
+
+    setUploadingImage(true);
+
+    try {
+      for (const file of selectedFiles) {
+        // 1. Compress image client-side to ~30-60KB WebP
+        const compressedBase64 = await compressImageFile(file, 1200, 0.75);
+
+        // 2. Upload compressed image to Cloudinary
         const res = await fetch('/api/cloudinary/upload', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ file: base64, folder: 'toolsman/products' }),
+          body: JSON.stringify({ file: compressedBase64, folder: 'toolsman/products' }),
         });
+
         const data = await res.json();
         if (res.ok && data.url) {
-          const isFirst = images.length === 0;
-          setImages((prev) => [
-            ...prev,
-            {
-              image_url: data.url,
-              cloudinary_public_id: data.public_id,
-              alt_text: name,
-              is_primary: isFirst,
-              sort_order: prev.length,
-            },
-          ]);
+          setImages((prev) => {
+            if (prev.length >= 5) return prev;
+            const isFirst = prev.length === 0;
+            return [
+              ...prev,
+              {
+                image_url: data.url,
+                cloudinary_public_id: data.public_id,
+                alt_text: name,
+                is_primary: isFirst,
+                sort_order: prev.length,
+              },
+            ];
+          });
+        } else {
+          alert(data.error || 'Image upload failed');
         }
-      } catch {
-        alert('Image upload failed');
       }
-    };
+    } catch (err) {
+      console.error('Upload error:', err);
+      alert('Image compression/upload failed');
+    } finally {
+      setUploadingImage(false);
+      e.target.value = '';
+    }
   };
 
   const handleSetPrimaryImage = (index: number) => {
@@ -180,6 +202,11 @@ export default function ProductForm({ categories, brands, initialData }: Product
       return;
     }
 
+    if (!weight.trim()) {
+      setErrorMsg('Please enter Item Weight (Item Weight is required).');
+      return;
+    }
+
     if (!subcategoryId) {
       setErrorMsg('Please select a Subcategory. Products must belong to a Subcategory.');
       return;
@@ -200,7 +227,7 @@ export default function ProductForm({ categories, brands, initialData }: Product
         original_price: parseFloat(originalPrice) || parseFloat(sellingPrice),
         selling_price: parseFloat(sellingPrice),
         stock_quantity: parseInt(stockQuantity, 10) || 0,
-        weight: weight.trim() || null,
+        weight: weight.trim(),
         included_components: includedComponents.trim() || null,
         is_active: isActive,
         is_featured: isFeatured,
@@ -401,10 +428,11 @@ export default function ProductForm({ categories, brands, initialData }: Product
 
           <div>
             <label className="block font-bold text-neutral-700 uppercase tracking-wider mb-1">
-              Item Weight <span className="text-neutral-400 font-normal normal-case">(Optional)</span>
+              Item Weight *
             </label>
             <input
               type="text"
+              required
               value={weight}
               onChange={(e) => setWeight(e.target.value)}
               className="w-full px-3 py-2.5 rounded-lg border border-neutral-300 text-sm focus:outline-none focus:border-orange-500"
@@ -549,24 +577,44 @@ export default function ProductForm({ categories, brands, initialData }: Product
         </div>
       </div>
 
-      {/* 3. Product Images (Cloudinary) */}
+      {/* 3. Product Images (Cloudinary - Max 5) */}
       <div className="bg-white rounded-2xl border border-neutral-200 p-6 shadow-sm">
         <div className="flex items-center justify-between pb-3 mb-4 border-b border-neutral-100">
           <div>
-            <h2 className="font-black text-base text-neutral-900 uppercase tracking-tight">
-              Product Images ({images.length})
+            <h2 className="font-black text-base text-neutral-900 uppercase tracking-tight flex items-center gap-2">
+              <span>Product Images ({images.length}/5)</span>
+              {images.length >= 5 && (
+                <span className="text-[10px] font-bold bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full uppercase">
+                  Max Limit Reached
+                </span>
+              )}
             </h2>
             <p className="text-[11px] text-neutral-500">
-              Upload multiple images to Cloudinary. Click &quot;Set Primary&quot; to choose the main thumbnail.
+              Upload up to 5 product images. Images are automatically compressed to minimal KB size before Cloudinary upload.
             </p>
           </div>
 
-          <label className="btn-secondary py-1.5 px-3 cursor-pointer text-xs font-bold flex items-center gap-1.5">
-            <Upload size={14} />
-            <span>Upload Image</span>
+          <label
+            className={`btn-secondary py-1.5 px-3 text-xs font-bold flex items-center gap-1.5 cursor-pointer ${
+              images.length >= 5 || uploadingImage ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''
+            }`}
+          >
+            {uploadingImage ? (
+              <>
+                <Loader2 size={14} className="animate-spin text-orange-600" />
+                <span>Compressing & Uploading...</span>
+              </>
+            ) : (
+              <>
+                <Upload size={14} />
+                <span>Upload Image ({5 - images.length} left)</span>
+              </>
+            )}
             <input
               type="file"
               accept="image/*"
+              multiple
+              disabled={images.length >= 5 || uploadingImage}
               className="hidden"
               onChange={handleAddImageUpload}
             />
@@ -608,7 +656,7 @@ export default function ProductForm({ categories, brands, initialData }: Product
           </div>
         ) : (
           <div className="p-8 text-center bg-neutral-50 rounded-xl border border-dashed border-neutral-300 text-neutral-400">
-            No images uploaded yet. Click &quot;Upload Image&quot; to add photos.
+            No images uploaded yet. Click &quot;Upload Image&quot; to add up to 5 photos.
           </div>
         )}
       </div>

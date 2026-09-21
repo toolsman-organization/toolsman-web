@@ -81,3 +81,25 @@ export function verifyRazorpaySignature(params: {
 
   return expectedSignature === params.razorpay_signature;
 }
+
+/**
+ * Verify Razorpay Webhook signature.
+ */
+export function verifyRazorpayWebhookSignature(
+  rawBody: string,
+  signature: string,
+  secret?: string
+): boolean {
+  const webhookSecret = secret || process.env.RAZORPAY_WEBHOOK_SECRET || process.env.RAZORPAY_KEY_SECRET;
+  if (!webhookSecret) {
+    throw new Error('Missing webhook secret (RAZORPAY_WEBHOOK_SECRET or RAZORPAY_KEY_SECRET)');
+  }
+
+  const expectedSignature = crypto
+    .createHmac('sha256', webhookSecret)
+    .update(rawBody)
+    .digest('hex');
+
+  return expectedSignature === signature;
+}
+

@@ -3,7 +3,14 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowLeft, Clock, MapPin, CreditCard, ShieldCheck } from 'lucide-react';
 import { getOrderById } from '@/services/orders';
-import { formatCurrency, formatDateTime, getOrderStatusColor, getPaymentStatusColor } from '@/lib/utils';
+import {
+  formatCurrency,
+  formatDateTime,
+  getOrderStatusColor,
+  getPaymentStatusColor,
+  formatFulfillmentStatusLabel,
+  formatPaymentStatusLabel,
+} from '@/lib/utils';
 import OrderStatusUpdater from './OrderStatusUpdater';
 
 interface AdminOrderDetailPageProps {
@@ -61,11 +68,11 @@ export default async function AdminOrderDetailPage({ params }: AdminOrderDetailP
         </div>
 
         <div className="flex items-center gap-2">
-          <span className={`status-pill ${getOrderStatusColor(order.order_status)} text-xs px-3 py-1 font-bold`}>
-            Status: {order.order_status}
-          </span>
           <span className={`status-pill ${getPaymentStatusColor(order.payment_status)} text-xs px-3 py-1 font-bold`}>
-            Payment: {order.payment_status}
+            Payment: {formatPaymentStatusLabel(order.payment_status)}
+          </span>
+          <span className={`status-pill ${getOrderStatusColor(order.order_status)} text-xs px-3 py-1 font-bold`}>
+            Fulfillment: {formatFulfillmentStatusLabel(order.order_status)}
           </span>
         </div>
       </div>
@@ -126,7 +133,7 @@ export default async function AdminOrderDetailPage({ params }: AdminOrderDetailP
                 <span className="font-bold text-neutral-900">{formatCurrency(order.shipping_amount)}</span>
               </div>
               <div className="pt-2 border-t border-neutral-200 flex justify-between items-baseline font-black text-base text-neutral-950">
-                <span>Total Amount Paid/Due</span>
+                <span>Total Amount</span>
                 <span>{formatCurrency(order.total_amount)}</span>
               </div>
             </div>
@@ -157,17 +164,21 @@ export default async function AdminOrderDetailPage({ params }: AdminOrderDetailP
                 {address.landmark && <p className="text-neutral-400 mt-1">Landmark: {address.landmark}</p>}
               </div>
 
-              {order.razorpay_payment_id && (
-                <div className="sm:col-span-2 pt-3 border-t border-neutral-100">
-                  <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider block mb-1">
-                    Razorpay Transaction Details
-                  </span>
-                  <p className="font-mono text-xs">Payment ID: <strong className="text-neutral-900">{order.razorpay_payment_id}</strong></p>
-                  {order.razorpay_order_id && (
-                    <p className="font-mono text-xs text-neutral-500">Order ID: {order.razorpay_order_id}</p>
-                  )}
+              <div className="sm:col-span-2 pt-3 border-t border-neutral-100 space-y-1.5">
+                <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider block mb-1">
+                  Payment Details
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 font-mono text-xs">
+                  <p>Method: <strong className="text-neutral-900 uppercase">{order.payment_method || 'Razorpay'}</strong></p>
+                  <p>Status: <strong className="text-neutral-900 capitalize">{formatPaymentStatusLabel(order.payment_status)}</strong></p>
+                  <p className="sm:col-span-2">
+                    Razorpay Order ID: <strong className="text-neutral-800">{order.razorpay_order_id || 'Not available'}</strong>
+                  </p>
+                  <p className="sm:col-span-2">
+                    Razorpay Payment ID: <strong className="text-neutral-800">{order.razorpay_payment_id || 'Not available'}</strong>
+                  </p>
                 </div>
-              )}
+              </div>
             </div>
           </div>
         </div>
@@ -178,6 +189,7 @@ export default async function AdminOrderDetailPage({ params }: AdminOrderDetailP
           <OrderStatusUpdater
             orderId={order.id}
             currentStatus={order.order_status}
+            paymentStatus={order.payment_status}
             customerEmail={order.customer_email}
             customerName={order.customer_name}
             orderNumber={order.order_number}

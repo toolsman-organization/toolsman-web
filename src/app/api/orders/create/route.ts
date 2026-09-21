@@ -19,7 +19,7 @@ export async function POST(request: Request) {
       shippingAddress,
       items,
       couponCode,
-      paymentMethod = 'cod',
+      paymentMethod = 'razorpay',
     } = body;
 
     if (!customerName || !customerPhone || !shippingAddress || !items || !Array.isArray(items) || items.length === 0) {
@@ -149,8 +149,8 @@ export async function POST(request: Request) {
         total_amount: serverGrandTotal,
         coupon_code: validCouponCode,
         payment_method: paymentMethod,
-        payment_status: paymentMethod === 'cod' ? 'pending' : 'pending',
-        order_status: paymentMethod === 'cod' ? 'confirmed' : 'pending',
+        payment_status: 'pending',
+        order_status: 'awaiting_payment',
       })
       .select()
       .single();

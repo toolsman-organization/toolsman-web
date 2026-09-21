@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { type NextRequest, NextResponse } from 'next/server';
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -62,8 +62,8 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Protect account & checkout routes
-  if (pathname.startsWith('/account') || pathname.startsWith('/checkout')) {
+  // Protect /account routes (checkout is open to guests as well)
+  if (pathname.startsWith('/account')) {
     if (!user) {
       return NextResponse.redirect(
         new URL(`/login?redirect=${encodeURIComponent(pathname)}`, request.url)
