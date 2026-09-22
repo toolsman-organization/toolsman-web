@@ -13,9 +13,10 @@ interface ProductCardProps {
   product: ProductWithDetails;
   priority?: boolean;
   compact?: boolean;
+  className?: string;
 }
 
-export default function ProductCard({ product, priority = false, compact = false }: ProductCardProps) {
+export default function ProductCard({ product, priority = false, compact = false, className = '' }: ProductCardProps) {
   const { addToCart } = useCart();
   const { isInWishlist, toggleWishlist } = useWishlist();
   const [adding, setAdding] = useState(false);
@@ -50,7 +51,7 @@ export default function ProductCard({ product, priority = false, compact = false
 
   if (compact) {
     return (
-      <div className="product-card group flex flex-col justify-between h-full bg-white rounded-xl border border-neutral-200/90 hover:border-orange-500/80 shadow-2xs hover:shadow-md transition-all duration-250 overflow-hidden">
+      <div className={`product-card group flex flex-col justify-between h-full bg-white rounded-xl border border-neutral-200/90 hover:border-orange-500/80 shadow-2xs hover:shadow-md transition-all duration-250 overflow-hidden ${className}`}>
         <div>
           {/* Top Badges & Wishlist */}
           <div className="relative p-2 pb-0 flex items-center justify-between z-10 gap-1">
@@ -162,7 +163,7 @@ export default function ProductCard({ product, priority = false, compact = false
   }
 
   return (
-    <div className="product-card group flex flex-col justify-between h-full bg-white rounded-xl sm:rounded-2xl border border-neutral-200/90 hover:border-orange-500/80 shadow-2xs hover:shadow-xl transition-all duration-300 overflow-hidden">
+    <div className={`product-card group flex flex-col justify-between h-full bg-white rounded-xl sm:rounded-2xl border border-neutral-200/90 hover:border-orange-500/80 shadow-2xs hover:shadow-xl transition-all duration-300 overflow-hidden ${className}`}>
       <div>
         {/* Top Badges & Wishlist */}
         <div className="relative p-2 sm:p-3 pb-0 flex items-center justify-between z-10 gap-1">

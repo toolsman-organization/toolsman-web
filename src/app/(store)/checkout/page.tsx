@@ -42,7 +42,15 @@ function CheckoutContent() {
 
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [loading, setLoading] = useState(false);
+  const [isPaymentSuccess, setIsPaymentSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+
+  // Ensure checkout page opens at the top
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    }
+  }, []);
 
   const [isStateDropdownOpen, setIsStateDropdownOpen] = useState(false);
   const [stateSearch, setStateSearch] = useState('');
@@ -279,6 +287,7 @@ function CheckoutContent() {
 
             const verifyData = await verifyRes.json();
             if (verifyData.success) {
+              setIsPaymentSuccess(true);
               await clearCart();
               router.push(`/checkout/success?orderNumber=${orderNumber}`);
             } else {
@@ -324,6 +333,16 @@ function CheckoutContent() {
       setLoading(false);
     }
   };
+
+  if (isPaymentSuccess) {
+    return (
+      <div className="container-site py-20 text-center">
+        <Loader2 className="w-10 h-10 animate-spin text-orange-500 mx-auto mb-3" />
+        <h2 className="text-base font-bold text-neutral-900">Payment Successful!</h2>
+        <p className="text-xs text-neutral-500 mt-1">Preparing your order confirmation details...</p>
+      </div>
+    );
+  }
 
   if (cartLoading || authLoading) {
     return (

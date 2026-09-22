@@ -90,16 +90,6 @@ export default async function AdminDashboardPage() {
             Dashboard
           </h1>
         </div>
-
-        <div className="flex items-center gap-3">
-          <Link
-            href="/admin/products/new"
-            className="btn-primary py-2.5 px-4 text-xs font-bold flex items-center gap-1.5 shadow-md"
-          >
-            <PlusCircle size={16} />
-            <span>Add New Product</span>
-          </Link>
-        </div>
       </div>
 
       {/* Main KPI Stats Cards */}

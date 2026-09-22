@@ -76,7 +76,7 @@ export default async function HomePage() {
           {topPicks.length > 0 ? (
             <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 lg:gap-5">
               {topPicks.map((product, idx) => (
-                <ProductCard key={product.id} product={product} priority={idx < 5} />
+                <ProductCard key={product.id} product={product} priority={idx < 5} className={idx >= 6 ? 'hidden md:flex' : ''} />
               ))}
             </div>
           ) : (
@@ -121,8 +121,8 @@ export default async function HomePage() {
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 lg:gap-5">
-              {displayNewArrivals.map((product) => (
-                <ProductCard key={product.id} product={product} />
+              {displayNewArrivals.map((product, idx) => (
+                <ProductCard key={product.id} product={product} className={idx >= 6 ? 'hidden md:flex' : ''} />
               ))}
             </div>
           </div>

@@ -32,14 +32,14 @@ export default function PromoMidBanner({ banners = [] }: PromoMidBannerProps) {
                       alt={promo.title || 'Promotion Banner'}
                       fill
                       className="object-cover sm:hidden"
-                      sizes="(max-width: 640px) 100vw, 1200px"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1280px) 100vw, 1280px"
                     />
                     <Image
                       src={promo.image_url}
                       alt={promo.title || 'Promotion Banner'}
                       fill
                       className="object-cover hidden sm:block"
-                      sizes="1200px"
+                      sizes="(max-width: 1280px) 100vw, 1280px"
                     />
                   </>
                 ) : (
@@ -48,17 +48,11 @@ export default function PromoMidBanner({ banners = [] }: PromoMidBannerProps) {
                     alt={promo.title || 'Promotion Banner'}
                     fill
                     className="object-cover"
-                    sizes="1200px"
+                    sizes="(max-width: 1280px) 100vw, 1280px"
                   />
                 )}
                 {showOverlay && (
-                  <div
-                    className="absolute inset-0"
-                    style={{
-                      background:
-                        'linear-gradient(to right, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.6) 60%, rgba(0,0,0,0.2) 100%)',
-                    }}
-                  />
+                  <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/50 to-transparent" />
                 )}
               </div>
             ) : (
@@ -72,7 +66,7 @@ export default function PromoMidBanner({ banners = [] }: PromoMidBannerProps) {
               />
             )}
 
-            {/* Content */}
+            {/* Content Overlay */}
             {showOverlay ? (
               <div className="relative z-10 p-6 sm:p-10 lg:p-12 max-w-2xl text-white">
                 {structured.badge && (
@@ -89,42 +83,32 @@ export default function PromoMidBanner({ banners = [] }: PromoMidBannerProps) {
                   </span>
                 )}
 
-                <div className="flex flex-col gap-1 mb-3">
-                  {structured.heading_lines.map((line, idx) => (
+                <div className="flex flex-col gap-0.5 sm:gap-1 mb-3">
+                  {structured.line1_text && (
                     <h2
-                      key={line.id || idx}
-                      className="text-2xl sm:text-4xl lg:text-5xl font-black uppercase tracking-tight leading-tight"
-                      style={{
-                        fontFamily: 'var(--font-display)',
-                        color: line.color || '#ffffff',
-                      }}
+                      className="font-serif text-2xl sm:text-4xl lg:text-5xl font-black uppercase tracking-tight leading-tight sm:whitespace-nowrap"
+                      style={{ color: structured.line1_color || '#ffffff' }}
                     >
-                      {line.mobile_text && line.mobile_text.trim() ? (
-                        <>
-                          <span className="sm:hidden">{line.mobile_text}</span>
-                          <span className="hidden sm:inline">{line.text}</span>
-                        </>
-                      ) : (
-                        line.text
-                      )}
+                      {structured.line1_text}
                     </h2>
-                  ))}
+                  )}
+                  {structured.line2_text && (
+                    <h2
+                      className="font-serif text-2xl sm:text-4xl lg:text-5xl font-black uppercase tracking-tight leading-tight sm:whitespace-nowrap"
+                      style={{ color: structured.line2_color || '#f97316' }}
+                    >
+                      {structured.line2_text}
+                    </h2>
+                  )}
                 </div>
 
-                {(structured.subtitle || structured.mobile_subtitle) && (
-                  <p className="text-sm sm:text-base text-neutral-300 mb-6 leading-relaxed max-w-lg">
-                    {structured.mobile_subtitle && structured.mobile_subtitle.trim() ? (
-                      <>
-                        <span className="sm:hidden">{structured.mobile_subtitle}</span>
-                        <span className="hidden sm:inline">{structured.subtitle}</span>
-                      </>
-                    ) : (
-                      structured.subtitle
-                    )}
+                {structured.subtitle && (
+                  <p className="font-serif italic text-sm sm:text-base text-neutral-200/90 mb-6 leading-relaxed max-w-lg tracking-wide">
+                    {structured.subtitle}
                   </p>
                 )}
 
-                {structured.button_visible !== false && structured.button_text && (
+                {structured.button_text && (
                   <Link
                     href={bannerLink}
                     className="btn-primary inline-flex items-center gap-2 px-6 py-3 text-xs sm:text-sm font-bold shadow-lg shadow-orange-500/25"
