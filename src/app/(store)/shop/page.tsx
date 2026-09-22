@@ -123,8 +123,10 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
             </p>
           </div>
 
-          {/* Interactive Reactive Sort Controller */}
-          <SortDropdown currentSort={params.sort} />
+          {/* Interactive Reactive Sort Controller (Desktop) */}
+          <div className="hidden lg:block">
+            <SortDropdown currentSort={params.sort} />
+          </div>
         </div>
 
         {/* Main Content: Sidebar + Products Grid */}

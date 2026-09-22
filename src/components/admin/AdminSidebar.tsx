@@ -22,6 +22,7 @@ import {
   LogOut,
   X,
   Loader2,
+  Sparkles,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
@@ -40,6 +41,7 @@ const navItems = [
   { href: '/admin/delivery-charge', label: 'Delivery Charge', icon: <Truck size={18} /> },
   { href: '/admin/customers', label: 'Customers', icon: <Users size={18} /> },
   { href: '/admin/banners', label: 'Hero Banners', icon: <ImageIcon size={18} /> },
+  { href: '/admin/promo-banners', label: 'Promo Banners', icon: <Sparkles size={18} /> },
   { href: '/admin/announcements', label: 'Announcements', icon: <Megaphone size={18} /> },
   { href: '/admin/testimonials', label: 'Testimonials', icon: <MessageSquareQuote size={18} /> },
   { href: '/admin/coupons', label: 'Coupons', icon: <TicketPercent size={18} /> },

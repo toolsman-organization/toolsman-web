@@ -102,7 +102,7 @@ export default function HeroBanner({ banners }: HeroBannerProps) {
   // Fallback when no banners in database
   if (!banners.length) {
     return (
-      <section className="relative overflow-hidden bg-neutral-950 h-[calc(100dvh-60px)] sm:h-[calc(100dvh-112px)] min-h-[480px] max-h-[1000px] flex items-center">
+      <section className="relative overflow-hidden bg-neutral-950 h-[78dvh] sm:h-[calc(100dvh-112px)] min-h-[420px] sm:min-h-[480px] max-h-[1000px] flex items-center">
         <div className="container-site py-8 sm:py-16 relative z-10">
           <BannerContentBlock
             content={{
@@ -128,7 +128,7 @@ export default function HeroBanner({ banners }: HeroBannerProps) {
   const bannerLink = activeBanner.button_link || structured.button_link || '/shop';
 
   return (
-    <section className="relative overflow-hidden bg-neutral-950 h-[calc(100dvh-60px)] sm:h-[calc(100dvh-112px)] min-h-[480px] max-h-[1000px] flex flex-col justify-center">
+    <section className="relative overflow-hidden bg-neutral-950 h-[78dvh] sm:h-[calc(100dvh-112px)] min-h-[420px] sm:min-h-[480px] max-h-[1000px] flex flex-col justify-center">
       {/* Background Image Layer */}
       <div
         className="absolute inset-0 transition-opacity duration-300 pointer-events-none"

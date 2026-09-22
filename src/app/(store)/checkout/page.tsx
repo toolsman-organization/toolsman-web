@@ -468,7 +468,7 @@ function CheckoutContent() {
                     )}
 
                     {/* Inner Label Form Inputs Grid */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 overflow-visible">
                       {/* Full Name */}
                       <div className="rounded-xl border border-neutral-300 bg-white px-3.5 pt-2 pb-1.5 focus-within:border-orange-500 focus-within:ring-2 focus-within:ring-orange-500/15 transition-all">
                         <label className="block text-[10px] font-extrabold uppercase tracking-wider text-neutral-500 select-none">
@@ -583,7 +583,7 @@ function CheckoutContent() {
                       </div>
 
                       {/* Custom Modern State Selection Dropdown (Mandatory) */}
-                      <div ref={stateDropdownRef} className="relative">
+                      <div ref={stateDropdownRef} className="relative col-span-full sm:col-span-1">
                         <div
                           onClick={() => setIsStateDropdownOpen(!isStateDropdownOpen)}
                           className={`rounded-xl border bg-white px-3.5 pt-2 pb-1.5 cursor-pointer select-none transition-all ${
@@ -660,7 +660,7 @@ function CheckoutContent() {
                       </div>
 
                       {/* PIN Code */}
-                      <div className="rounded-xl border border-neutral-300 bg-white px-3.5 pt-2 pb-1.5 focus-within:border-orange-500 focus-within:ring-2 focus-within:ring-orange-500/15 transition-all">
+                      <div className="col-span-full sm:col-span-1 rounded-xl border border-neutral-300 bg-white px-3.5 pt-2 pb-1.5 focus-within:border-orange-500 focus-within:ring-2 focus-within:ring-orange-500/15 transition-all">
                         <label className="block text-[10px] font-extrabold uppercase tracking-wider text-neutral-500 select-none">
                           PIN Code (6 Digits) <span className="text-orange-600">*</span>
                         </label>

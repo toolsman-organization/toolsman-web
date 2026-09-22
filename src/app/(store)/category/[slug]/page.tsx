@@ -88,7 +88,9 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
               <span className="font-bold text-neutral-900">{total}</span> products
             </p>
           </div>
-          <SortDropdown currentSort={sp.sort} />
+          <div className="hidden lg:block">
+            <SortDropdown currentSort={sp.sort} />
+          </div>
         </div>
 
         <div className="flex flex-col lg:flex-row gap-8 items-start">
