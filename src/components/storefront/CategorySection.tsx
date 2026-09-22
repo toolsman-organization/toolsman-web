@@ -79,7 +79,7 @@ export default function CategorySection({ categories }: CategorySectionProps) {
             <Link
               key={category.id}
               data-category-item
-              href={`/shop?category=${category.slug}`}
+              href={`/category/${category.slug}`}
               className="group flex-none w-28 xs:w-32 sm:w-36 snap-start flex flex-col items-center justify-start text-center transition-transform duration-300"
             >
               {/* Circular Frame matching reference image */}
