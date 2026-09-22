@@ -77,7 +77,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
           {parentCatObj && (
             <>
               <ChevronRight size={13} />
-              <Link href={`/shop?category=${parentCatObj.slug}`} className="hover:text-orange-600 transition-colors font-semibold">
+              <Link href={`/category/${parentCatObj.slug}`} className="hover:text-orange-600 transition-colors font-semibold">
                 {parentCatObj.name}
               </Link>
             </>

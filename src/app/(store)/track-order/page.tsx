@@ -125,43 +125,51 @@ function TrackOrderContent() {
         </div>
 
         {/* Search Form Card */}
-        <div className="bg-white rounded-3xl border border-neutral-200 p-6 sm:p-8 shadow-sm mb-8">
+        <div className="bg-white rounded-2xl border border-neutral-200/90 p-5 sm:p-6 shadow-xs max-w-xl mx-auto mb-8">
           <form onSubmit={handleTrack} className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-3.5">
               <div>
-                <label className="block text-xs font-bold text-neutral-700 uppercase tracking-wider mb-1.5">
-                  Order Number *
+                <label className="block text-[11px] font-bold text-neutral-700 uppercase tracking-wider mb-1.5">
+                  Order Number <span className="text-orange-600">*</span>
                 </label>
                 <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-neutral-400">
+                    <Package size={16} />
+                  </div>
                   <input
                     type="text"
                     required
                     value={orderNumber}
                     onChange={(e) => setOrderNumber(e.target.value.toUpperCase())}
                     placeholder="e.g. TM-202609-1234"
-                    className="w-full pl-3.5 pr-4 py-3 rounded-xl border border-neutral-300 font-mono text-sm uppercase focus:outline-none focus:border-orange-500 font-bold placeholder:font-sans placeholder:font-normal"
+                    className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-neutral-300 font-mono text-xs sm:text-sm uppercase focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/10 font-bold placeholder:font-sans placeholder:font-normal text-neutral-900 transition-all"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-neutral-700 uppercase tracking-wider mb-1.5">
-                  Phone Number or Email *
+                <label className="block text-[11px] font-bold text-neutral-700 uppercase tracking-wider mb-1.5">
+                  Phone Number or Email <span className="text-orange-600">*</span>
                 </label>
-                <input
-                  type="text"
-                  required
-                  value={identifier}
-                  onChange={(e) => setIdentifier(e.target.value)}
-                  placeholder="e.g. 9876543210 or email@example.com"
-                  className="w-full px-3.5 py-3 rounded-xl border border-neutral-300 text-sm focus:outline-none focus:border-orange-500 font-medium"
-                />
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-neutral-400">
+                    <Phone size={15} />
+                  </div>
+                  <input
+                    type="text"
+                    required
+                    value={identifier}
+                    onChange={(e) => setIdentifier(e.target.value)}
+                    placeholder="e.g. 9876543210 or email@example.com"
+                    className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-neutral-300 text-xs sm:text-sm focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/10 font-medium text-neutral-900 transition-all"
+                  />
+                </div>
               </div>
             </div>
 
             {errorMsg && (
-              <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2 font-medium">
-                <AlertCircle size={16} className="shrink-0 text-red-500" />
+              <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2 font-medium">
+                <AlertCircle size={15} className="shrink-0 text-red-500" />
                 <span>{errorMsg}</span>
               </div>
             )}
@@ -169,7 +177,7 @@ function TrackOrderContent() {
             <button
               type="submit"
               disabled={loading}
-              className="btn-primary w-full py-3.5 text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-orange-500/20 disabled:opacity-60"
+              className="btn-primary w-full py-3 text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 shadow-md shadow-orange-500/20 disabled:opacity-60 active:scale-[0.99] transition-all"
             >
               {loading ? (
                 <>
@@ -178,7 +186,7 @@ function TrackOrderContent() {
                 </>
               ) : (
                 <>
-                  <Search size={16} />
+                  <Search size={15} />
                   <span>Track Live Order Status</span>
                 </>
               )}

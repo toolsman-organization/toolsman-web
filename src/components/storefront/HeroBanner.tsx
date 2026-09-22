@@ -1,132 +1,23 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
 import type { Banner } from '@/types/database';
-import {
-  parseBannerContent,
-  DEFAULT_BANNER_TEMPLATE,
-  type BannerStructuredContent,
-  type BannerHeadingSize,
-  type BannerHeadingWeight,
-} from '@/lib/bannerHelper';
-import BannerFeatureIconComponent from './BannerFeatureIcon';
+import { parseBannerContent, type SimpleBannerContent } from '@/lib/bannerHelper';
 
 interface HeroBannerProps {
   banners: Banner[];
 }
 
-function getMobileHeadingSizeClass(mobileSize?: BannerHeadingSize | 'auto', desktopSize?: BannerHeadingSize): string {
-  const effective = !mobileSize || mobileSize === 'auto' ? desktopSize || 'extra-large' : mobileSize;
-  switch (effective) {
-    case 'small':
-      return 'text-2xl xs:text-3xl tracking-wide leading-tight';
-    case 'medium':
-      return 'text-3xl xs:text-4xl tracking-wide leading-tight';
-    case 'large':
-      return 'text-4xl xs:text-5xl tracking-wider leading-[0.94]';
-    case 'extra-large':
-      return 'text-5xl xs:text-6xl tracking-wider leading-[0.90]';
-    case 'massive':
-    default:
-      return 'text-6xl xs:text-7xl tracking-wider leading-[0.88]';
-  }
-}
-
-function getDesktopHeadingSizeClass(size: BannerHeadingSize): string {
-  switch (size) {
-    case 'small':
-      return 'sm:text-3xl md:text-4xl lg:text-5xl sm:tracking-wide sm:leading-tight';
-    case 'medium':
-      return 'sm:text-4xl md:text-5xl lg:text-6xl sm:tracking-wide sm:leading-tight';
-    case 'large':
-      return 'sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl sm:tracking-wider sm:leading-[0.96]';
-    case 'massive':
-      return 'sm:text-7xl md:text-8xl lg:text-[8.5rem] xl:text-[10rem] sm:tracking-widest sm:leading-[0.92]';
-    case 'extra-large':
-    default:
-      return 'sm:text-6xl md:text-7xl lg:text-8xl xl:text-[7.5rem] sm:tracking-wider sm:leading-[0.94]';
-  }
-}
-
-function getHeadingWeightClass(weight: BannerHeadingWeight): string {
-  switch (weight) {
-    case 'normal':
-      return 'font-normal';
-    case 'semibold':
-      return 'font-semibold';
-    case 'bold':
-      return 'font-bold';
-    case 'extrabold':
-      return 'font-extrabold';
-    case 'black':
-    default:
-      return 'font-black';
-  }
-}
-
-function getButtonStyleClass(style?: string): string {
-  switch (style) {
-    case 'secondary':
-      return 'btn-secondary text-white border-white/60 hover:bg-white hover:text-neutral-950 text-xs sm:text-sm px-5 sm:px-6 py-2.5 sm:py-3';
-    case 'dark':
-      return 'btn-dark bg-neutral-900 text-white hover:bg-neutral-800 border border-neutral-700 text-xs sm:text-sm px-5 sm:px-6 py-2.5 sm:py-3';
-    case 'outline-white':
-      return 'inline-flex items-center justify-center gap-2 px-5 sm:px-6 py-2.5 sm:py-3 rounded text-xs sm:text-sm font-bold border-2 border-white text-white hover:bg-white hover:text-neutral-950 transition-all';
-    case 'primary':
-    default:
-      return 'btn-primary text-xs sm:text-sm md:text-base px-5 sm:px-7 py-2.5 sm:py-3 gap-2 shadow-lg shadow-orange-500/30';
-  }
-}
-
-function getFontFamilyStyle(font?: string): string {
-  switch (font) {
-    case 'anton':
-      return "'Anton', 'Impact', sans-serif";
-    case 'barlow':
-      return "'Barlow Condensed', sans-serif";
-    case 'montserrat':
-      return "'Montserrat', sans-serif";
-    case 'inter':
-      return "'Inter', sans-serif";
-    case 'bebas':
-    default:
-      return "'Bebas Neue', 'Impact', sans-serif";
-  }
-}
-
-/**
- * Reusable Banner Content View used for both Storefront and Admin Live Preview.
- */
-export function BannerContentView({
-  content,
-  isLive = false,
-  isMobilePreview = false,
-}: {
-  content: BannerStructuredContent;
-  isLive?: boolean;
-  isMobilePreview?: boolean;
-}) {
-  const horizontalClass = useMemo(() => {
-    switch (content.horizontal_position) {
-      case 'center':
-        return 'items-center text-center mx-auto';
-      case 'right':
-        return 'items-end text-right ml-auto';
-      case 'left':
-      default:
-        return 'items-start text-left mr-auto';
-    }
-  }, [content.horizontal_position]);
-
+export function BannerContentBlock({ content }: { content: SimpleBannerContent }) {
   return (
-    <div className={`flex flex-col max-w-2xl lg:max-w-3xl xl:max-w-4xl ${horizontalClass}`}>
+    <div className="flex flex-col w-full max-w-5xl items-start text-left mr-auto">
       {/* 1. Top Badge / Tagline */}
       {content.badge && (
         <span
-          className="text-xs sm:text-sm font-bold uppercase tracking-widest mb-2.5 inline-flex items-center gap-2 drop-shadow-sm"
+          className="text-xs sm:text-sm font-bold uppercase tracking-widest mb-2 inline-flex items-center gap-2 drop-shadow-sm"
           style={{ color: content.badge_color || '#f97316' }}
         >
           <span
@@ -137,116 +28,43 @@ export function BannerContentView({
         </span>
       )}
 
-      {/* 2. Multi-line Headings with impactful elongated display typography */}
-      <div className="flex flex-col gap-1 sm:gap-1.5 mb-3.5">
-        {content.heading_lines.map((line, idx) => {
-          const mobileSizeClass = getMobileHeadingSizeClass(line.mobile_size, line.size);
-          const desktopSizeClass = getDesktopHeadingSizeClass(line.size);
-          const weightClass = getHeadingWeightClass(line.weight);
-          const hasMobileText = Boolean(line.mobile_text && line.mobile_text.trim());
-          const fontStyle = getFontFamilyStyle(line.font_family || content.font_family);
-
-          return (
-            <h1
-              key={line.id || idx}
-              className={`${
-                isMobilePreview ? mobileSizeClass : `${mobileSizeClass} ${desktopSizeClass}`
-              } ${weightClass} uppercase drop-shadow-lg`}
-              style={{
-                fontFamily: fontStyle,
-                color: line.color || '#ffffff',
-              }}
-            >
-              {isMobilePreview ? (
-                hasMobileText ? line.mobile_text : line.text
-              ) : hasMobileText ? (
-                <>
-                  <span className="sm:hidden">{line.mobile_text}</span>
-                  <span className="hidden sm:inline">{line.text}</span>
-                </>
-              ) : (
-                line.text
-              )}
-            </h1>
-          );
-        })}
+      {/* 2. Two-Line Display Heading (strictly 1 line per headline row) */}
+      <div className="flex flex-col gap-0.5 sm:gap-1 mb-3.5 w-full">
+        {content.line1_text && (
+          <h1
+            className="font-serif text-3xl xs:text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black uppercase tracking-tight leading-[0.95] drop-shadow-md sm:whitespace-nowrap"
+            style={{ color: content.line1_color || '#ffffff' }}
+          >
+            {content.line1_text}
+          </h1>
+        )}
+        {content.line2_text && (
+          <h1
+            className="font-serif text-3xl xs:text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black uppercase tracking-tight leading-[0.95] drop-shadow-md sm:whitespace-nowrap"
+            style={{ color: content.line2_color || '#f97316' }}
+          >
+            {content.line2_text}
+          </h1>
+        )}
       </div>
 
-      {/* 3. Subtitle */}
-      {(content.subtitle || content.mobile_subtitle) && (
-        <p
-          className="text-sm sm:text-base lg:text-lg xl:text-xl mb-2.5 leading-relaxed font-medium drop-shadow-sm max-w-xl"
-          style={{ color: content.subtitle_color || '#d4d4d4' }}
-        >
-          {isMobilePreview ? (
-            content.mobile_subtitle && content.mobile_subtitle.trim() ? (
-              content.mobile_subtitle
-            ) : (
-              content.subtitle
-            )
-          ) : content.mobile_subtitle && content.mobile_subtitle.trim() ? (
-            <>
-              <span className="sm:hidden">{content.mobile_subtitle}</span>
-              <span className="hidden sm:inline">{content.subtitle}</span>
-            </>
-          ) : (
-            content.subtitle
-          )}
+      {/* 3. Subtitle / Description */}
+      {content.subtitle && (
+        <p className="font-serif italic text-xs sm:text-sm md:text-base lg:text-lg text-neutral-200/95 font-normal leading-relaxed max-w-xl mb-4 sm:mb-5 drop-shadow-sm tracking-wide">
+          {content.subtitle}
         </p>
       )}
 
-      {/* 4. Optional Description */}
-      {content.description && (
-        <p
-          className="text-xs sm:text-sm mb-4 leading-relaxed max-w-lg"
-          style={{ color: content.description_color || '#a3a3a3' }}
-        >
-          {content.description}
-        </p>
-      )}
-
-      {/* 5. Feature Badges (e.g. Sales, Service, Support) */}
-      {content.features && content.features.length > 0 && (
-        <div
-          className={`flex flex-wrap gap-2.5 sm:gap-4 my-4 ${
-            content.horizontal_position === 'center'
-              ? 'justify-center'
-              : content.horizontal_position === 'right'
-              ? 'justify-end'
-              : 'justify-start'
-          }`}
-        >
-          {content.features.map((feat, idx) => (
-            <div
-              key={feat.id || idx}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/45 backdrop-blur-xs border border-white/10 shadow-sm"
-            >
-              <BannerFeatureIconComponent icon={feat.icon} size={15} className="text-orange-500 shrink-0" />
-              <div className="flex flex-col text-left leading-none">
-                <span className="text-[11px] font-black text-white uppercase tracking-wider">{feat.title}</span>
-                {feat.description && (
-                  <span className="text-[9px] text-neutral-400 font-medium mt-0.5">{feat.description}</span>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* 6. CTA Button */}
-      {content.button_visible !== false && content.button_text && (
-        <div className="mt-2.5 pt-1">
-          {isLive ? (
-            <span className={getButtonStyleClass(content.button_style)}>
-              <span>{content.button_text}</span>
-              <ArrowRight size={17} />
-            </span>
-          ) : (
-            <Link href={content.button_link || '/shop'} className={getButtonStyleClass(content.button_style)}>
-              <span>{content.button_text}</span>
-              <ArrowRight size={17} />
-            </Link>
-          )}
+      {/* 4. CTA Button (Placed below the subtitle) */}
+      {content.button_text && (
+        <div className="mt-1 sm:mt-2">
+          <Link
+            href={content.button_link || '/shop'}
+            className="btn-primary text-xs sm:text-sm md:text-base px-6 sm:px-8 py-3 sm:py-3.5 inline-flex items-center gap-2 shadow-xl shadow-orange-500/25 active:scale-95 transition-all"
+          >
+            <span>{content.button_text}</span>
+            <ArrowRight size={17} />
+          </Link>
         </div>
       )}
     </div>
@@ -263,7 +81,7 @@ export default function HeroBanner({ banners }: HeroBannerProps) {
     setTimeout(() => {
       setCurrent((prev) => (prev + 1) % banners.length);
       setTransitioning(false);
-    }, 300);
+    }, 250);
   }, [banners.length, transitioning]);
 
   const prev = useCallback(() => {
@@ -272,7 +90,7 @@ export default function HeroBanner({ banners }: HeroBannerProps) {
     setTimeout(() => {
       setCurrent((prev) => (prev - 1 + banners.length) % banners.length);
       setTransitioning(false);
-    }, 300);
+    }, 250);
   }, [banners.length, transitioning]);
 
   useEffect(() => {
@@ -281,30 +99,24 @@ export default function HeroBanner({ banners }: HeroBannerProps) {
     return () => clearInterval(interval);
   }, [banners.length, next]);
 
-  // Fallback state when no banner exists
+  // Fallback when no banners in database
   if (!banners.length) {
     return (
-      <section
-        className="relative overflow-hidden bg-neutral-950 min-h-[520px] xs:min-h-[580px] sm:min-h-[600px] lg:h-[calc(100vh-112px)] lg:min-h-[640px] lg:max-h-[960px]"
-      >
-        {/* Industrial Pattern Overlay */}
-        <div
-          className="absolute inset-0 opacity-15"
-          style={{
-            backgroundImage:
-              'repeating-linear-gradient(45deg, transparent, transparent 35px, rgba(255,255,255,.05) 35px, rgba(255,255,255,.05) 70px)',
-          }}
-        />
-        {/* Radial highlight */}
-        <div
-          className="absolute inset-0 opacity-30 pointer-events-none"
-          style={{
-            background: 'radial-gradient(circle at 20% 50%, rgba(249,115,22,0.25) 0%, transparent 60%)',
-          }}
-        />
-
-        <div className="container-site h-full flex items-center py-16 sm:py-24 relative z-10">
-          <BannerContentView content={DEFAULT_BANNER_TEMPLATE} />
+      <section className="relative overflow-hidden bg-neutral-950 h-[calc(100dvh-60px)] sm:h-[calc(100dvh-112px)] min-h-[480px] max-h-[1000px] flex items-center">
+        <div className="container-site py-8 sm:py-16 relative z-10">
+          <BannerContentBlock
+            content={{
+              badge: 'Professional Tools Store',
+              badge_color: '#f97316',
+              line1_text: 'BUILT FOR',
+              line1_color: '#ffffff',
+              line2_text: 'THE JOB.',
+              line2_color: '#f97316',
+              subtitle: 'Heavy-duty power tools & industrial accessories with express delivery.',
+              button_text: 'SHOP NOW',
+              button_link: '/shop',
+            }}
+          />
         </div>
       </section>
     );
@@ -313,39 +125,14 @@ export default function HeroBanner({ banners }: HeroBannerProps) {
   const activeBanner = banners[current];
   const structured = parseBannerContent(activeBanner);
   const showOverlay = structured.show_overlay !== false;
-
-  // Determine vertical alignment container class:
-  // On mobile (<sm), flex-col justify-end forces all content (headlines, features, CTA) to sit strictly in the lower half
-  // On desktop (sm:), honor the configured top/center/bottom vertical_position
-  const verticalContainerClass =
-    structured.vertical_position === 'top'
-      ? 'justify-end sm:justify-start sm:pt-20 pb-12 sm:pb-20'
-      : structured.vertical_position === 'bottom'
-      ? 'justify-end pb-12 sm:pb-20 sm:pt-20'
-      : 'justify-end sm:justify-center pb-12 sm:pb-0 sm:py-20 lg:py-24';
-
-  // Dynamic gradient overlay depending on content horizontal position for desktop
-  const desktopGradientOverlay =
-    structured.horizontal_position === 'right'
-      ? 'linear-gradient(to left, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.5) 60%, rgba(0,0,0,0.15) 100%)'
-      : structured.horizontal_position === 'center'
-      ? 'linear-gradient(to bottom, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.75) 100%)'
-      : 'linear-gradient(to right, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.5) 58%, rgba(0,0,0,0.15) 100%)';
-
-  // Bottom-up dark gradient for mobile to keep top product photo clear and bottom text crisp
-  const mobileGradientOverlay =
-    'linear-gradient(to top, rgba(0,0,0,0.96) 0%, rgba(0,0,0,0.75) 48%, rgba(0,0,0,0.1) 80%, transparent 100%)';
-
   const bannerLink = activeBanner.button_link || structured.button_link || '/shop';
 
   return (
-    <section
-      className="relative overflow-hidden bg-neutral-950 min-h-[520px] xs:min-h-[580px] sm:min-h-[600px] lg:h-[calc(100vh-112px)] lg:min-h-[640px] lg:max-h-[960px] flex flex-col"
-    >
+    <section className="relative overflow-hidden bg-neutral-950 h-[calc(100dvh-60px)] sm:h-[calc(100dvh-112px)] min-h-[480px] max-h-[1000px] flex flex-col justify-center">
       {/* Background Image Layer */}
       <div
         className="absolute inset-0 transition-opacity duration-300 pointer-events-none"
-        style={{ opacity: transitioning ? 0.3 : 1 }}
+        style={{ opacity: transitioning ? 0.35 : 1 }}
       >
         {activeBanner.mobile_image_url ? (
           <>
@@ -353,11 +140,11 @@ export default function HeroBanner({ banners }: HeroBannerProps) {
             <div className="relative w-full h-full sm:hidden">
               <Image
                 src={activeBanner.mobile_image_url}
-                alt={structured.heading_lines[0]?.text || activeBanner.title || 'Toolsman Hero Banner'}
+                alt={activeBanner.title || 'Banner'}
                 fill
-                className="object-cover"
                 priority={current === 0}
-                sizes="100vw"
+                className="object-cover"
+                sizes="(max-width: 640px) 100vw, 100vw"
               />
             </div>
             {/* Desktop Banner Image */}
@@ -365,98 +152,94 @@ export default function HeroBanner({ banners }: HeroBannerProps) {
               {activeBanner.image_url ? (
                 <Image
                   src={activeBanner.image_url}
-                  alt={structured.heading_lines[0]?.text || activeBanner.title || 'Toolsman Hero Banner'}
+                  alt={activeBanner.title || 'Banner'}
                   fill
-                  className="object-cover"
                   priority={current === 0}
+                  className="object-cover"
                   sizes="100vw"
                 />
               ) : (
-                <div style={{ background: 'linear-gradient(135deg, #0a0a0a, #1a1a1a)' }} className="w-full h-full" />
+                <div className="w-full h-full bg-gradient-to-r from-neutral-950 via-neutral-900 to-neutral-950" />
               )}
             </div>
           </>
         ) : activeBanner.image_url ? (
           <Image
             src={activeBanner.image_url}
-            alt={structured.heading_lines[0]?.text || activeBanner.title || 'Toolsman Hero Banner'}
+            alt={activeBanner.title || 'Banner'}
             fill
-            className="object-cover"
             priority={current === 0}
+            className="object-cover"
             sizes="100vw"
           />
         ) : (
-          <div style={{ background: 'linear-gradient(135deg, #0a0a0a, #1a1a1a)' }} className="w-full h-full" />
+          <div className="w-full h-full bg-gradient-to-r from-neutral-950 via-neutral-900 to-neutral-950" />
         )}
 
-        {/* Dynamic Dark Gradient Overlay for Readability (Only shown if overlay content is enabled) */}
+        {/* Clear, readable subtle contrast gradient */}
         {showOverlay && (
           <>
-            {/* Mobile Gradient */}
-            <div className="absolute inset-0 sm:hidden pointer-events-none" style={{ background: mobileGradientOverlay }} />
-            {/* Desktop Gradient */}
-            <div className="absolute inset-0 hidden sm:block pointer-events-none" style={{ background: desktopGradientOverlay }} />
+            {/* Mobile Gradient: Soft bottom fade to make text pop while keeping top product clear */}
+            <div className="absolute inset-0 sm:hidden bg-gradient-to-t from-black/90 via-black/50 to-transparent pointer-events-none" />
+            {/* Desktop Gradient: Left-to-right soft fade */}
+            <div className="absolute inset-0 hidden sm:block bg-gradient-to-r from-black/85 via-black/40 to-transparent pointer-events-none" />
           </>
         )}
       </div>
 
-      {/* HTML Content Overlay Layer OR Clickable Area */}
+      {/* Content Overlay */}
       {showOverlay ? (
-        <div
-          className={`container-site relative z-10 flex-1 flex flex-col ${verticalContainerClass}`}
-        >
+        <div className="container-site relative z-10 pb-10 pt-[68%] sm:pt-0 sm:py-16 lg:py-20 flex items-end sm:items-center">
           <div
             className="w-full"
             style={{
               opacity: transitioning ? 0 : 1,
-              transform: transitioning ? 'translateY(8px)' : 'translateY(0)',
-              transition: 'opacity 0.3s ease, transform 0.3s ease',
+              transform: transitioning ? 'translateY(6px)' : 'translateY(0)',
+              transition: 'opacity 0.25s ease, transform 0.25s ease',
             }}
           >
-            <BannerContentView content={structured} />
+            <BannerContentBlock content={structured} />
           </div>
         </div>
       ) : (
-        /* In Graphic Banner mode, the entire banner is clickable */
+        /* Graphic Banner (Pure Image click) */
         <Link
           href={bannerLink}
           className="absolute inset-0 z-10 block"
-          aria-label={activeBanner.title || 'View Banner Promotion'}
+          aria-label={activeBanner.title || 'View Promotion'}
         />
       )}
 
-      {/* Navigation Arrows */}
+      {/* Carousel Navigation (Arrows & Indicators) */}
       {banners.length > 1 && (
         <>
           <button
             onClick={prev}
-            className="absolute left-3 sm:left-5 top-[25%] sm:top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-all opacity-30 hover:opacity-100 bg-black/40 hover:bg-orange-500 text-white backdrop-blur-xs border border-white/10 cursor-pointer shadow-md active:scale-95"
-            aria-label="Previous slide"
+            className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 z-30 w-9 h-9 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-all bg-black/50 hover:bg-orange-500 text-white backdrop-blur-md border border-white/15 cursor-pointer shadow-lg active:scale-95"
+            aria-label="Previous banner"
           >
-            <ChevronLeft size={18} className="sm:hidden" />
-            <ChevronLeft size={20} className="hidden sm:block" />
+            <ChevronLeft size={20} />
           </button>
           <button
             onClick={next}
-            className="absolute right-3 sm:right-5 top-[25%] sm:top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-all opacity-30 hover:opacity-100 bg-black/40 hover:bg-orange-500 text-white backdrop-blur-xs border border-white/10 cursor-pointer shadow-md active:scale-95"
-            aria-label="Next slide"
+            className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 z-30 w-9 h-9 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-all bg-black/50 hover:bg-orange-500 text-white backdrop-blur-md border border-white/15 cursor-pointer shadow-lg active:scale-95"
+            aria-label="Next banner"
           >
-            <ChevronRight size={18} className="sm:hidden" />
-            <ChevronRight size={20} className="hidden sm:block" />
+            <ChevronRight size={20} />
           </button>
 
-          {/* Dots Indicator */}
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 z-20 bg-black/40 backdrop-blur-xs px-3 py-1.5 rounded-full border border-white/10">
+          {/* Sliding Indicator Pill */}
+          <div className="absolute bottom-5 sm:bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 z-30 bg-black/60 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/20 shadow-2xl">
             {banners.map((_, i) => (
               <button
                 key={i}
+                type="button"
                 onClick={() => setCurrent(i)}
-                className="rounded-full transition-all duration-300 cursor-pointer"
-                style={{
-                  width: i === current ? '24px' : '7px',
-                  height: '7px',
-                  backgroundColor: i === current ? '#f97316' : 'rgba(255,255,255,0.4)',
-                }}
+                className={`rounded-full transition-all duration-300 cursor-pointer ${
+                  i === current
+                    ? 'w-7 h-2 bg-orange-500 shadow-sm shadow-orange-500/50'
+                    : 'w-2 h-2 bg-white/40 hover:bg-white/80'
+                }`}
                 aria-label={`Go to slide ${i + 1}`}
               />
             ))}

@@ -1,11 +1,5 @@
 import type { Banner } from '@/types/database';
 
-export type BannerHeadingSize = 'small' | 'medium' | 'large' | 'extra-large' | 'massive';
-export type BannerHeadingWeight = 'normal' | 'semibold' | 'bold' | 'extrabold' | 'black';
-export type BannerHorizontalPosition = 'left' | 'center' | 'right';
-export type BannerVerticalPosition = 'top' | 'center' | 'bottom';
-export type BannerButtonStyle = 'primary' | 'secondary' | 'dark' | 'outline-white';
-export type BannerFontFamily = 'bebas' | 'anton' | 'barlow' | 'montserrat' | 'inter';
 export type BannerFeatureIcon =
   | 'shield'
   | 'wrench'
@@ -16,236 +10,135 @@ export type BannerFeatureIcon =
   | 'star'
   | 'refresh'
   | 'zap'
-  | 'pen-tool'
   | 'clock'
   | 'package'
   | 'sparkles';
 
-export interface BannerHeadingLine {
-  id: string;
-  text: string;
-  mobile_text?: string;
-  color: string;
-  size: BannerHeadingSize;
-  mobile_size?: BannerHeadingSize | 'auto';
-  weight: BannerHeadingWeight;
-  font_family?: BannerFontFamily;
-}
-
-export interface BannerFeatureItem {
-  id: string;
-  icon: BannerFeatureIcon;
-  title: string;
-  description?: string;
-}
-
-export interface BannerStructuredContent {
-  version: 2;
-  font_family?: BannerFontFamily;
-  show_overlay?: boolean;
+export interface SimpleBannerContent {
   badge?: string;
   badge_color?: string;
-  heading_lines: BannerHeadingLine[];
+  line1_text?: string;
+  line1_color?: string;
+  line2_text?: string;
+  line2_color?: string;
   subtitle?: string;
-  mobile_subtitle?: string;
-  subtitle_color?: string;
-  description?: string;
-  description_color?: string;
-  features: BannerFeatureItem[];
   button_text?: string;
   button_link?: string;
-  button_visible?: boolean;
-  button_style?: BannerButtonStyle;
-  horizontal_position: BannerHorizontalPosition;
-  vertical_position: BannerVerticalPosition;
+  show_overlay?: boolean;
 }
 
 export const BANNER_COLOR_PRESETS = [
   { label: 'White', value: '#ffffff' },
   { label: 'Brand Orange', value: '#f97316' },
-  { label: 'Amber Gold', value: '#f59e0b' },
-  { label: 'Emerald Green', value: '#22c55e' },
-  { label: 'Sky Blue', value: '#38bdf8' },
+  { label: 'Amber Yellow', value: '#f59e0b' },
+  { label: 'Emerald Green', value: '#10b981' },
+  { label: 'Cyan Blue', value: '#06b6d4' },
   { label: 'Light Gray', value: '#e5e5e5' },
-  { label: 'Dark Slate', value: '#111111' },
 ];
 
-export const BANNER_ICON_OPTIONS: { value: BannerFeatureIcon; label: string }[] = [
-  { value: 'shield', label: 'Shield (Warranty / Genuine)' },
-  { value: 'wrench', label: 'Wrench (Service / Repairs)' },
-  { value: 'headphones', label: 'Headphones (Support / Help)' },
-  { value: 'truck', label: 'Truck (Fast Delivery)' },
-  { value: 'award', label: 'Award (Certified / Quality)' },
-  { value: 'check', label: 'Check (Verified / Tested)' },
-  { value: 'star', label: 'Star (Top Rated)' },
-  { value: 'refresh', label: 'Refresh (Rentals / Exchange)' },
-  { value: 'zap', label: 'Lightning (High Power / Fast)' },
-  { value: 'clock', label: 'Clock (Same-Day Dispatch)' },
-  { value: 'package', label: 'Package (Safe Delivery)' },
-  { value: 'sparkles', label: 'Sparkles (New / Featured)' },
-];
-
-export const BANNER_FONT_OPTIONS: { value: BannerFontFamily; label: string; previewFont: string }[] = [
-  { value: 'bebas', label: 'Bebas Neue (Industrial Elongated)', previewFont: "'Bebas Neue', 'Impact', sans-serif" },
-  { value: 'anton', label: 'Anton (Ultra Heavy Impact)', previewFont: "'Anton', 'Impact', sans-serif" },
-  { value: 'barlow', label: 'Barlow Condensed (Technical Bold)', previewFont: "'Barlow Condensed', sans-serif" },
-  { value: 'montserrat', label: 'Montserrat (Modern Bold Sans)', previewFont: "'Montserrat', sans-serif" },
-  { value: 'inter', label: 'Inter (Clean Technical)', previewFont: "'Inter', sans-serif" },
-];
-
-export const DEFAULT_BANNER_TEMPLATE: BannerStructuredContent = {
-  version: 2,
-  font_family: 'bebas',
-  show_overlay: true,
+export const DEFAULT_BANNER_CONTENT: SimpleBannerContent = {
   badge: 'Professional Tools Store',
   badge_color: '#f97316',
-  heading_lines: [
-    {
-      id: 'h-1',
-      text: 'BUILT FOR',
-      mobile_text: '',
-      color: '#ffffff',
-      size: 'extra-large',
-      mobile_size: 'extra-large',
-      weight: 'black',
-    },
-    {
-      id: 'h-2',
-      text: 'THE JOB.',
-      mobile_text: '',
-      color: '#f97316',
-      size: 'extra-large',
-      mobile_size: 'extra-large',
-      weight: 'black',
-    },
-  ],
+  line1_text: 'BUILT FOR',
+  line1_color: '#ffffff',
+  line2_text: 'THE JOB.',
+  line2_color: '#f97316',
   subtitle: 'Professional tools. Serious performance.',
-  mobile_subtitle: '',
-  subtitle_color: '#d4d4d4',
-  description: '',
-  description_color: '#a3a3a3',
-  features: [
-    { id: 'f-1', icon: 'shield', title: 'SALES', description: 'Buy with confidence' },
-    { id: 'f-2', icon: 'wrench', title: 'SERVICE', description: 'After sales support' },
-    { id: 'f-3', icon: 'headphones', title: 'SUPPORT', description: 'We are here to help' },
-  ],
   button_text: 'SHOP NOW',
   button_link: '/shop',
-  button_visible: true,
-  button_style: 'primary',
-  horizontal_position: 'left',
-  vertical_position: 'center',
+  show_overlay: true,
 };
 
 const JSON_PREFIX = '__BANNER_V2__:';
+const SIMPLE_PREFIX = '__BANNER_SIMPLE__:';
 
 /**
- * Safely parse a Banner record into BannerStructuredContent.
- * Handles both V2 structured JSON formats and legacy standard text banners.
+ * Safely parse a Banner record into SimpleBannerContent.
  */
-export function parseBannerContent(banner: Partial<Banner> | null | undefined): BannerStructuredContent {
-  if (!banner) return { ...DEFAULT_BANNER_TEMPLATE };
+export function parseBannerContent(banner: Partial<Banner> | null | undefined): SimpleBannerContent {
+  if (!banner) return { ...DEFAULT_BANNER_CONTENT };
 
-  // Check if subtitle contains the serialized V2 structured JSON
-  if (banner.subtitle && banner.subtitle.startsWith(JSON_PREFIX)) {
+  // Check for simple JSON
+  if (banner.subtitle && banner.subtitle.startsWith(SIMPLE_PREFIX)) {
     try {
-      const jsonStr = banner.subtitle.slice(JSON_PREFIX.length);
-      const parsed = JSON.parse(jsonStr) as BannerStructuredContent;
-      if (parsed && parsed.version === 2) {
-        return {
-          ...DEFAULT_BANNER_TEMPLATE,
-          ...parsed,
-          font_family: parsed.font_family || 'bebas',
-          heading_lines: (parsed.heading_lines || []).map((line) => ({
-            ...line,
-            mobile_text: line.mobile_text || '',
-            mobile_size: line.mobile_size || line.size || 'extra-large',
-            font_family: line.font_family || parsed.font_family || 'bebas',
-          })),
-          show_overlay: parsed.show_overlay ?? true,
-          button_text: banner.button_text ?? parsed.button_text ?? 'SHOP NOW',
-          button_link: banner.button_link ?? parsed.button_link ?? '/shop',
-          button_visible: parsed.button_visible ?? Boolean(banner.button_text),
-        };
-      }
-    } catch (e) {
-      console.warn('[parseBannerContent] Failed to parse V2 JSON, falling back to legacy structure:', e);
+      const data = JSON.parse(banner.subtitle.slice(SIMPLE_PREFIX.length));
+      return {
+        ...DEFAULT_BANNER_CONTENT,
+        ...data,
+        button_text: banner.button_text || data.button_text || 'SHOP NOW',
+        button_link: banner.button_link || data.button_link || '/shop',
+      };
+    } catch {
+      // fallback
     }
   }
 
-  // Legacy Banner Fallback: split title into lines if possible
+  // Check for legacy V2 JSON
+  if (banner.subtitle && banner.subtitle.startsWith(JSON_PREFIX)) {
+    try {
+      const data = JSON.parse(banner.subtitle.slice(JSON_PREFIX.length));
+      const lines = data.heading_lines || [];
+      return {
+        ...DEFAULT_BANNER_CONTENT,
+        badge: data.badge || '',
+        badge_color: data.badge_color || '#f97316',
+        line1_text: lines[0]?.text || '',
+        line1_color: lines[0]?.color || '#ffffff',
+        line2_text: lines.slice(1).map((l: { text?: string }) => l.text).filter(Boolean).join(' ') || '',
+        line2_color: lines[1]?.color || '#f97316',
+        subtitle: data.subtitle || '',
+        button_text: banner.button_text || data.button_text || 'SHOP NOW',
+        button_link: banner.button_link || data.button_link || '/shop',
+        show_overlay: data.show_overlay ?? true,
+      };
+    } catch {
+      // fallback
+    }
+  }
+
+  // Plain text banner fallback
   const rawTitle = banner.title?.trim() || '';
   const rawSubtitle = banner.subtitle?.trim() || '';
+  let line1 = rawTitle;
+  let line2 = '';
 
-  let lines: BannerHeadingLine[] = [];
-  if (rawTitle) {
-    if (rawTitle.includes('\n')) {
-      lines = rawTitle.split('\n').filter(Boolean).map((t, idx) => ({
-        id: `h-${idx + 1}`,
-        text: t.trim(),
-        mobile_text: '',
-        color: idx === 0 ? '#ffffff' : '#f97316',
-        size: 'extra-large' as BannerHeadingSize,
-        mobile_size: 'extra-large' as BannerHeadingSize,
-        weight: 'black' as BannerHeadingWeight,
-      }));
-    } else {
-      lines = [
-        {
-          id: 'h-1',
-          text: rawTitle,
-          mobile_text: '',
-          color: '#ffffff',
-          size: 'extra-large' as BannerHeadingSize,
-          mobile_size: 'extra-large' as BannerHeadingSize,
-          weight: 'black' as BannerHeadingWeight,
-        },
-      ];
-    }
-  } else {
-    lines = [...DEFAULT_BANNER_TEMPLATE.heading_lines];
+  if (rawTitle.includes('\n')) {
+    const parts = rawTitle.split('\n');
+    line1 = parts[0]?.trim() || '';
+    line2 = parts.slice(1).join(' ').trim();
   }
 
   return {
-    version: 2,
-    show_overlay: true,
+    ...DEFAULT_BANNER_CONTENT,
     badge: 'Professional Tools Store',
     badge_color: '#f97316',
-    heading_lines: lines,
+    line1_text: line1 || 'BUILT FOR',
+    line1_color: '#ffffff',
+    line2_text: line2 || 'THE JOB.',
+    line2_color: '#f97316',
     subtitle: rawSubtitle || 'Professional tools. Serious performance.',
-    subtitle_color: '#d4d4d4',
-    description: '',
-    description_color: '#a3a3a3',
-    features: [
-      { id: 'f-1', icon: 'shield', title: 'SALES', description: 'Buy with confidence' },
-      { id: 'f-2', icon: 'wrench', title: 'SERVICE', description: 'After sales support' },
-      { id: 'f-3', icon: 'headphones', title: 'SUPPORT', description: 'We are here to help' },
-    ],
     button_text: banner.button_text || 'SHOP NOW',
     button_link: banner.button_link || '/shop',
-    button_visible: Boolean(banner.button_text),
-    button_style: 'primary',
-    horizontal_position: 'left',
-    vertical_position: 'center',
+    show_overlay: true,
   };
 }
 
 /**
- * Serialize BannerStructuredContent into database fields.
+ * Serialize SimpleBannerContent into database fields.
  */
-export function serializeBannerContent(content: BannerStructuredContent): {
+export function serializeBannerContent(content: SimpleBannerContent): {
   title: string;
   subtitle: string;
   button_text: string | null;
   button_link: string | null;
 } {
-  const plainTitle = content.heading_lines.map((h) => h.text.trim()).filter(Boolean).join(' ');
-  const serializedSubtitle = `${JSON_PREFIX}${JSON.stringify(content)}`;
+  const plainTitle = [content.line1_text, content.line2_text].filter(Boolean).join(' ').trim();
+  const serializedSubtitle = `${SIMPLE_PREFIX}${JSON.stringify(content)}`;
 
   return {
     title: plainTitle || 'Hero Banner',
     subtitle: serializedSubtitle,
-    button_text: content.button_visible && content.button_text ? content.button_text.trim() : null,
+    button_text: content.button_text ? content.button_text.trim() : 'SHOP NOW',
     button_link: content.button_link ? content.button_link.trim() : '/shop',
   };
 }

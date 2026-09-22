@@ -44,8 +44,8 @@ export default function BrandSection({ brands }: BrandSectionProps) {
       {/* Auto-sliding Single-line Marquee with dark edge gradient fade */}
       <div className="relative w-full overflow-hidden py-1">
         {/* Left & Right gradient edge fades matching black background */}
-        <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-12 sm:w-28 bg-gradient-to-r from-black via-black/80 to-transparent z-10" />
-        <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-12 sm:w-28 bg-gradient-to-l from-black via-black/80 to-transparent z-10" />
+        <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-12 sm:w-28 bg-gradient-to-r from-black via-black/80 to-transparent z-10 hidden sm:block" />
+        <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-12 sm:w-28 bg-gradient-to-l from-black via-black/80 to-transparent z-10 hidden sm:block" />
 
         {/* Sliding brand track */}
         <div className="animate-brand-marquee flex items-center gap-3 sm:gap-4 lg:gap-5">
