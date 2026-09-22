@@ -166,6 +166,13 @@ export default function AdminBannersPage() {
     }
   };
 
+  const [selectedTab, setSelectedTab] = useState<'all' | 'hero' | 'promo'>('all');
+
+  const filteredBanners = banners.filter((b) => {
+    if (selectedTab === 'all') return true;
+    return b.position === selectedTab;
+  });
+
   return (
     <div className="space-y-6">
       {/* Top Header */}
@@ -188,18 +195,41 @@ export default function AdminBannersPage() {
         </button>
       </div>
 
+      {/* Tabs Filter */}
+      <div className="flex flex-wrap items-center gap-2 border-b border-neutral-200 pb-3">
+        {[
+          { id: 'all', label: `All Banners (${banners.length})` },
+          { id: 'hero', label: `Hero Carousel (${banners.filter(b => b.position === 'hero').length})` },
+          { id: 'promo', label: `Mid-Page Promo Grid (${banners.filter(b => b.position === 'promo').length})` },
+        ].map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setSelectedTab(tab.id as 'all' | 'hero' | 'promo')}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+              selectedTab === tab.id
+                ? 'bg-neutral-950 text-white shadow-xs'
+                : 'bg-white border border-neutral-200 text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
       {/* Banners List */}
       {loading ? (
         <div className="bg-white rounded-2xl border border-neutral-200 p-12 text-center">
           <Loader2 className="w-8 h-8 animate-spin text-orange-500 mx-auto mb-2" />
           <p className="text-xs text-neutral-500 font-semibold">Loading banners...</p>
         </div>
-      ) : banners.length === 0 ? (
+      ) : filteredBanners.length === 0 ? (
         <div className="bg-white rounded-2xl border border-neutral-200 p-12 text-center">
           <ImageIcon className="w-12 h-12 text-neutral-300 mx-auto mb-3" />
           <h3 className="text-base font-bold text-neutral-800 mb-1">No Banners Found</h3>
           <p className="text-xs text-neutral-500 mb-4 max-w-sm mx-auto">
-            Add promotional banners for the storefront homepage carousel or mid-page promotions.
+            {selectedTab === 'promo'
+              ? 'Add 2 mid-page promotional banners to show in the 2-banner advertising grid.'
+              : 'Add promotional banners for the storefront homepage carousel or mid-page promotions.'}
           </p>
           <button onClick={openAddModal} className="btn-primary text-xs py-2 px-4">
             Create First Banner
@@ -207,7 +237,7 @@ export default function AdminBannersPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {banners.map((banner) => {
+          {filteredBanners.map((banner) => {
             const parsed = parseBannerContent(banner);
             return (
               <div
@@ -352,13 +382,18 @@ export default function AdminBannersPage() {
                     className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-xs sm:text-sm font-semibold focus:outline-none focus:border-orange-500 bg-white"
                   >
                     <option value="hero">Hero Carousel (Top Homepage Slider)</option>
-                    <option value="promo">Mid-Page Promo Banner</option>
+                    <option value="promo">Mid-Page Promo (2-Banner Advertising Grid)</option>
                   </select>
+                  <p className="text-[10px] text-neutral-500 mt-1">
+                    {position === 'promo'
+                      ? 'Appears in the 2-banner advertising grid in the middle of the homepage.'
+                      : 'Appears in the main top hero carousel.'}
+                  </p>
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold text-neutral-700 uppercase tracking-wider mb-1.5">
-                    Display Order / Sequence
+                    Display Order / Position #{position === 'promo' ? '(1 = Left, 2 = Right)' : ''}
                   </label>
                   <input
                     type="number"
@@ -367,6 +402,11 @@ export default function AdminBannersPage() {
                     onChange={(e) => setSortOrder(parseInt(e.target.value, 10) || 1)}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-xs sm:text-sm font-bold font-mono focus:outline-none focus:border-orange-500"
                   />
+                  <p className="text-[10px] text-neutral-500 mt-1">
+                    {position === 'promo'
+                      ? 'Set to 1 for Left Banner, 2 for Right Banner.'
+                      : 'Sequence in the hero slider carousel.'}
+                  </p>
                 </div>
               </div>
 
