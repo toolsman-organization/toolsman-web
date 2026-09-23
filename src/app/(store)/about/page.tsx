@@ -21,7 +21,7 @@ export default function AboutPage() {
           <div className="bg-white rounded-3xl border border-neutral-200 p-8 sm:p-12 shadow-sm space-y-8">
             <div>
               <div className="flex items-center gap-2 text-xs font-bold text-orange-600 uppercase tracking-widest mb-2">
-                <Wrench size={16} />
+                
                 <span>Built for the Job</span>
               </div>
               <h1 className="text-2xl sm:text-4xl font-black text-neutral-950 uppercase tracking-tight">

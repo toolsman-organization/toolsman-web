@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { verifyRazorpayWebhookSignature } from '@/lib/razorpay';
-import { sendOrderConfirmation } from '@/lib/brevo';
+import { sendPaidOrderEmails } from '@/lib/brevo';
 
 export async function POST(request: Request) {
   try {
@@ -65,23 +65,9 @@ export async function POST(request: Request) {
               .select('*, order_items(*)')
               .single();
 
-            // Send confirmation email asynchronously if available
-            if (updatedOrder?.customer_email) {
-              const address = (updatedOrder.shipping_address || {}) as { address_line_1?: string; city?: string; state?: string; pincode?: string };
-              const formattedAddress = `${address.address_line_1 || ''}, ${address.city || ''}, ${address.state || ''} - ${address.pincode || ''}`;
-
-              sendOrderConfirmation({
-                customerEmail: updatedOrder.customer_email,
-                customerName: updatedOrder.customer_name,
-                orderNumber: updatedOrder.order_number,
-                orderTotal: updatedOrder.total_amount,
-                orderItems: (updatedOrder.order_items || []).map((i: { product_name: string; quantity: number; unit_price: number }) => ({
-                  name: i.product_name,
-                  quantity: i.quantity,
-                  price: i.unit_price,
-                })),
-                shippingAddress: formattedAddress,
-              }).catch((e) => console.error('[Razorpay Webhook] Email error:', e));
+            // Send paid order notifications (Customer confirmation + Admin alert)
+            if (updatedOrder) {
+              await sendPaidOrderEmails(updatedOrder);
             }
           }
         }
