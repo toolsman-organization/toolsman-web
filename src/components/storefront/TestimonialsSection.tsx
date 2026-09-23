@@ -88,7 +88,7 @@ export default function TestimonialsSection({ testimonials }: TestimonialsSectio
         <div className="flex items-end justify-between mb-6 sm:mb-8">
           <div>
             <div className="flex items-center gap-1.5 text-[11px] font-bold text-orange-600 uppercase tracking-widest mb-1">
-              <MessageSquareQuote size={14} className="shrink-0" />
+              
               <span>Real Reviews From Real Customers</span>
             </div>
             <h2 className="text-lg sm:text-xl lg:text-2xl font-black text-neutral-950 tracking-tight leading-none uppercase">

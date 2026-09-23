@@ -24,7 +24,7 @@ export default function PrivacyPage() {
           {/* Header */}
           <div className="border-b border-neutral-100 pb-5 mb-6">
             <div className="flex items-center gap-2 text-xs font-black text-orange-600 uppercase tracking-widest mb-2">
-              <Lock size={15} />
+               
               <span>Security & Data Protection</span>
             </div>
 
