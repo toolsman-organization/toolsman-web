@@ -32,13 +32,13 @@ export default async function HomePage() {
     getActiveBrands(),
     getFeaturedProducts(10),
     getBestSellerProducts(10),
-    getNewArrivalProducts(5),
+    getNewArrivalProducts(10),
     getActiveTestimonials(),
   ]);
 
   // Combine top picks: prioritize bestSellers or featured, maximum 10 products
   const topPicks = (bestSellers.length > 0 ? bestSellers : featuredProducts).slice(0, 10);
-  const displayNewArrivals = newArrivals.slice(0, 5);
+  const displayNewArrivals = newArrivals.slice(0, 10);
 
   return (
     <div className="flex flex-col min-h-screen">

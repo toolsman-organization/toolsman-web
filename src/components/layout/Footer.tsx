@@ -12,25 +12,21 @@ interface FooterProps {
 
 const quickLinks = [
   { label: 'Shop All Products', href: '/shop' },
-  { label: 'Track Your Order', href: '/track-order' },
   { label: 'Power Tools', href: '/shop?search=power+tools' },
   { label: 'Hand Tools', href: '/shop?search=hand+tools' },
   { label: 'Accessories', href: '/shop?search=accessories' },
 ];
 
 const companyLinks = [
-  { label: 'About Us', href: '/about' },
   { label: 'Terms & Conditions', href: '/terms' },
   { label: 'Privacy Policy', href: '/privacy' },
   { label: 'Delivery & Shipping', href: '/terms' },
 ];
 
-const accountLinks = [
-  { label: 'My Account', href: '/account' },
-  { label: 'My Orders', href: '/account/orders' },
-  { label: 'Track Live Order', href: '/track-order' },
-  { label: 'Wishlist', href: '/account/wishlist' },
-  { label: 'Saved Addresses', href: '/account/addresses' },
+const customerCareLinks = [
+  { label: 'About Us', href: '/about' },
+  { label: 'Contact Us', href: '/contact' },
+  { label: 'All Categories', href: '/shop' },
 ];
 
 export default function Footer({ settings }: FooterProps) {
@@ -38,7 +34,7 @@ export default function Footer({ settings }: FooterProps) {
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     quick: false,
     company: false,
-    account: false,
+    customer: false,
     contact: false,
   });
 
@@ -127,13 +123,13 @@ export default function Footer({ settings }: FooterProps) {
             </ul>
           </div>
 
-          {/* Column 4: My Account (2 cols) */}
+          {/* Column 4: Customer Care (2 cols) */}
           <div className="lg:col-span-2">
             <h3 className="text-white font-bold text-xs uppercase tracking-widest mb-4">
-              My Account
+              Customer Care
             </h3>
             <ul className="space-y-2.5">
-              {accountLinks.map((link) => (
+              {customerCareLinks.map((link) => (
                 <li key={link.label}>
                   <Link
                     href={link.href}
@@ -232,25 +228,25 @@ export default function Footer({ settings }: FooterProps) {
             )}
           </div>
 
-          {/* Accordion 3: My Account */}
+          {/* Accordion 3: Customer Care */}
           <div>
             <button
               type="button"
-              onClick={() => toggleSection('account')}
+              onClick={() => toggleSection('customer')}
               className="w-full flex items-center justify-between py-2 text-left font-bold text-xs uppercase tracking-wider text-white"
-              aria-expanded={openSections.account}
+              aria-expanded={openSections.customer}
             >
-              <span>My Account</span>
+              <span>Customer Care</span>
               <ChevronDown
                 size={16}
                 className={`text-neutral-400 transition-transform duration-200 ${
-                  openSections.account ? 'rotate-180 text-orange-500' : ''
+                  openSections.customer ? 'rotate-180 text-orange-500' : ''
                 }`}
               />
             </button>
-            {openSections.account && (
+            {openSections.customer && (
               <ul className="pt-2 pb-1 space-y-2.5 animate-in fade-in slide-in-from-top-1 duration-150">
-                {accountLinks.map((link) => (
+                {customerCareLinks.map((link) => (
                   <li key={link.label}>
                     <Link
                       href={link.href}
@@ -322,7 +318,14 @@ export default function Footer({ settings }: FooterProps) {
           </p>
           <p className="text-xs text-neutral-500">
             Powered by{' '}
-            <span className="text-neutral-400 font-medium">Ekodrix</span>
+            <a
+              href="https://www.ekodrix.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-neutral-400 font-medium hover:text-orange-400 transition-colors underline-offset-2 hover:underline"
+            >
+              Ekodrix
+            </a>
           </p>
         </div>
       </div>
