@@ -65,20 +65,20 @@ export default function OrderStatusUpdater({
 
       if (error) throw error;
 
-      // Send Brevo email notification via internal API if email exists
-      if (customerEmail) {
-        fetch('/api/brevo/send', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            type: 'status_update',
-            customerEmail,
-            customerName,
-            orderNumber,
-            newStatus: status,
-            note: note || undefined,
-          }),
-        }).catch(() => {});
+      // Send Brevo Customer Delivered email if status changed to 'delivered' (idempotent)
+      if (status === 'delivered' && currentStatus !== 'delivered') {
+        try {
+          await fetch('/api/brevo/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type: 'order_delivered',
+              orderId,
+            }),
+          });
+        } catch (err) {
+          console.error('[OrderStatusUpdater] Email dispatch error:', err);
+        }
       }
 
       setSuccess(true);

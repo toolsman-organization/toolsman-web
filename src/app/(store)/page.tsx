@@ -57,8 +57,7 @@ export default async function HomePage() {
           <div className="flex items-end justify-between mb-6 sm:mb-8">
             <div>
               <div className="flex items-center gap-1.5 text-[11px] font-bold text-orange-600 uppercase tracking-widest mb-1">
-                <Flame size={14} className="fill-orange-500 text-orange-500 shrink-0" />
-                <span>Best Selling Tools This Week</span>
+                 <span>Best Selling Tools This Week</span>
               </div>
               <h2 className="text-lg sm:text-xl lg:text-2xl font-black text-neutral-950 tracking-tight leading-none">
                 TOP PICKS
@@ -104,7 +103,7 @@ export default async function HomePage() {
             <div className="flex items-end justify-between mb-6 sm:mb-8">
               <div>
                 <div className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-600 uppercase tracking-widest mb-1">
-                  <Sparkles size={14} className="shrink-0" />
+                  
                   <span>Just Arrived In Stock</span>
                 </div>
                 <h2 className="text-lg sm:text-xl lg:text-2xl font-black text-neutral-950 tracking-tight leading-none">

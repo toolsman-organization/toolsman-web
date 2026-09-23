@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Search, ShoppingCart, Heart, User, Menu, X, ChevronDown, Truck, Loader2 } from 'lucide-react';
+import { Search, ShoppingCart, Heart, User, Menu, X, ChevronDown, ChevronRight, Truck, Loader2 } from 'lucide-react';
 import type { Category, ProductWithDetails } from '@/types/database';
 import { useCart } from '@/hooks/useCart';
 import { useWishlist } from '@/hooks/useWishlist';
@@ -274,20 +274,21 @@ export default function Header({ categories }: HeaderProps) {
             <nav className="relative flex items-center justify-center w-full py-0.5" aria-label="Main navigation">
 
               {/* Centered Group: All Categories + Dynamic Main Categories + Brands */}
-              <div className="flex items-center justify-center gap-1 sm:gap-1.5 lg:gap-2 overflow-x-auto scrollbar-none">
-                {/* Hierarchical Categories Dropdown */}
-                <div className="relative group shrink-0">
+              <div className="flex items-center justify-center gap-1 sm:gap-1.5 lg:gap-2">
+                {/* Classic Simple Categories Dropdown */}
+                <div className="relative group/allcat shrink-0">
                   <button
+                    type="button"
                     className="flex items-center gap-1.5 px-3.5 py-2 text-sm font-semibold text-white hover:bg-white/10 rounded-md transition-colors whitespace-nowrap"
                     aria-haspopup="true"
                   >
                     <Menu size={15} />
                     <span>All Categories</span>
-                    <ChevronDown size={13} className="group-hover:rotate-180 transition-transform duration-200 ml-0.5" />
+                    <ChevronDown size={13} className="group-hover/allcat:rotate-180 transition-transform duration-200 ml-0.5" />
                   </button>
 
-                  {/* Hierarchical Mega Flyout */}
-                  <div className="absolute top-full left-0 w-64 bg-white shadow-2xl rounded-b-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 border-t-2 border-orange-500 text-left py-1 divide-y divide-gray-100">
+                  {/* Main Dropdown Menu */}
+                  <div className="absolute top-full left-0 w-60 bg-white shadow-xl rounded-b-lg opacity-0 invisible group-hover/allcat:opacity-100 group-hover/allcat:visible transition-all duration-150 z-50 border-t-2 border-orange-500 text-left py-1 divide-y divide-gray-50 border border-gray-100">
                     {categories
                       .filter((cat) => !cat.parent_id)
                       .map((mainCat) => {
@@ -296,18 +297,18 @@ export default function Header({ categories }: HeaderProps) {
                           <div key={mainCat.id} className="relative group/item">
                             <Link
                               href={`/category/${mainCat.slug}`}
-                              className="flex items-center justify-between px-4 py-2.5 text-sm font-bold text-gray-900 hover:bg-orange-50 hover:text-orange-600 transition-colors"
+                              className="flex items-center justify-between px-4 py-2.5 text-sm font-bold text-gray-800 hover:bg-orange-50 hover:text-orange-600 transition-colors"
                             >
                               <span>{mainCat.name}</span>
                               {subs.length > 0 && (
-                                <ChevronDown size={13} className="-rotate-90 text-gray-400 group-hover/item:text-orange-600" />
+                                <ChevronRight size={14} className="text-gray-400 group-hover/item:text-orange-600 group-hover/item:translate-x-0.5 transition-all" />
                               )}
                             </Link>
 
                             {/* Flyout Submenu for Subcategories */}
                             {subs.length > 0 && (
-                              <div className="absolute top-0 left-full w-56 bg-white shadow-2xl rounded-r-md opacity-0 invisible group-hover/item:opacity-100 group-hover/item:visible transition-all duration-150 border-l border-t border-b border-gray-100 text-left py-1">
-                                <div className="px-3.5 py-1.5 bg-neutral-50 border-b border-neutral-100 text-[11px] font-black text-orange-600 uppercase tracking-wider">
+                              <div className="absolute top-0 left-full w-56 bg-white shadow-xl rounded-r-lg opacity-0 invisible group-hover/item:opacity-100 group-hover/item:visible transition-all duration-150 border border-gray-100 text-left py-1">
+                                <div className="px-4 py-2 bg-orange-50/50 border-b border-orange-100/50 text-[11px] font-black text-orange-600 uppercase tracking-wider">
                                   {mainCat.name}
                                 </div>
                                 {subs.map((sub) => (
@@ -335,7 +336,7 @@ export default function Header({ categories }: HeaderProps) {
                   Shop
                 </Link>
 
-                {/* Dynamic Main Categories nav links */}
+                {/* Dynamic Main Categories nav links (simple links, no dropdown) */}
                 {categories
                   .filter((cat) => !cat.parent_id)
                   .slice(0, 4)
@@ -343,7 +344,7 @@ export default function Header({ categories }: HeaderProps) {
                     <Link
                       key={mainCat.id}
                       href={`/category/${mainCat.slug}`}
-                      className="px-3.5 py-2 text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 rounded-md transition-colors whitespace-nowrap"
+                      className="px-3.5 py-2 text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 rounded-md transition-colors whitespace-nowrap shrink-0"
                     >
                       {mainCat.name}
                     </Link>
