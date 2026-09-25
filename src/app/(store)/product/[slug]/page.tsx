@@ -6,6 +6,8 @@ import ProductActions from '@/components/storefront/ProductActions';
 import ProductCard from '@/components/storefront/ProductCard';
 import { getProductBySlug, getRelatedProducts } from '@/services/products';
 import { formatCurrency, calculateDiscount } from '@/lib/utils';
+import { getSiteUrl, getAbsoluteUrl } from '@/lib/site-url';
+import { generateProductSchema, generateBreadcrumbSchema } from '@/lib/schema';
 import type { Metadata } from 'next';
 
 interface ProductPageProps {
@@ -24,13 +26,45 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
     };
   }
 
+  const brandName = product.brand?.name;
+  const title = brandName
+    ? `${product.name} | ${brandName} | TOOLSMAN`
+    : `${product.name} | TOOLSMAN`;
+
+  const description =
+    product.short_description ||
+    `Buy genuine ${product.name} at best price with warranty in Kerala at TOOLSMAN. Fast delivery across Kerala.`;
+
+  const canonicalUrl = `/product/${product.slug}`;
+  const images = product.primary_image_url
+    ? [
+        {
+          url: product.primary_image_url,
+          width: 800,
+          height: 800,
+          alt: product.name,
+        },
+      ]
+    : [];
+
   return {
-    title: `${product.name} (${product.product_code}) | TOOLSMAN`,
-    description: product.short_description || `Buy ${product.name} at best price with warranty in Kerala.`,
+    title,
+    description,
+    alternates: {
+      canonical: canonicalUrl,
+    },
     openGraph: {
-      title: `${product.name} | TOOLSMAN`,
-      description: product.short_description || undefined,
-      images: product.primary_image_url ? [{ url: product.primary_image_url }] : [],
+      title,
+      description,
+      url: getAbsoluteUrl(canonicalUrl),
+      type: 'website',
+      images,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: product.primary_image_url ? [product.primary_image_url] : [],
     },
   };
 }
@@ -53,8 +87,48 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
         .filter(Boolean)
     : [];
 
+  // Build JSON-LD structured data matching visible UI
+  const productSchema = generateProductSchema(
+    product,
+    getAbsoluteUrl(`/product/${product.slug}`)
+  );
+
+  const breadcrumbItems: { name: string; url?: string }[] = [
+    { name: 'Home', url: '/' },
+    { name: 'Shop', url: '/shop' },
+  ];
+
+  if (product.category?.parent) {
+    breadcrumbItems.push({
+      name: product.category.parent.name,
+      url: `/category/${product.category.parent.slug}`,
+    });
+  }
+
+  if (product.category) {
+    breadcrumbItems.push({
+      name: product.category.name,
+      url: `/category/${product.category.slug}`,
+    });
+  }
+
+  breadcrumbItems.push({
+    name: product.name,
+    url: `/product/${product.slug}`,
+  });
+
+  const breadcrumbSchema = generateBreadcrumbSchema(breadcrumbItems);
+
   return (
     <div className="bg-white min-h-screen py-3 sm:py-6 lg:py-8 border-b border-neutral-200">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
       <div className="container-site">
         {/* Breadcrumbs */}
         <nav className="flex items-center gap-1.5 text-xs text-neutral-500 mb-3 sm:mb-5 flex-wrap" aria-label="Breadcrumb">

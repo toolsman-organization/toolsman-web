@@ -89,10 +89,10 @@ export default function ProductCard({ product, priority = false, compact = false
             {product.primary_image_url ? (
               <Image
                 src={product.primary_image_url}
-                alt={product.primary_image_alt || product.name}
+                alt={product.primary_image_alt || `${product.brand_name ? product.brand_name + ' ' : ''}${product.name}`}
                 fill
                 priority={priority}
-                sizes="(max-width: 640px) 33vw, 20vw"
+                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
                 className="object-contain p-1"
               />
             ) : (
@@ -207,7 +207,7 @@ export default function ProductCard({ product, priority = false, compact = false
           {product.primary_image_url ? (
             <Image
               src={product.primary_image_url}
-              alt={product.primary_image_alt || product.name}
+              alt={product.primary_image_alt || `${product.brand_name ? product.brand_name + ' ' : ''}${product.name}`}
               fill
               priority={priority}
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"

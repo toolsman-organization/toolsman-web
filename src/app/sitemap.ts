@@ -1,11 +1,13 @@
 import { MetadataRoute } from 'next';
-import { getProducts } from '@/services/products';
-import { getActiveCategories } from '@/services/categories';
+import { createClient } from '@supabase/supabase-js';
+import { getSiteUrl } from '@/lib/site-url';
+
+export const revalidate = 3600; // Cache sitemap for 1 hour
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+  const siteUrl = getSiteUrl();
 
-  // Static routes
+  // Static indexable routes
   const staticRoutes: MetadataRoute.Sitemap = [
     {
       url: `${siteUrl}`,
@@ -52,12 +54,32 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   try {
-    const [productsResult, categories] = await Promise.all([
-      getProducts({}, 1, 500).catch(() => ({ data: [], total: 0, page: 1, limit: 500, totalPages: 1 })),
-      getActiveCategories().catch(() => []),
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      return staticRoutes;
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+    const [productsResult, categoriesResult] = await Promise.all([
+      supabase
+        .from('products')
+        .select('slug, updated_at')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false }),
+      supabase
+        .from('categories')
+        .select('slug, updated_at')
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true }),
     ]);
 
-    const productRoutes: MetadataRoute.Sitemap = (productsResult?.data || []).map((product) => ({
+    const products = productsResult.data || [];
+    const categories = categoriesResult.data || [];
+
+    const productRoutes: MetadataRoute.Sitemap = products.map((product) => ({
       url: `${siteUrl}/product/${product.slug}`,
       lastModified: product.updated_at ? new Date(product.updated_at) : new Date(),
       changeFrequency: 'weekly',
@@ -66,13 +88,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     const categoryRoutes: MetadataRoute.Sitemap = categories.map((cat) => ({
       url: `${siteUrl}/category/${cat.slug}`,
-      lastModified: new Date(),
+      lastModified: cat.updated_at ? new Date(cat.updated_at) : new Date(),
       changeFrequency: 'weekly',
       priority: 0.8,
     }));
 
     return [...staticRoutes, ...categoryRoutes, ...productRoutes];
-  } catch {
+  } catch (error) {
+    console.error('[Sitemap] Error generating dynamic routes:', error);
     return staticRoutes;
   }
 }
+

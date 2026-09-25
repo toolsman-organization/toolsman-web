@@ -2,9 +2,20 @@ import Link from 'next/link';
 import { ArrowLeft, Phone, Mail, MapPin, Clock, MessageSquare, Send } from 'lucide-react';
 import { getSiteSettings } from '@/services/settings';
 
-export const metadata = {
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
   title: 'Contact Us | TOOLSMAN',
-  description: 'Get in touch with TOOLSMAN for tool inquiries, machinery sales, servicing, and bulk orders across Kerala.',
+  description:
+    'Get in touch with TOOLSMAN for tool inquiries, machinery sales, servicing, and bulk orders across Kerala.',
+  alternates: {
+    canonical: '/contact',
+  },
+  openGraph: {
+    title: 'Contact Us | TOOLSMAN',
+    description:
+      'Get in touch with TOOLSMAN for tool inquiries, machinery sales, servicing, and bulk orders across Kerala.',
+  },
 };
 
 export default async function ContactPage() {

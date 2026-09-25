@@ -1,9 +1,18 @@
 import Link from 'next/link';
 import { ArrowLeft, Lock } from 'lucide-react';
 
-export const metadata = {
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
   title: 'Privacy Policy | TOOLSMAN',
   description: 'Privacy policy and data protection practices at TOOLSMAN.',
+  alternates: {
+    canonical: '/privacy',
+  },
+  openGraph: {
+    title: 'Privacy Policy | TOOLSMAN',
+    description: 'Privacy policy and data protection practices at TOOLSMAN.',
+  },
 };
 
 export default function PrivacyPage() {

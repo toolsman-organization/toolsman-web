@@ -2,9 +2,20 @@ import Link from 'next/link';
 import { ArrowLeft, Wrench, Award, Truck, HeadphonesIcon, CheckCircle2 } from 'lucide-react';
 import WhyChooseSection from '@/components/storefront/WhyChooseSection';
 
-export const metadata = {
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
   title: 'About Us | TOOLSMAN',
-  description: 'Learn about TOOLSMAN — your trusted partner for professional power tools, machinery sales, and equipment servicing in Kerala.',
+  description:
+    'Learn about TOOLSMAN — your trusted partner for professional power tools, machinery sales, and equipment servicing in Kerala.',
+  alternates: {
+    canonical: '/about',
+  },
+  openGraph: {
+    title: 'About Us | TOOLSMAN',
+    description:
+      'Learn about TOOLSMAN — your trusted partner for professional power tools, machinery sales, and equipment servicing in Kerala.',
+  },
 };
 
 export default function AboutPage() {

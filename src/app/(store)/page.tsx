@@ -13,7 +13,26 @@ import { getActiveBrands } from '@/services/brands';
 import { getFeaturedProducts, getBestSellerProducts, getNewArrivalProducts } from '@/services/products';
 import { getActiveTestimonials } from '@/services/testimonials';
 
+import type { Metadata } from 'next';
+import { getSiteUrl } from '@/lib/site-url';
+
 export const revalidate = 60; // ISR 1 minute
+
+export const metadata: Metadata = {
+  title: 'TOOLSMAN — Professional Power Tools, Hand Tools & Machinery',
+  description:
+    'Shop authentic power tools, cordless machines, hand tools and spare parts at TOOLSMAN. Top brands INGCO, Bosch, Makita, DeWalt with fast delivery across Kerala.',
+  alternates: {
+    canonical: '/',
+  },
+  openGraph: {
+    title: 'TOOLSMAN — Professional Power Tools & Equipment',
+    description:
+      'Shop authentic power tools, cordless machines, hand tools and spare parts at TOOLSMAN. Fast delivery across Kerala.',
+    url: getSiteUrl(),
+    type: 'website',
+  },
+};
 
 export default async function HomePage() {
   const [
