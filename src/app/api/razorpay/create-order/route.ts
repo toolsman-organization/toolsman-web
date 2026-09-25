@@ -1,12 +1,23 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { createRazorpayOrder } from '@/lib/razorpay';
 import { calculateDeliveryCharge, parseWeightInKg } from '@/lib/delivery';
 
 export async function POST(request: Request) {
   try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const serverSupabase = await createClient();
+    const { data: { user } } = await serverSupabase.auth.getUser();
+
+    // Use admin client if service role key is available, else fallback to server client
+    let supabase = serverSupabase;
+    if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      try {
+        supabase = createAdminClient() as any;
+      } catch {
+        supabase = serverSupabase;
+      }
+    }
 
     const {
       customerName,

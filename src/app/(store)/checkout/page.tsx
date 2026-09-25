@@ -675,61 +675,62 @@ function CheckoutContent() {
                 )}
               </div>
 
-              {/* Step 2: Exclusive Razorpay Online Payment */}
+              {/* Step 2: Online Payment */}
               {step === 2 && (
                 <div className="bg-white rounded-2xl border border-neutral-200 p-6 shadow-sm animate-in fade-in duration-200">
-                  <div className="flex items-center gap-2 pb-4 mb-4 border-b border-neutral-100">
-                    <span className="w-6 h-6 rounded-full bg-orange-600 text-white flex items-center justify-center text-xs font-black">
-                      2
+                  <div className="flex items-center justify-between pb-4 mb-5 border-b border-neutral-100">
+                    <div className="flex items-center gap-2">
+                      <span className="w-6 h-6 rounded-full bg-orange-600 text-white flex items-center justify-center text-xs font-black">
+                        2
+                      </span>
+                      <h2 className="font-black text-base text-neutral-950 uppercase tracking-tight">
+                        Online Payment
+                      </h2>
+                    </div>
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                      <ShieldCheck size={12} className="text-emerald-600" />
+                      100% Secure
                     </span>
-                    <h2 className="font-black text-base text-neutral-950 uppercase tracking-tight">
-                      Online Payment (Razorpay)
-                    </h2>
                   </div>
 
+                  {/* Clean Selected Payment Card */}
                   <div className="mb-6">
-                    <div className="p-4 rounded-2xl border-2 border-orange-500 bg-orange-50/40 shadow-xs space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <CreditCard size={18} className="text-orange-600" />
-                          <span className="font-extrabold text-sm text-neutral-950">
-                            Pay Online via Razorpay
-                          </span>
+                    <div className="p-4 sm:p-5 rounded-2xl border-2 border-orange-500 bg-orange-50/30 shadow-xs flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3.5">
+                        <div className="w-10 h-10 rounded-xl bg-orange-500 text-white flex items-center justify-center shrink-0 shadow-sm">
+                          <CreditCard size={20} />
                         </div>
-                        <span className="text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-900 px-2.5 py-0.5 rounded-full">
-                          100% Secure
-                        </span>
+                        <div>
+                          <div className="font-black text-sm text-neutral-950">
+                            Online Payment
+                          </div>
+                          <p className="text-xs text-neutral-500 mt-0.5 font-medium">
+                            Safe, fast & encrypted checkout
+                          </p>
+                        </div>
                       </div>
-
-                      <p className="text-xs text-neutral-600 leading-relaxed">
-                        Instant, encrypted payment gateway. Supports Google Pay, PhonePe, Paytm, UPI, Credit/Debit cards, and NetBanking.
-                      </p>
-
-                      <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                        {['Google Pay', 'PhonePe', 'Paytm', 'UPI', 'Cards', 'NetBanking'].map((badge) => (
-                          <span key={badge} className="px-2.5 py-1 rounded-md bg-white border border-neutral-200 text-[10px] font-bold text-neutral-800 shadow-2xs">
-                            {badge}
-                          </span>
-                        ))}
+                      
+                      <div className="w-5 h-5 rounded-full bg-orange-500 text-white flex items-center justify-center shrink-0 shadow-xs">
+                        <Check size={12} className="stroke-[3]" />
                       </div>
                     </div>
                   </div>
 
-                  {/* CTA Place Order */}
+                  {/* CTA Place Order & Pay */}
                   <button
                     onClick={handlePlaceOrder}
                     disabled={loading}
-                    className="btn-primary w-full py-4 text-sm font-bold flex items-center justify-center gap-2 shadow-xl shadow-orange-500/25 disabled:opacity-50"
+                    className="btn-primary w-full py-4 text-sm font-bold flex items-center justify-center gap-2 shadow-xl shadow-orange-500/25 disabled:opacity-50 cursor-pointer"
                   >
                     {loading ? (
                       <>
                         <Loader2 size={18} className="animate-spin" />
-                        <span>Initiating Razorpay Payment...</span>
+                        <span>Connecting to Secure Payment...</span>
                       </>
                     ) : (
                       <>
                         <ShieldCheck size={18} />
-                        <span>PAY SECURELY VIA RAZORPAY {formatCurrency(grandTotal)}</span>
+                        <span>PAY {formatCurrency(grandTotal)}</span>
                       </>
                     )}
                   </button>
