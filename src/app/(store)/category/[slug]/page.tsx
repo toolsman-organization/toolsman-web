@@ -7,6 +7,8 @@ import SortDropdown from '@/components/storefront/SortDropdown';
 import { getProducts } from '@/services/products';
 import { getActiveCategories, getCategoryBySlug } from '@/services/categories';
 import { getActiveBrands } from '@/services/brands';
+import { getSiteUrl, getAbsoluteUrl } from '@/lib/site-url';
+import { generateBreadcrumbSchema, generateCollectionPageSchema } from '@/lib/schema';
 import type { Metadata } from 'next';
 
 interface CategoryPageProps {
@@ -21,15 +23,58 @@ interface CategoryPageProps {
   }>;
 }
 
-export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: CategoryPageProps): Promise<Metadata> {
   const { slug } = await params;
+  const sp = await searchParams;
   const category = await getCategoryBySlug(slug);
+
   if (!category) return { title: 'Category Not Found | TOOLSMAN' };
+
   const parentName = category.parent ? category.parent.name + ' > ' : '';
+  const pageNum = sp.page ? parseInt(sp.page, 10) : 1;
+  const pageSuffix = pageNum > 1 ? ` (Page ${pageNum})` : '';
+
+  const title = `${category.name}${pageSuffix} — Professional Power Tools | TOOLSMAN`;
+  const description =
+    category.description ||
+    `Shop ${category.name} at TOOLSMAN. Browse our full range of ${parentName}${category.name.toLowerCase()} with fast delivery across Kerala. 100% authentic brands.`;
+
+  const canonicalUrl = `/category/${slug}`;
+  const hasFilterParams = Boolean(sp.minPrice || sp.maxPrice || sp.sort || sp.inStock);
+
+  const images = category.image_url
+    ? [
+        {
+          url: category.image_url,
+          width: 800,
+          height: 800,
+          alt: category.name,
+        },
+      ]
+    : [];
+
   return {
-    title: category.name + ' — Professional Power Tools | TOOLSMAN',
-    description: 'Shop ' + category.name + ' at TOOLSMAN. Browse our full range of ' + parentName + category.name.toLowerCase() + ' with fast delivery across Kerala.',
-    alternates: { canonical: '/category/' + slug },
+    title,
+    description,
+    alternates: {
+      canonical: canonicalUrl,
+    },
+    robots: hasFilterParams
+      ? { index: false, follow: true }
+      : { index: true, follow: true },
+    openGraph: {
+      title,
+      description,
+      url: getAbsoluteUrl(canonicalUrl),
+      type: 'website',
+      images,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: category.image_url ? [category.image_url] : [],
+    },
   };
 }
 
@@ -59,8 +104,41 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
   const { data: products, total, totalPages } = await getProducts(filters, page, limit);
   const parentCat = category.parent ?? null;
 
+  // Build Breadcrumb JSON-LD
+  const breadcrumbItems: { name: string; url?: string }[] = [
+    { name: 'Home', url: '/' },
+    { name: 'Shop Catalog', url: '/shop' },
+  ];
+
+  if (parentCat) {
+    breadcrumbItems.push({
+      name: parentCat.name,
+      url: `/category/${parentCat.slug}`,
+    });
+  }
+
+  breadcrumbItems.push({
+    name: category.name,
+    url: `/category/${category.slug}`,
+  });
+
+  const breadcrumbSchema = generateBreadcrumbSchema(breadcrumbItems);
+  const collectionSchema = generateCollectionPageSchema(
+    category.name,
+    category.description || `Browse our full range of ${category.name} at TOOLSMAN.`,
+    `/category/${category.slug}`
+  );
+
   return (
     <div className="bg-white min-h-screen py-6 sm:py-10 border-b border-neutral-200">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionSchema) }}
+      />
       <div className="container-site">
         <nav className="flex items-center gap-1.5 text-xs text-neutral-500 mb-6 flex-wrap" aria-label="Breadcrumb">
           <Link href="/" className="hover:text-orange-600 transition-colors">Home</Link>
