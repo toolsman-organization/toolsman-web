@@ -395,9 +395,21 @@ CREATE POLICY "Users can manage own cart" ON public.cart_items FOR ALL USING (au
 DROP POLICY IF EXISTS "Users can view own orders" ON public.orders;
 CREATE POLICY "Users can view own orders" ON public.orders FOR SELECT USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Anyone can insert orders" ON public.orders;
+CREATE POLICY "Anyone can insert orders" ON public.orders FOR INSERT WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Users can update own orders" ON public.orders;
+CREATE POLICY "Users can update own orders" ON public.orders FOR UPDATE USING (auth.uid() = user_id OR auth.uid() IS NULL);
+
 DROP POLICY IF EXISTS "Users can view own order items" ON public.order_items;
 CREATE POLICY "Users can view own order items" ON public.order_items FOR SELECT
   USING (EXISTS (SELECT 1 FROM public.orders o WHERE o.id = order_items.order_id AND o.user_id = auth.uid()));
+
+DROP POLICY IF EXISTS "Anyone can insert order items" ON public.order_items;
+CREATE POLICY "Anyone can insert order items" ON public.order_items FOR INSERT WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Anyone can insert order status history" ON public.order_status_history;
+CREATE POLICY "Anyone can insert order status history" ON public.order_status_history FOR INSERT WITH CHECK (true);
 
 -- Admin full access policies
 DROP POLICY IF EXISTS "Admins full access to categories" ON public.categories;
