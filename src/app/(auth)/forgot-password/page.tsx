@@ -17,18 +17,21 @@ export default function ForgotPasswordPage() {
     setErrorMsg('');
 
     try {
-      const supabase = createClient();
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/callback?next=/account/reset-password`,
+      const res = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim() }),
       });
 
-      if (error) {
-        setErrorMsg(error.message);
+      const data = await res.json();
+
+      if (!res.ok || data.error) {
+        setErrorMsg(data.error || 'Failed to process password reset request.');
       } else {
         setSent(true);
       }
     } catch {
-      setErrorMsg('Failed to process password reset request.');
+      setErrorMsg('Failed to process password reset request. Please check your network connection.');
     } finally {
       setLoading(false);
     }

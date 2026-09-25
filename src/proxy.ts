@@ -41,7 +41,7 @@ export async function proxy(request: NextRequest) {
     }
 
     // Check admin role from profile or metadata
-    let isAdmin = user.app_metadata?.role === 'admin' || user.user_metadata?.role === 'admin';
+    let isAdmin = user.app_metadata?.role === 'admin' || user.user_metadata?.role === 'admin' || user.email?.toLowerCase() === 'admin@toolsman.in';
 
     if (!isAdmin) {
       const { data: profile } = await supabase
@@ -71,20 +71,39 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  // Redirect logged-in users away from auth pages
+  // Handle logged-in users on auth pages (/login, /register)
   if (user && (pathname === '/login' || pathname === '/register')) {
     const rawRedirect = request.nextUrl.searchParams.get('redirect');
+    const errorParam = request.nextUrl.searchParams.get('error');
+
+    // Check if user is admin
+    let isAdminUser = user.app_metadata?.role === 'admin' || user.user_metadata?.role === 'admin' || user.email?.toLowerCase() === 'admin@toolsman.in';
+    if (!isAdminUser) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (profile?.role === 'admin') {
+        isAdminUser = true;
+      }
+    }
+
+    // If a logged-in non-admin user is redirected here to sign in as admin, allow them to view the admin login form!
+    if (!isAdminUser && (rawRedirect?.startsWith('/admin') || errorParam === 'unauthorized_admin')) {
+      return supabaseResponse;
+    }
+
     if (rawRedirect && rawRedirect !== '/' && !rawRedirect.startsWith('/login')) {
+      // Prevent redirecting non-admin users back to /admin (which would cause an infinite loop)
+      if (rawRedirect.startsWith('/admin') && !isAdminUser) {
+        return supabaseResponse;
+      }
       return NextResponse.redirect(new URL(rawRedirect, request.url));
     }
-    // Check if user is admin, redirect to /admin by default if on login
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single();
 
-    if (profile?.role === 'admin') {
+    if (isAdminUser) {
       return NextResponse.redirect(new URL('/admin', request.url));
     }
 

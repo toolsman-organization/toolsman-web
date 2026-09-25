@@ -33,8 +33,6 @@ const indianStates = [
 
 function CheckoutContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const couponCode = searchParams.get('coupon') || '';
 
   const { items, cartTotal, clearCart, loading: cartLoading } = useCart();
   const { user, loading: authLoading } = useAuth();
@@ -90,9 +88,6 @@ function CheckoutContent() {
   // Payment Option (Exclusive Razorpay Online Payment)
   const [paymentMethod] = useState<'razorpay'>('razorpay');
 
-  // Coupon State
-  const [couponDiscount, setCouponDiscount] = useState(0);
-
   // Delivery settings
   const [baseCharge, setBaseCharge] = useState(100);
   const [additionalCharge, setAdditionalCharge] = useState(50);
@@ -125,9 +120,9 @@ function CheckoutContent() {
     additionalCharge
   );
   const shippingFee = deliveryCalc.deliveryCharge;
-  const grandTotal = Math.max(0, cartTotal - couponDiscount + shippingFee);
+  const grandTotal = Math.max(0, cartTotal + shippingFee);
 
-  // Load saved addresses and validate coupon
+  // Load saved addresses
   useEffect(() => {
     if (user) {
       supabase
@@ -154,22 +149,7 @@ function CheckoutContent() {
           }
         });
     }
-
-    if (couponCode && cartTotal > 0) {
-      fetch('/api/coupons/validate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: couponCode, orderTotal: cartTotal }),
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.valid && data.coupon) {
-            setCouponDiscount(data.coupon.discount_amount);
-          }
-        })
-        .catch(() => {});
-    }
-  }, [user, supabase, couponCode, cartTotal]);
+  }, [user, supabase]);
 
   const handleSelectSavedAddress = (addr: CustomerAddress) => {
     setSelectedAddressId(addr.id);
@@ -236,7 +216,6 @@ function CheckoutContent() {
         imageUrl: i.product?.primary_image_url || '',
         quantity: i.quantity,
       })),
-      couponCode: couponDiscount > 0 ? couponCode : undefined,
       paymentMethod: 'razorpay',
     };
 
@@ -825,13 +804,6 @@ function CheckoutContent() {
                     {totalCartWeightKg} KG
                   </span>
                 </div>
-
-                {couponDiscount > 0 && (
-                  <div className="flex justify-between text-emerald-700 bg-emerald-50/80 p-2 rounded-lg font-bold border border-emerald-200/60">
-                    <span>Coupon Discount</span>
-                    <span>-{formatCurrency(couponDiscount)}</span>
-                  </div>
-                )}
 
                 <div className="flex justify-between text-neutral-600 items-center">
                   <span className="font-medium">Delivery Charge</span>

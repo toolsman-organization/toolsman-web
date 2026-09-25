@@ -34,6 +34,20 @@ export default async function AdminLayout({
     }
   }
 
+  // Master admin email fallback & auto-sync profile
+  if (!isAdmin && user.email?.toLowerCase() === 'admin@toolsman.in') {
+    isAdmin = true;
+    try {
+      await supabase.from('profiles').upsert({
+        id: user.id,
+        role: 'admin',
+        full_name: user.user_metadata?.full_name || 'Admin',
+      }, { onConflict: 'id' });
+    } catch {
+      // Ignore
+    }
+  }
+
   if (!isAdmin) {
     redirect('/login?error=unauthorized_admin&redirect=/admin');
   }

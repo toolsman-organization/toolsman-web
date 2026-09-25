@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import ImageUploader from '@/components/admin/ImageUploader';
+import ConfirmDeleteModal from '@/components/admin/ConfirmDeleteModal';
 import { slugify } from '@/lib/utils';
 import type { Category } from '@/types/database';
 
@@ -29,6 +30,11 @@ export default function AdminCategoriesPage() {
   const [submitting, setSubmitting] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [collapsedMains, setCollapsedMains] = useState<Record<string, boolean>>({});
+
+  // Delete modal state
+  const [deleteTarget, setDeleteTarget] = useState<Category | null>(null);
+  const [deleteWarning, setDeleteWarning] = useState<string | undefined>(undefined);
+  const [deleting, setDeleting] = useState(false);
 
   // Form State
   const [categoryType, setCategoryType] = useState<'main' | 'sub'>('main');
@@ -158,17 +164,15 @@ export default function AdminCategoriesPage() {
     }
   };
 
-  const handleDelete = async (cat: Category) => {
+  const promptDelete = async (cat: Category) => {
     const isMain = !cat.parent_id;
+    let warning: string | undefined = undefined;
 
     // 1. If Main Category: check for child subcategories
     if (isMain) {
       const childSubs = subcategoriesByParent[cat.id] || [];
       if (childSubs.length > 0) {
-        alert(
-          `Cannot delete "${cat.name}": It contains ${childSubs.length} subcategory(ies).\n\nPlease delete or move its subcategories before deleting this main category.`
-        );
-        return;
+        warning = `Note: This category contains ${childSubs.length} subcategory(ies). Please delete or move its subcategories first.`;
       }
     }
 
@@ -179,23 +183,28 @@ export default function AdminCategoriesPage() {
       .eq('category_id', cat.id);
 
     if (!error && count && count > 0) {
-      alert(
-        `Cannot delete "${cat.name}": There are ${count} product(s) assigned to this category.\n\nPlease reassign these products to another subcategory before deleting.`
-      );
-      return;
+      warning = `Warning: There are ${count} product(s) assigned to this category.`;
     }
 
-    if (!confirm(`Are you sure you want to delete ${isMain ? 'Main Category' : 'Subcategory'} "${cat.name}"?`)) {
-      return;
-    }
+    setDeleteWarning(warning);
+    setDeleteTarget(cat);
+  };
 
-    const { error: delError } = await supabase.from('categories').delete().eq('id', cat.id);
-    if (delError) {
-      alert('Delete failed: ' + delError.message);
-      return;
-    }
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
 
-    await loadCategories();
+    try {
+      const { error: delError } = await supabase.from('categories').delete().eq('id', deleteTarget.id);
+      if (delError) {
+        alert('Delete failed: ' + delError.message);
+        return;
+      }
+      setDeleteTarget(null);
+      await loadCategories();
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const handleToggle = async (cat: Category) => {
@@ -323,8 +332,8 @@ export default function AdminCategoriesPage() {
                     </button>
 
                     <button
-                      onClick={() => handleDelete(mainCat)}
-                      className="p-2 text-neutral-600 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors"
+                      onClick={() => promptDelete(mainCat)}
+                      className="p-2 text-neutral-600 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors cursor-pointer"
                       title="Delete Main Category"
                     >
                       <Trash2 size={16} />
@@ -369,15 +378,15 @@ export default function AdminCategoriesPage() {
 
                               <button
                                 onClick={() => openEditModal(sub)}
-                                className="p-1.5 text-neutral-500 hover:text-orange-600 rounded hover:bg-white"
+                                className="p-1.5 text-neutral-500 hover:text-orange-600 rounded hover:bg-white cursor-pointer"
                                 title="Edit Subcategory"
                               >
                                 <Edit size={14} />
                               </button>
 
                               <button
-                                onClick={() => handleDelete(sub)}
-                                className="p-1.5 text-neutral-500 hover:text-red-600 rounded hover:bg-white"
+                                onClick={() => promptDelete(sub)}
+                                className="p-1.5 text-neutral-500 hover:text-red-600 rounded hover:bg-white cursor-pointer"
                                 title="Delete Subcategory"
                               >
                                 <Trash2 size={14} />
@@ -591,14 +600,14 @@ export default function AdminCategoriesPage() {
                 <button
                   type="button"
                   onClick={() => setModalOpen(false)}
-                  className="flex-1 py-2.5 rounded-lg border border-neutral-300 font-bold text-neutral-700 hover:bg-neutral-50"
+                  className="flex-1 py-2.5 rounded-lg border border-neutral-300 font-bold text-neutral-700 hover:bg-neutral-50 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="flex-1 btn-primary py-2.5 font-bold shadow-md"
+                  className="flex-1 btn-primary py-2.5 font-bold shadow-md cursor-pointer"
                 >
                   {submitting ? 'Saving...' : editingCategory ? 'Update Category' : 'Create Category'}
                 </button>
@@ -607,6 +616,18 @@ export default function AdminCategoriesPage() {
           </div>
         </div>
       )}
+
+      {/* Confirmation Delete Modal */}
+      <ConfirmDeleteModal
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleConfirmDelete}
+        loading={deleting}
+        title={`Delete ${deleteTarget?.parent_id ? 'Subcategory' : 'Main Category'}`}
+        description="Are you sure you want to permanently delete this category?"
+        itemName={deleteTarget?.name}
+        warningMessage={deleteWarning}
+      />
     </div>
   );
 }

@@ -124,7 +124,7 @@ export default async function AdminOrderDetailPage({ params }: AdminOrderDetailP
               </div>
               {order.discount_amount > 0 && (
                 <div className="flex justify-between text-emerald-600 font-bold">
-                  <span>Coupon Discount ({order.coupon_code})</span>
+                  <span>Discount {order.coupon_code ? `(${order.coupon_code})` : ''}</span>
                   <span>-{formatCurrency(order.discount_amount)}</span>
                 </div>
               )}

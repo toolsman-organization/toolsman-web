@@ -878,3 +878,85 @@ export async function sendPaidOrderEmails(order: OrderEmailData): Promise<void> 
 // Backward compatibility alias
 export const sendOrderConfirmation = sendOrderConfirmationEmail;
 
+export interface PasswordResetEmailData {
+  recipientEmail: string;
+  recipientName?: string;
+  resetUrl: string;
+}
+
+/**
+ * Send a branded Password Reset email to the customer via Brevo.
+ */
+export async function sendPasswordResetEmail(data: PasswordResetEmailData): Promise<boolean> {
+  if (!isValidEmail(data.recipientEmail)) {
+    console.warn('[Brevo] Invalid recipient email for password reset:', data.recipientEmail);
+    return false;
+  }
+
+  const name = data.recipientName || data.recipientEmail.split('@')[0] || 'Customer';
+  const siteUrl = getSiteBaseUrl();
+
+  const htmlContent = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reset Your TOOLSMAN Password</title>
+  <style>
+    body { margin: 0; padding: 0; background-color: #f4f4f5; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #18181b; }
+    .container { max-width: 600px; margin: 30px auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.06); }
+    .header { background: #0f0f0f; padding: 30px 40px; text-align: center; border-bottom: 3px solid #f97316; }
+    .logo-text { font-size: 24px; font-weight: 900; color: #ffffff; letter-spacing: 2px; text-transform: uppercase; margin: 0; }
+    .content { padding: 40px; }
+    .title { font-size: 20px; font-weight: 800; color: #111827; margin: 0 0 16px; text-transform: uppercase; }
+    .message { font-size: 14px; line-height: 1.6; color: #4b5563; margin-bottom: 24px; }
+    .btn-container { text-align: center; margin: 32px 0; }
+    .btn { display: inline-block; background-color: #f97316; color: #ffffff !important; padding: 14px 32px; font-size: 14px; font-weight: bold; text-decoration: none; border-radius: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .link-fallback { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; font-size: 12px; color: #6b7280; word-break: break-all; margin-top: 24px; }
+    .security-note { font-size: 12px; color: #9ca3af; margin-top: 24px; border-top: 1px solid #f3f4f6; padding-top: 16px; }
+    .footer { background: #18181b; color: #9ca3af; padding: 24px 40px; text-align: center; font-size: 12px; }
+    .footer a { color: #f97316; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1 class="logo-text">TOOLSMAN</h1>
+    </div>
+    <div class="content">
+      <h2 class="title">Password Reset Request</h2>
+      <p class="message">
+        Hello <strong>${name}</strong>,<br /><br />
+        We received a request to reset the password for your TOOLSMAN customer account. Click the button below to choose a new password:
+      </p>
+      <div class="btn-container">
+        <a href="${data.resetUrl}" class="btn" target="_blank">Reset My Password</a>
+      </div>
+      <p class="message" style="margin-bottom: 0;">
+        If the button above does not work, copy and paste the following URL into your web browser:
+      </p>
+      <div class="link-fallback">
+        <a href="${data.resetUrl}" style="color: #ea580c;">${data.resetUrl}</a>
+      </div>
+      <div class="security-note">
+        <strong>🔒 Security Notice:</strong> This link is valid for 1 hour. If you did not request a password reset, please disregard this email. Your password will remain unchanged.
+      </div>
+    </div>
+    <div class="footer">
+      <p style="margin: 0 0 8px;">© ${new Date().getFullYear()} TOOLSMAN — Kerala's Premier Power Tools Hub</p>
+      <p style="margin: 0;"><a href="${siteUrl}">Visit Store</a> &bull; Support Helpline: +91 79944 10167</p>
+    </div>
+  </div>
+</body>
+</html>
+  `;
+
+  return sendEmail({
+    to: [{ email: data.recipientEmail, name }],
+    subject: 'Reset Your TOOLSMAN Account Password',
+    htmlContent,
+  });
+}
+
+
