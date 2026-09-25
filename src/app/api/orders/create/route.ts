@@ -1,14 +1,24 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { calculateDeliveryCharge, parseWeightInKg } from '@/lib/delivery';
 
 export async function POST(request: Request) {
   try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const serverSupabase = await createClient();
+    const { data: { user } } = await serverSupabase.auth.getUser();
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized. Please login to place an order.' }, { status: 401 });
+    }
+
+    let supabase = serverSupabase;
+    if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      try {
+        supabase = createAdminClient() as any;
+      } catch {
+        supabase = serverSupabase;
+      }
     }
 
     const body = await request.json();

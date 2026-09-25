@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { verifyRazorpaySignature } from '@/lib/razorpay';
 import { sendPaidOrderEmails } from '@/lib/brevo';
 
@@ -19,7 +20,15 @@ export async function POST(request: Request) {
       );
     }
 
-    const supabase = await createClient();
+    const serverSupabase = await createClient();
+    let supabase = serverSupabase;
+    if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      try {
+        supabase = createAdminClient() as any;
+      } catch {
+        supabase = serverSupabase;
+      }
+    }
 
     // 1. Fetch existing order to check status and prevent duplicate updates (Idempotency)
     const { data: existingOrder, error: fetchError } = await supabase
