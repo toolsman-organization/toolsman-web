@@ -37,12 +37,12 @@ export async function POST(request: Request) {
           // ignore profile lookup failure
         }
 
-        // Generate recovery link
+        // Generate recovery link directly to /reset-password so the client receives hash/code immediately
         const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
           type: 'recovery',
           email: cleanEmail,
           options: {
-            redirectTo: `${siteUrl}/auth/callback?next=/reset-password`,
+            redirectTo: `${siteUrl}/reset-password`,
           },
         });
 
@@ -81,7 +81,7 @@ export async function POST(request: Request) {
     // Works directly with standard Supabase URL & Anon key!
     const supabase = await createClient();
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
-      redirectTo: `${siteUrl}/auth/callback?next=/reset-password`,
+      redirectTo: `${siteUrl}/reset-password`,
     });
 
     if (resetError) {
