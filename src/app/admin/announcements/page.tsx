@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Loader2, Megaphone } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import ConfirmDeleteModal from '@/components/admin/ConfirmDeleteModal';
 import type { AnnouncementBar } from '@/types/database';
 
 export default function AdminAnnouncementsPage() {
@@ -12,6 +13,10 @@ export default function AdminAnnouncementsPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [editingAnnounce, setEditingAnnounce] = useState<AnnouncementBar | null>(null);
+
+  // Delete modal state
+  const [deleteTarget, setDeleteTarget] = useState<AnnouncementBar | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const [form, setForm] = useState({
     message: '',
@@ -82,10 +87,16 @@ export default function AdminAnnouncementsPage() {
     await loadAnnouncements();
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this announcement?')) return;
-    await supabase.from('announcement_bars').delete().eq('id', id);
-    await loadAnnouncements();
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await supabase.from('announcement_bars').delete().eq('id', deleteTarget.id);
+      setDeleteTarget(null);
+      await loadAnnouncements();
+    } finally {
+      setDeleting(false);
+    }
   };
 
   return (
@@ -158,8 +169,9 @@ export default function AdminAnnouncementsPage() {
                           <Edit size={15} />
                         </button>
                         <button
-                          onClick={() => handleDelete(a.id)}
-                          className="p-1.5 text-neutral-600 hover:text-red-600 rounded hover:bg-red-50"
+                          onClick={() => setDeleteTarget(a)}
+                          className="p-1.5 text-neutral-600 hover:text-red-600 rounded hover:bg-red-50 cursor-pointer"
+                          title="Delete Announcement"
                         >
                           <Trash2 size={15} />
                         </button>
@@ -258,14 +270,14 @@ export default function AdminAnnouncementsPage() {
                 <button
                   type="button"
                   onClick={() => setModalOpen(false)}
-                  className="flex-1 py-2.5 rounded-lg border border-neutral-300 font-bold text-neutral-700"
+                  className="flex-1 py-2.5 rounded-lg border border-neutral-300 font-bold text-neutral-700 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="flex-1 btn-primary py-2.5 font-bold"
+                  className="flex-1 btn-primary py-2.5 font-bold cursor-pointer"
                 >
                   {submitting ? 'Saving...' : 'Save Announcement'}
                 </button>
@@ -274,6 +286,17 @@ export default function AdminAnnouncementsPage() {
           </div>
         </div>
       )}
+
+      {/* Confirmation Delete Modal */}
+      <ConfirmDeleteModal
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleConfirmDelete}
+        loading={deleting}
+        title="Delete Announcement"
+        description="Are you sure you want to delete this announcement bar message?"
+        itemName={deleteTarget?.message}
+      />
     </div>
   );
 }

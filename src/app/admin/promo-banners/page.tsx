@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import ImageUploader from '@/components/admin/ImageUploader';
+import ConfirmDeleteModal from '@/components/admin/ConfirmDeleteModal';
 import type { Banner } from '@/types/database';
 
 interface CleanSlotState {
@@ -52,6 +53,8 @@ export default function AdminPromoBannersPage() {
   const [loading, setLoading] = useState(true);
   const [savingSlot, setSavingSlot] = useState<number | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [deleteSlotTarget, setDeleteSlotTarget] = useState<1 | 2 | null>(null);
+  const [deletingSlot, setDeletingSlot] = useState(false);
 
   const [slot1, setSlot1] = useState<CleanSlotState>({ ...INITIAL_SLOT_1 });
   const [slot2, setSlot2] = useState<CleanSlotState>({ ...INITIAL_SLOT_2 });
@@ -164,25 +167,31 @@ export default function AdminPromoBannersPage() {
     }
   };
 
-  const handleDeleteSlot = async (slotNumber: 1 | 2) => {
+  const handleConfirmDeleteSlot = async () => {
+    if (!deleteSlotTarget) return;
+    const slotNumber = deleteSlotTarget;
     const slotData = slotNumber === 1 ? slot1 : slot2;
+
     if (!slotData.id) {
       if (slotNumber === 1) setSlot1({ ...INITIAL_SLOT_1 });
       else setSlot2({ ...INITIAL_SLOT_2 });
+      setDeleteSlotTarget(null);
       return;
     }
 
-    if (!confirm(`Are you sure you want to remove Promo Banner Slot ${slotNumber}?`)) return;
-
+    setDeletingSlot(true);
     try {
       await supabase.from('banners').delete().eq('id', slotData.id);
       if (slotNumber === 1) setSlot1({ ...INITIAL_SLOT_1 });
       else setSlot2({ ...INITIAL_SLOT_2 });
       setSuccessMsg(`Promo Banner Slot ${slotNumber} deleted.`);
       setTimeout(() => setSuccessMsg(null), 3000);
+      setDeleteSlotTarget(null);
       await loadPromoBanners();
     } catch (err) {
       alert((err as Error).message || 'Failed to delete');
+    } finally {
+      setDeletingSlot(false);
     }
   };
 
@@ -236,8 +245,8 @@ export default function AdminPromoBannersPage() {
             {slot.id && (
               <button
                 type="button"
-                onClick={() => handleDeleteSlot(slotNumber)}
-                className="p-1.5 text-neutral-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                onClick={() => setDeleteSlotTarget(slotNumber)}
+                className="p-1.5 text-neutral-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
                 title="Remove this banner"
               >
                 <Trash2 size={16} />
@@ -341,7 +350,7 @@ export default function AdminPromoBannersPage() {
             type="button"
             disabled={isSaving}
             onClick={() => handleSaveSlot(slotNumber)}
-            className="btn-primary w-full py-3 text-xs sm:text-sm font-black flex items-center justify-center gap-2 shadow-md shadow-orange-500/20 disabled:opacity-50"
+            className="btn-primary w-full py-3 text-xs sm:text-sm font-black flex items-center justify-center gap-2 shadow-md shadow-orange-500/20 disabled:opacity-50 cursor-pointer"
           >
             {isSaving ? (
               <>
@@ -400,6 +409,16 @@ export default function AdminPromoBannersPage() {
         {renderSlotCard(1, slot1, setSlot1)}
         {renderSlotCard(2, slot2, setSlot2)}
       </div>
+
+      {/* Confirmation Delete Modal */}
+      <ConfirmDeleteModal
+        isOpen={deleteSlotTarget !== null}
+        onClose={() => setDeleteSlotTarget(null)}
+        onConfirm={handleConfirmDeleteSlot}
+        loading={deletingSlot}
+        title={`Remove Promo Banner Slot ${deleteSlotTarget || ''}`}
+        description={`Are you sure you want to remove the promotional banner from Slot ${deleteSlotTarget || ''}?`}
+      />
     </div>
   );
 }

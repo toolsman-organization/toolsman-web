@@ -1,9 +1,10 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { Package, Heart, MapPin, User, ArrowRight, ShieldCheck, LogOut } from 'lucide-react';
+import { Package, Heart, MapPin, ArrowRight } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { getUserOrders } from '@/services/orders';
 import { formatCurrency, formatDate, getOrderStatusColor } from '@/lib/utils';
+import AccountLogoutButton from '@/components/account/AccountLogoutButton';
 
 export default async function AccountPage() {
   const supabase = await createClient();
@@ -41,6 +42,8 @@ export default async function AccountPage() {
               <p className="text-xs text-neutral-400">{user.email}</p>
             </div>
           </div>
+
+          <AccountLogoutButton />
         </div>
 
         {/* Quick Nav Cards */}

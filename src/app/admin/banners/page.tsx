@@ -13,6 +13,7 @@ import {
   AlertTriangle,
   ToggleLeft,
   ToggleRight,
+  Sparkles,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import ImageUploader from '@/components/admin/ImageUploader';
@@ -38,7 +39,6 @@ export default function AdminBannersPage() {
   const [cloudinaryPublicId, setCloudinaryPublicId] = useState('');
   const [mobileImageUrl, setMobileImageUrl] = useState('');
   const [mobileCloudinaryPublicId, setMobileCloudinaryPublicId] = useState('');
-  const [position, setPosition] = useState<'hero' | 'promo' | 'sidebar'>('hero');
   const [sortOrder, setSortOrder] = useState(1);
   const [isActive, setIsActive] = useState(true);
 
@@ -50,9 +50,11 @@ export default function AdminBannersPage() {
   const [deleting, setDeleting] = useState(false);
 
   const loadBanners = async () => {
+    setLoading(true);
     const { data } = await supabase
       .from('banners')
       .select('*')
+      .eq('position', 'hero')
       .order('sort_order', { ascending: true });
     setBanners(data || []);
     setLoading(false);
@@ -68,7 +70,6 @@ export default function AdminBannersPage() {
     setCloudinaryPublicId('');
     setMobileImageUrl('');
     setMobileCloudinaryPublicId('');
-    setPosition('hero');
     setSortOrder(banners.length + 1);
     setIsActive(true);
     setContent({ ...DEFAULT_BANNER_CONTENT });
@@ -81,7 +82,6 @@ export default function AdminBannersPage() {
     setCloudinaryPublicId(banner.cloudinary_public_id || '');
     setMobileImageUrl(banner.mobile_image_url || '');
     setMobileCloudinaryPublicId(banner.mobile_cloudinary_public_id || '');
-    setPosition(banner.position);
     setSortOrder(banner.sort_order);
     setIsActive(banner.is_active);
 
@@ -110,7 +110,7 @@ export default function AdminBannersPage() {
         mobile_cloudinary_public_id: mobileCloudinaryPublicId || null,
         button_text: content.show_overlay ? content.button_text || 'SHOP NOW' : null,
         button_link: content.button_link || '/shop',
-        position,
+        position: 'hero' as const,
         sort_order: sortOrder,
         is_active: isActive,
         updated_at: new Date().toISOString(),
@@ -166,78 +166,51 @@ export default function AdminBannersPage() {
     }
   };
 
-  const [selectedTab, setSelectedTab] = useState<'all' | 'hero' | 'promo'>('all');
-
-  const filteredBanners = banners.filter((b) => {
-    if (selectedTab === 'all') return true;
-    return b.position === selectedTab;
-  });
-
   return (
     <div className="space-y-6">
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <span className="text-xs font-bold text-orange-600 uppercase tracking-widest">
-            Marketing & Promotions
+            Marketing & Homepage
           </span>
           <h1 className="text-2xl sm:text-3xl font-black text-neutral-950 uppercase tracking-tight">
-            Hero & Promo Banners
+            Hero Banners ({banners.length})
           </h1>
+          <p className="text-xs text-neutral-500 mt-0.5">
+            Manage the top homepage slider carousel banners. (Promo banners are managed separately under Promo Banners).
+          </p>
         </div>
 
         <button
           onClick={openAddModal}
-          className="btn-primary py-2.5 px-4 text-xs font-bold flex items-center gap-1.5 shadow-md self-start sm:self-auto"
+          className="btn-primary py-2.5 px-4 text-xs font-bold flex items-center gap-1.5 shadow-md self-start sm:self-auto cursor-pointer"
         >
           <Plus size={16} />
-          <span>Add New Banner</span>
+          <span>Add Hero Slide</span>
         </button>
-      </div>
-
-      {/* Tabs Filter */}
-      <div className="flex flex-wrap items-center gap-2 border-b border-neutral-200 pb-3">
-        {[
-          { id: 'all', label: `All Banners (${banners.length})` },
-          { id: 'hero', label: `Hero Carousel (${banners.filter(b => b.position === 'hero').length})` },
-          { id: 'promo', label: `Mid-Page Promo Grid (${banners.filter(b => b.position === 'promo').length})` },
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setSelectedTab(tab.id as 'all' | 'hero' | 'promo')}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
-              selectedTab === tab.id
-                ? 'bg-neutral-950 text-white shadow-xs'
-                : 'bg-white border border-neutral-200 text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
       </div>
 
       {/* Banners List */}
       {loading ? (
         <div className="bg-white rounded-2xl border border-neutral-200 p-12 text-center">
           <Loader2 className="w-8 h-8 animate-spin text-orange-500 mx-auto mb-2" />
-          <p className="text-xs text-neutral-500 font-semibold">Loading banners...</p>
+          <p className="text-xs text-neutral-500 font-semibold">Loading hero banners...</p>
         </div>
-      ) : filteredBanners.length === 0 ? (
+      ) : banners.length === 0 ? (
         <div className="bg-white rounded-2xl border border-neutral-200 p-12 text-center">
           <ImageIcon className="w-12 h-12 text-neutral-300 mx-auto mb-3" />
-          <h3 className="text-base font-bold text-neutral-800 mb-1">No Banners Found</h3>
+          <h3 className="text-base font-bold text-neutral-800 mb-1">No Hero Banners Found</h3>
           <p className="text-xs text-neutral-500 mb-4 max-w-sm mx-auto">
-            {selectedTab === 'promo'
-              ? 'Add 2 mid-page promotional banners to show in the 2-banner advertising grid.'
-              : 'Add promotional banners for the storefront homepage carousel or mid-page promotions.'}
+            Add promotional slides for the storefront homepage top hero carousel.
           </p>
-          <button onClick={openAddModal} className="btn-primary text-xs py-2 px-4">
-            Create First Banner
+          <button onClick={openAddModal} className="btn-primary text-xs py-2 px-4 cursor-pointer">
+            Create First Hero Banner
           </button>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {filteredBanners.map((banner) => {
+          {banners.map((banner) => {
             const parsed = parseBannerContent(banner);
             return (
               <div
@@ -249,7 +222,7 @@ export default function AdminBannersPage() {
                   {banner.image_url ? (
                     <Image
                       src={banner.image_url}
-                      alt={banner.title || 'Banner Image'}
+                      alt={banner.title || 'Hero Banner Image'}
                       fill
                       className="object-cover"
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 600px"
@@ -287,17 +260,17 @@ export default function AdminBannersPage() {
                     </div>
                   )}
 
-                  {/* Position Badge */}
+                  {/* Hero Slider Badge */}
                   <div className="absolute top-3 left-3">
                     <span className="bg-black/70 backdrop-blur-xs text-white text-[10px] font-black uppercase px-2.5 py-1 rounded-md border border-white/10">
-                      {banner.position === 'hero' ? 'Hero Slider' : 'Promo Banner'}
+                      Hero Slider
                     </span>
                   </div>
 
                   {/* Sort Order Badge */}
                   <div className="absolute top-3 right-3">
                     <span className="bg-neutral-900/80 text-orange-400 font-mono text-[10px] font-bold px-2 py-1 rounded-md border border-neutral-700">
-                      #{banner.sort_order}
+                      Slide #{banner.sort_order}
                     </span>
                   </div>
                 </div>
@@ -307,7 +280,7 @@ export default function AdminBannersPage() {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => handleToggleActive(banner)}
-                      className={`p-1 rounded-md hover:bg-neutral-100 ${
+                      className={`p-1 rounded-md hover:bg-neutral-100 cursor-pointer ${
                         banner.is_active ? 'text-emerald-600' : 'text-neutral-400'
                       }`}
                       title={banner.is_active ? 'Deactivate' : 'Activate'}
@@ -326,14 +299,14 @@ export default function AdminBannersPage() {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => openEditModal(banner)}
-                      className="p-2 hover:text-orange-600 rounded-lg hover:bg-orange-50 text-neutral-600 transition-colors"
+                      className="p-2 hover:text-orange-600 rounded-lg hover:bg-orange-50 text-neutral-600 transition-colors cursor-pointer"
                       title="Edit Banner"
                     >
                       <Edit size={16} />
                     </button>
                     <button
                       onClick={() => setDeleteTarget(banner)}
-                      className="p-2 hover:text-red-600 rounded-lg hover:bg-red-50 text-neutral-600 transition-colors"
+                      className="p-2 hover:text-red-600 rounded-lg hover:bg-red-50 text-neutral-600 transition-colors cursor-pointer"
                       title="Delete Banner"
                     >
                       <Trash2 size={16} />
@@ -346,7 +319,7 @@ export default function AdminBannersPage() {
         </div>
       )}
 
-      {/* Simplified Add / Edit Banner Modal (No Split Screen Preview) */}
+      {/* Add / Edit Hero Banner Modal */}
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs overflow-y-auto">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl my-6 overflow-hidden border border-neutral-200 animate-in fade-in zoom-in-95 duration-200">
@@ -354,15 +327,15 @@ export default function AdminBannersPage() {
             <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-100 bg-neutral-50/70">
               <div>
                 <h2 className="text-base sm:text-lg font-black text-neutral-950 uppercase tracking-tight">
-                  {editingBanner ? 'Edit Banner' : 'Create New Banner'}
+                  {editingBanner ? 'Edit Hero Banner' : 'Create New Hero Banner'}
                 </h2>
                 <p className="text-xs text-neutral-500 font-medium">
-                  Configure background image, headline text, and button link.
+                  Configure slider background image, headline text, and button link.
                 </p>
               </div>
               <button
                 onClick={() => setModalOpen(false)}
-                className="w-8 h-8 rounded-full bg-neutral-200/80 hover:bg-neutral-300 flex items-center justify-center text-neutral-600 transition-colors"
+                className="w-8 h-8 rounded-full bg-neutral-200/80 hover:bg-neutral-300 flex items-center justify-center text-neutral-600 transition-colors cursor-pointer"
               >
                 <X size={16} />
               </button>
@@ -370,44 +343,21 @@ export default function AdminBannersPage() {
 
             {/* Modal Form */}
             <form onSubmit={handleSubmit} className="p-6 space-y-6 max-h-[80vh] overflow-y-auto">
-              {/* 1. Placement & Order */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-neutral-700 uppercase tracking-wider mb-1.5">
-                    Banner Placement
-                  </label>
-                  <select
-                    value={position}
-                    onChange={(e) => setPosition(e.target.value as 'hero' | 'promo' | 'sidebar')}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-xs sm:text-sm font-semibold focus:outline-none focus:border-orange-500 bg-white"
-                  >
-                    <option value="hero">Hero Carousel (Top Homepage Slider)</option>
-                    <option value="promo">Mid-Page Promo (2-Banner Advertising Grid)</option>
-                  </select>
-                  <p className="text-[10px] text-neutral-500 mt-1">
-                    {position === 'promo'
-                      ? 'Appears in the 2-banner advertising grid in the middle of the homepage.'
-                      : 'Appears in the main top hero carousel.'}
-                  </p>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-neutral-700 uppercase tracking-wider mb-1.5">
-                    Display Order / Position #{position === 'promo' ? '(1 = Left, 2 = Right)' : ''}
-                  </label>
-                  <input
-                    type="number"
-                    min={1}
-                    value={sortOrder}
-                    onChange={(e) => setSortOrder(parseInt(e.target.value, 10) || 1)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-xs sm:text-sm font-bold font-mono focus:outline-none focus:border-orange-500"
-                  />
-                  <p className="text-[10px] text-neutral-500 mt-1">
-                    {position === 'promo'
-                      ? 'Set to 1 for Left Banner, 2 for Right Banner.'
-                      : 'Sequence in the hero slider carousel.'}
-                  </p>
-                </div>
+              {/* 1. Slide Order */}
+              <div>
+                <label className="block text-xs font-bold text-neutral-700 uppercase tracking-wider mb-1.5">
+                  Slide Sequence / Display Order #
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  value={sortOrder}
+                  onChange={(e) => setSortOrder(parseInt(e.target.value, 10) || 1)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-xs sm:text-sm font-bold font-mono focus:outline-none focus:border-orange-500"
+                />
+                <p className="text-[10px] text-neutral-500 mt-1">
+                  Controls the order of this slide in the homepage top carousel.
+                </p>
               </div>
 
               {/* 2. Banner Background Images */}
@@ -484,7 +434,7 @@ export default function AdminBannersPage() {
                             key={p.value}
                             type="button"
                             onClick={() => setContent({ ...content, badge_color: p.value })}
-                            className={`w-4 h-4 rounded-full border border-neutral-300 transition-transform ${
+                            className={`w-4 h-4 rounded-full border border-neutral-300 transition-transform cursor-pointer ${
                               content.badge_color === p.value ? 'scale-125 ring-2 ring-orange-500' : ''
                             }`}
                             style={{ backgroundColor: p.value }}
@@ -514,7 +464,7 @@ export default function AdminBannersPage() {
                             key={p.value}
                             type="button"
                             onClick={() => setContent({ ...content, line1_color: p.value })}
-                            className={`w-4 h-4 rounded-full border border-neutral-300 transition-transform ${
+                            className={`w-4 h-4 rounded-full border border-neutral-300 transition-transform cursor-pointer ${
                               content.line1_color === p.value ? 'scale-125 ring-2 ring-orange-500' : ''
                             }`}
                             style={{ backgroundColor: p.value }}
@@ -544,7 +494,7 @@ export default function AdminBannersPage() {
                             key={p.value}
                             type="button"
                             onClick={() => setContent({ ...content, line2_color: p.value })}
-                            className={`w-4 h-4 rounded-full border border-neutral-300 transition-transform ${
+                            className={`w-4 h-4 rounded-full border border-neutral-300 transition-transform cursor-pointer ${
                               content.line2_color === p.value ? 'scale-125 ring-2 ring-orange-500' : ''
                             }`}
                             style={{ backgroundColor: p.value }}
@@ -618,7 +568,7 @@ export default function AdminBannersPage() {
                 <button
                   type="button"
                   onClick={() => setIsActive(!isActive)}
-                  className={`p-1 rounded-md hover:bg-neutral-100 ${
+                  className={`p-1 rounded-md hover:bg-neutral-100 cursor-pointer ${
                     isActive ? 'text-emerald-600' : 'text-neutral-400'
                   }`}
                 >
@@ -631,14 +581,14 @@ export default function AdminBannersPage() {
                 <button
                   type="button"
                   onClick={() => setModalOpen(false)}
-                  className="px-5 py-2.5 rounded-xl border border-neutral-300 text-xs font-bold text-neutral-700 hover:bg-neutral-100 transition-colors"
+                  className="px-5 py-2.5 rounded-xl border border-neutral-300 text-xs font-bold text-neutral-700 hover:bg-neutral-100 transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="btn-primary py-2.5 px-6 text-xs font-bold uppercase tracking-wider flex items-center gap-2 shadow-md shadow-orange-500/20 disabled:opacity-60"
+                  className="btn-primary py-2.5 px-6 text-xs font-bold uppercase tracking-wider flex items-center gap-2 shadow-md shadow-orange-500/20 disabled:opacity-60 cursor-pointer"
                 >
                   {submitting ? (
                     <>
@@ -668,10 +618,10 @@ export default function AdminBannersPage() {
               </div>
               <div>
                 <h3 className="text-sm font-black text-neutral-950 uppercase tracking-tight">
-                  Delete Banner
+                  Delete Hero Banner
                 </h3>
                 <p className="text-xs text-neutral-500 font-medium mt-0.5">
-                  Are you sure you want to delete this banner?
+                  Are you sure you want to delete this hero slider banner?
                 </p>
               </div>
             </div>
@@ -681,7 +631,7 @@ export default function AdminBannersPage() {
                 type="button"
                 onClick={() => setDeleteTarget(null)}
                 disabled={deleting}
-                className="px-4 py-2 rounded-xl border border-neutral-300 text-xs font-bold text-neutral-700 hover:bg-neutral-100 transition-colors"
+                className="px-4 py-2 rounded-xl border border-neutral-300 text-xs font-bold text-neutral-700 hover:bg-neutral-100 transition-colors cursor-pointer"
               >
                 Cancel
               </button>
@@ -689,7 +639,7 @@ export default function AdminBannersPage() {
                 type="button"
                 onClick={handleDelete}
                 disabled={deleting}
-                className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-colors disabled:opacity-60"
+                className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-colors disabled:opacity-60 cursor-pointer"
               >
                 {deleting ? <Loader2 size={14} className="animate-spin" /> : null}
                 <span>Delete</span>

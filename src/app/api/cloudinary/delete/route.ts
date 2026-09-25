@@ -11,13 +11,22 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single();
+    // Verify admin role
+    let isAdmin = user.app_metadata?.role === 'admin' || user.user_metadata?.role === 'admin' || user.email?.toLowerCase() === 'admin@toolsman.in';
 
-    if (profile?.role !== 'admin') {
+    if (!isAdmin) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+      if (profile?.role === 'admin') {
+        isAdmin = true;
+      }
+    }
+
+    if (!isAdmin) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 

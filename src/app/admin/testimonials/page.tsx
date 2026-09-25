@@ -12,6 +12,7 @@ import {
   Quote,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import ConfirmDeleteModal from '@/components/admin/ConfirmDeleteModal';
 import type { Testimonial } from '@/types/database';
 
 export default function AdminTestimonialsPage() {
@@ -21,6 +22,10 @@ export default function AdminTestimonialsPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [editingItem, setEditingItem] = useState<Testimonial | null>(null);
+
+  // Delete modal state
+  const [deleteTarget, setDeleteTarget] = useState<Testimonial | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const [form, setForm] = useState({
     name: '',
@@ -114,15 +119,21 @@ export default function AdminTestimonialsPage() {
     }
   };
 
-  const handleDelete = async (item: Testimonial) => {
-    if (!confirm(`Delete testimonial from "${item.name}"?`)) return;
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
 
-    const { error } = await supabase.from('testimonials').delete().eq('id', item.id);
-    if (error) {
-      alert('Delete failed: ' + error.message);
-      return;
+    try {
+      const { error } = await supabase.from('testimonials').delete().eq('id', deleteTarget.id);
+      if (error) {
+        alert('Delete failed: ' + error.message);
+        return;
+      }
+      setDeleteTarget(null);
+      await loadTestimonials();
+    } finally {
+      setDeleting(false);
     }
-    await loadTestimonials();
   };
 
   const handleToggleActive = async (item: Testimonial) => {
@@ -225,14 +236,14 @@ export default function AdminTestimonialsPage() {
                   <div className="flex items-center gap-1 shrink-0">
                     <button
                       onClick={() => openEditModal(t)}
-                      className="p-1.5 text-neutral-500 hover:text-orange-600 rounded hover:bg-white transition-colors"
+                      className="p-1.5 text-neutral-500 hover:text-orange-600 rounded hover:bg-white transition-colors cursor-pointer"
                       title="Edit"
                     >
                       <Edit size={14} />
                     </button>
                     <button
-                      onClick={() => handleDelete(t)}
-                      className="p-1.5 text-neutral-500 hover:text-red-600 rounded hover:bg-white transition-colors"
+                      onClick={() => setDeleteTarget(t)}
+                      className="p-1.5 text-neutral-500 hover:text-red-600 rounded hover:bg-white transition-colors cursor-pointer"
                       title="Delete"
                     >
                       <Trash2 size={14} />
@@ -372,14 +383,14 @@ export default function AdminTestimonialsPage() {
                 <button
                   type="button"
                   onClick={() => setModalOpen(false)}
-                  className="flex-1 py-2.5 rounded-lg border border-neutral-300 font-bold text-neutral-700 hover:bg-neutral-50"
+                  className="flex-1 py-2.5 rounded-lg border border-neutral-300 font-bold text-neutral-700 hover:bg-neutral-50 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="flex-1 btn-primary py-2.5 font-bold shadow-md"
+                  className="flex-1 btn-primary py-2.5 font-bold shadow-md cursor-pointer"
                 >
                   {submitting ? 'Saving...' : editingItem ? 'Update' : 'Publish'}
                 </button>
@@ -388,6 +399,17 @@ export default function AdminTestimonialsPage() {
           </div>
         </div>
       )}
+
+      {/* Confirmation Delete Modal */}
+      <ConfirmDeleteModal
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleConfirmDelete}
+        loading={deleting}
+        title="Delete Testimonial"
+        description="Are you sure you want to delete this customer testimonial?"
+        itemName={deleteTarget ? `${deleteTarget.name} (${deleteTarget.rating} Stars)` : undefined}
+      />
     </div>
   );
 }
