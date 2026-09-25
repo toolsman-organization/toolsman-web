@@ -6,6 +6,8 @@ import SortDropdown from '@/components/storefront/SortDropdown';
 import { getProducts } from '@/services/products';
 import { getActiveCategories } from '@/services/categories';
 import { getActiveBrands } from '@/services/brands';
+import { getSiteUrl, getAbsoluteUrl } from '@/lib/site-url';
+import { generateBreadcrumbSchema } from '@/lib/schema';
 import type { Metadata } from 'next';
 
 interface ShopPageProps {
@@ -23,14 +25,49 @@ interface ShopPageProps {
 
 export async function generateMetadata({ searchParams }: ShopPageProps): Promise<Metadata> {
   const params = await searchParams;
-  let title = 'Shop All Professional Power Tools';
-  if (params.category) title = `${params.category.replace(/-/g, ' ')} | TOOLSMAN`;
-  if (params.brand) title = `${params.brand.toUpperCase()} Power Tools | TOOLSMAN`;
-  if (params.search) title = `Search: "${params.search}" | TOOLSMAN`;
+  let title = 'Shop All Professional Power Tools | TOOLSMAN';
+
+  if (params.search) {
+    title = `Search: "${params.search}" | TOOLSMAN`;
+  } else if (params.brand) {
+    title = `${params.brand.toUpperCase()} Power Tools & Equipment | TOOLSMAN`;
+  } else if (params.category) {
+    title = `${params.category.replace(/-/g, ' ').toUpperCase()} | TOOLSMAN`;
+  }
+
+  const isFilteredOrSearch = Boolean(
+    params.search ||
+    params.minPrice ||
+    params.maxPrice ||
+    params.sort ||
+    params.inStock
+  );
+
+  const canonicalUrl = '/shop';
 
   return {
     title,
-    description: 'Browse our extensive catalog of power tools, hand tools, accessories and spares with fast delivery in Kerala.',
+    description:
+      'Browse our extensive catalog of power tools, hand tools, accessories and spares with fast delivery in Kerala. 100% genuine products.',
+    alternates: {
+      canonical: canonicalUrl,
+    },
+    robots: isFilteredOrSearch
+      ? { index: false, follow: true }
+      : { index: true, follow: true },
+    openGraph: {
+      title,
+      description:
+        'Browse our extensive catalog of power tools, hand tools, accessories and spares with fast delivery in Kerala.',
+      url: getAbsoluteUrl(canonicalUrl),
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description:
+        'Browse our extensive catalog of power tools, hand tools, accessories and spares with fast delivery in Kerala.',
+    },
   };
 }
 
@@ -58,6 +95,11 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
 
   const { data: products, total, totalPages } = productsResult;
 
+  const breadcrumbSchema = generateBreadcrumbSchema([
+    { name: 'Home', url: '/' },
+    { name: 'Shop Catalog', url: '/shop' },
+  ]);
+
   const activeCatObj = params.category
     ? categories.find((c) => c.slug === params.category)
     : null;
@@ -67,6 +109,10 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
 
   return (
     <div className="bg-white min-h-screen py-6 sm:py-10 border-b border-neutral-200">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
       <div className="container-site">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-1.5 text-xs text-neutral-500 mb-6 flex-wrap" aria-label="Breadcrumb">

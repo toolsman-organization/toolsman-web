@@ -11,7 +11,15 @@ interface HeroBannerProps {
   banners: Banner[];
 }
 
-export function BannerContentBlock({ content }: { content: SimpleBannerContent }) {
+export function BannerContentBlock({
+  content,
+  isPrimary = true,
+}: {
+  content: SimpleBannerContent;
+  isPrimary?: boolean;
+}) {
+  const HeadingTag = isPrimary ? 'h1' : 'h2';
+
   return (
     <div className="flex flex-col w-full max-w-5xl items-start text-left mr-auto">
       {/* 1. Top Badge / Tagline */}
@@ -29,24 +37,24 @@ export function BannerContentBlock({ content }: { content: SimpleBannerContent }
       )}
 
       {/* 2. Two-Line Display Heading (strictly 1 line per headline row) */}
-      <div className="flex flex-col gap-0.5 sm:gap-1 mb-3.5 w-full">
+      <HeadingTag className="flex flex-col gap-0.5 sm:gap-1 mb-3.5 w-full">
         {content.line1_text && (
-          <h1
-            className="font-serif text-3xl xs:text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black uppercase tracking-tight leading-[0.95] drop-shadow-md sm:whitespace-nowrap"
+          <span
+            className="font-serif text-3xl xs:text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black uppercase tracking-tight leading-[0.95] drop-shadow-md sm:whitespace-nowrap block"
             style={{ color: content.line1_color || '#ffffff' }}
           >
             {content.line1_text}
-          </h1>
+          </span>
         )}
         {content.line2_text && (
-          <h1
-            className="font-serif text-3xl xs:text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black uppercase tracking-tight leading-[0.95] drop-shadow-md sm:whitespace-nowrap"
+          <span
+            className="font-serif text-3xl xs:text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black uppercase tracking-tight leading-[0.95] drop-shadow-md sm:whitespace-nowrap block"
             style={{ color: content.line2_color || '#f97316' }}
           >
             {content.line2_text}
-          </h1>
+          </span>
         )}
-      </div>
+      </HeadingTag>
 
       {/* 3. Subtitle / Description */}
       {content.subtitle && (
@@ -198,7 +206,7 @@ export default function HeroBanner({ banners }: HeroBannerProps) {
               transition: 'opacity 0.25s ease, transform 0.25s ease',
             }}
           >
-            <BannerContentBlock content={structured} />
+            <BannerContentBlock content={structured} isPrimary={current === 0} />
           </div>
         </div>
       ) : (

@@ -1,9 +1,18 @@
 import Link from 'next/link';
 import { ArrowLeft, ShieldCheck } from 'lucide-react';
 
-export const metadata = {
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
   title: 'Terms of Service | TOOLSMAN',
   description: 'Terms and conditions for purchasing power tools and equipment at TOOLSMAN.',
+  alternates: {
+    canonical: '/terms',
+  },
+  openGraph: {
+    title: 'Terms of Service | TOOLSMAN',
+    description: 'Terms and conditions for purchasing power tools and equipment at TOOLSMAN.',
+  },
 };
 
 export default function TermsPage() {
