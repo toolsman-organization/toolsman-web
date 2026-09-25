@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Trash2, Minus, Plus, ArrowRight, ShieldCheck, ShoppingBag, Tag, Loader2, Scale } from 'lucide-react';
+import { Trash2, Minus, Plus, ArrowRight, ShieldCheck, ShoppingBag, Scale } from 'lucide-react';
 import { useCart } from '@/hooks/useCart';
 import { formatCurrency } from '@/lib/utils';
 import { calculateTotalCartWeight, calculateDeliveryCharge } from '@/lib/delivery';
@@ -12,11 +12,6 @@ import { createClient } from '@/lib/supabase/client';
 export default function CartPage() {
   const supabase = createClient();
   const { items, cartCount, cartTotal, updateQuantity, removeFromCart, loading } = useCart();
-  const [couponCode, setCouponCode] = useState('');
-  const [couponDiscount, setCouponDiscount] = useState(0);
-  const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
-  const [couponLoading, setCouponLoading] = useState(false);
-  const [couponError, setCouponError] = useState('');
 
   // Delivery settings
   const [baseCharge, setBaseCharge] = useState(100);
@@ -50,43 +45,7 @@ export default function CartPage() {
     additionalCharge
   );
   const shippingFee = deliveryCalc.deliveryCharge;
-  const grandTotal = Math.max(0, cartTotal - couponDiscount + shippingFee);
-
-  const handleApplyCoupon = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!couponCode.trim()) return;
-
-    setCouponLoading(true);
-    setCouponError('');
-    try {
-      const res = await fetch('/api/coupons/validate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: couponCode.trim(), orderTotal: cartTotal }),
-      });
-      const data = await res.json();
-      if (!res.ok || data.error) {
-        setCouponError(data.error || 'Invalid coupon code');
-        setCouponDiscount(0);
-        setAppliedCoupon(null);
-      } else {
-        setCouponDiscount(data.coupon.discount_amount);
-        setAppliedCoupon(data.coupon.code);
-        setCouponError('');
-      }
-    } catch {
-      setCouponError('Failed to apply coupon');
-    } finally {
-      setCouponLoading(false);
-    }
-  };
-
-  const handleRemoveCoupon = () => {
-    setAppliedCoupon(null);
-    setCouponDiscount(0);
-    setCouponCode('');
-    setCouponError('');
-  };
+  const grandTotal = Math.max(0, cartTotal + shippingFee);
 
   if (loading) {
     return (
@@ -253,51 +212,6 @@ export default function CartPage() {
 
           {/* Order Summary & Checkout (4 cols) */}
           <div className="lg:col-span-4 flex flex-col gap-5 sticky top-24">
-            {/* Coupon Box */}
-            <div className="bg-white rounded-xl border border-neutral-200 p-4 sm:p-5 shadow-sm">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-neutral-800 uppercase tracking-wider mb-3">
-                <Tag size={15} className="text-orange-600" />
-                <span>Apply Coupon</span>
-              </div>
-
-              {appliedCoupon ? (
-                <div className="flex items-center justify-between p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold">
-                  <span>Coupon &quot;{appliedCoupon}&quot; Applied!</span>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handleRemoveCoupon();
-                    }}
-                    className="text-red-600 hover:underline ml-2 font-bold"
-                  >
-                    Remove
-                  </button>
-                </div>
-              ) : (
-                <form onSubmit={handleApplyCoupon} className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="Enter coupon code"
-                    value={couponCode}
-                    onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                    className="flex-1 px-3 py-2 text-xs rounded-md border border-neutral-300 focus:outline-none focus:border-orange-500 uppercase font-mono font-bold"
-                  />
-                  <button
-                    type="submit"
-                    disabled={couponLoading || !couponCode.trim()}
-                    className="px-4 py-2 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-bold rounded-md transition-colors disabled:opacity-50"
-                  >
-                    {couponLoading ? <Loader2 size={14} className="animate-spin" /> : 'APPLY'}
-                  </button>
-                </form>
-              )}
-
-              {couponError && (
-                <p className="text-xs text-red-600 mt-2 font-medium">{couponError}</p>
-              )}
-            </div>
-
             {/* Price Breakdown */}
             <div className="bg-white rounded-xl border border-neutral-200 p-5 sm:p-6 shadow-sm flex flex-col gap-4">
               <h2 className="font-black text-base text-neutral-950 uppercase tracking-wider pb-3 border-b border-neutral-100">
@@ -320,13 +234,6 @@ export default function CartPage() {
                   </span>
                 </div>
 
-                {couponDiscount > 0 && (
-                  <div className="flex justify-between text-emerald-600 font-bold">
-                    <span>Coupon Discount</span>
-                    <span>-{formatCurrency(couponDiscount)}</span>
-                  </div>
-                )}
-
                 <div className="flex justify-between">
                   <span>Delivery Charge</span>
                   <span className="font-bold text-neutral-900">{formatCurrency(shippingFee)}</span>
@@ -340,7 +247,7 @@ export default function CartPage() {
 
               {/* Checkout CTA */}
               <Link
-                href={`/checkout${appliedCoupon ? `?coupon=${appliedCoupon}` : ''}`}
+                href="/checkout"
                 className="btn-primary w-full py-3.5 text-sm font-bold flex items-center justify-center gap-2 mt-2 shadow-lg shadow-orange-500/25"
               >
                 <span>PROCEED TO CHECKOUT</span>

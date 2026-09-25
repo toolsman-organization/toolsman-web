@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
@@ -15,7 +15,6 @@ import {
   Users,
   Image as ImageIcon,
   Megaphone,
-  TicketPercent,
   MessageSquareQuote,
   Settings,
   ExternalLink,
@@ -32,20 +31,54 @@ interface AdminSidebarProps {
   onClose?: () => void;
 }
 
-const navItems = [
-  { href: '/admin', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
-  { href: '/admin/products', label: 'Products', icon: <Package size={18} /> },
-  { href: '/admin/categories', label: 'Categories', icon: <FolderTree size={18} /> },
-  { href: '/admin/brands', label: 'Brands', icon: <Tag size={18} /> },
-  { href: '/admin/orders', label: 'Orders', icon: <ShoppingBag size={18} /> },
-  { href: '/admin/delivery-charge', label: 'Delivery Charge', icon: <Truck size={18} /> },
-  { href: '/admin/customers', label: 'Customers', icon: <Users size={18} /> },
-  { href: '/admin/banners', label: 'Hero Banners', icon: <ImageIcon size={18} /> },
-  { href: '/admin/promo-banners', label: 'Promo Banners', icon: <Sparkles size={18} /> },
-  { href: '/admin/announcements', label: 'Announcements', icon: <Megaphone size={18} /> },
-  { href: '/admin/testimonials', label: 'Testimonials', icon: <MessageSquareQuote size={18} /> },
-  { href: '/admin/coupons', label: 'Coupons', icon: <TicketPercent size={18} /> },
-  { href: '/admin/settings', label: 'Site Settings', icon: <Settings size={18} /> },
+interface NavItem {
+  href: string;
+  label: string;
+  icon: React.ReactNode;
+}
+
+interface NavSection {
+  title?: string;
+  items: NavItem[];
+}
+
+const navSections: NavSection[] = [
+  {
+    items: [
+      { href: '/admin', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
+    ],
+  },
+  {
+    title: 'Catalog & Inventory',
+    items: [
+      { href: '/admin/products', label: 'Products', icon: <Package size={18} /> },
+      { href: '/admin/categories', label: 'Categories', icon: <FolderTree size={18} /> },
+      { href: '/admin/brands', label: 'Brands', icon: <Tag size={18} /> },
+    ],
+  },
+  {
+    title: 'Sales & Delivery',
+    items: [
+      { href: '/admin/orders', label: 'Orders', icon: <ShoppingBag size={18} /> },
+      { href: '/admin/delivery-charge', label: 'Delivery Charge', icon: <Truck size={18} /> },
+      { href: '/admin/customers', label: 'Customers', icon: <Users size={18} /> },
+    ],
+  },
+  {
+    title: 'Marketing & Content',
+    items: [
+      { href: '/admin/banners', label: 'Hero Banners', icon: <ImageIcon size={18} /> },
+      { href: '/admin/promo-banners', label: 'Promo Banners', icon: <Sparkles size={18} /> },
+      { href: '/admin/announcements', label: 'Announcements', icon: <Megaphone size={18} /> },
+      { href: '/admin/testimonials', label: 'Testimonials', icon: <MessageSquareQuote size={18} /> },
+    ],
+  },
+  {
+    title: 'Configuration',
+    items: [
+      { href: '/admin/settings', label: 'Site Settings', icon: <Settings size={18} /> },
+    ],
+  },
 ];
 
 export default function AdminSidebar({ mobileOpen = false, onClose }: AdminSidebarProps) {
@@ -53,6 +86,110 @@ export default function AdminSidebar({ mobileOpen = false, onClose }: AdminSideb
   const router = useRouter();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [hasNewOrders, setHasNewOrders] = useState(false);
+  const [latestOrderTimestamp, setLatestOrderTimestamp] = useState<string | null>(null);
+
+  // 1. Initial one-time check on mount & Realtime subscription for instant new orders
+  useEffect(() => {
+    const supabase = createClient();
+
+    // Initial one-time check for latest order
+    const checkInitialOrder = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('orders')
+          .select('created_at')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (error || !data?.created_at) return;
+
+        setLatestOrderTimestamp(data.created_at);
+        const lastSeen = localStorage.getItem('admin_last_seen_order_time');
+
+        if (pathname.startsWith('/admin/orders')) {
+          localStorage.setItem('admin_last_seen_order_time', data.created_at);
+          setHasNewOrders(false);
+          return;
+        }
+
+        if (!lastSeen) {
+          localStorage.setItem('admin_last_seen_order_time', data.created_at);
+          setHasNewOrders(false);
+        } else {
+          const lastSeenDate = new Date(lastSeen).getTime();
+          const latestOrderDate = new Date(data.created_at).getTime();
+          if (latestOrderDate > lastSeenDate) {
+            setHasNewOrders(true);
+          } else {
+            setHasNewOrders(false);
+          }
+        }
+      } catch (err) {
+        console.warn('[AdminSidebar] Initial order check note:', err);
+      }
+    };
+
+    checkInitialOrder();
+
+    // Subscribe to Supabase Realtime INSERT events on public.orders
+    const channel = supabase
+      .channel('admin-orders-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'orders',
+        },
+        (payload) => {
+          const newOrder = payload.new as { created_at?: string };
+          const createdAt = newOrder?.created_at || new Date().toISOString();
+          setLatestOrderTimestamp(createdAt);
+
+          // If admin is currently on the orders page, mark as seen immediately
+          if (pathname.startsWith('/admin/orders')) {
+            localStorage.setItem('admin_last_seen_order_time', createdAt);
+            setHasNewOrders(false);
+          } else {
+            setHasNewOrders(true);
+          }
+        }
+      )
+      .subscribe((status) => {
+        if (status === 'CHANNEL_ERROR') {
+          console.warn('[Realtime] Admin orders channel error');
+        }
+      });
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [pathname]);
+
+  // 2. When admin navigates to /admin/orders or /admin/orders/[id], dismiss the red dot
+  useEffect(() => {
+    if (pathname.startsWith('/admin/orders')) {
+      if (latestOrderTimestamp) {
+        localStorage.setItem('admin_last_seen_order_time', latestOrderTimestamp);
+      } else {
+        localStorage.setItem('admin_last_seen_order_time', new Date().toISOString());
+      }
+      setHasNewOrders(false);
+    }
+  }, [pathname, latestOrderTimestamp]);
+
+  // Lock background body scroll when mobile sidebar is open
+  useEffect(() => {
+    if (mobileOpen) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [mobileOpen]);
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -68,10 +205,10 @@ export default function AdminSidebar({ mobileOpen = false, onClose }: AdminSideb
   };
 
   const content = (
-    <div className="flex flex-col h-full bg-neutral-950 text-neutral-300 border-r border-neutral-800">
+    <div className="flex flex-col h-full bg-neutral-950 text-neutral-300 border-r border-neutral-800 select-none">
       {/* Brand Header */}
-      <div className="p-4 flex items-center justify-between border-b border-neutral-800">
-        <Link href="/admin" className="flex items-center gap-2.5">
+      <div className="p-4 flex items-center justify-between border-b border-neutral-800 shrink-0">
+        <Link href="/admin" onClick={onClose} className="flex items-center gap-2.5">
           <div className="w-10 h-10 flex items-center justify-center shrink-0">
             <Image src="/logo.png" alt="TOOLSMAN" width={40} height={40} className="w-full h-full object-contain" />
           </div>
@@ -85,36 +222,73 @@ export default function AdminSidebar({ mobileOpen = false, onClose }: AdminSideb
           </div>
         </Link>
         {onClose && (
-          <button onClick={onClose} className="lg:hidden text-neutral-400 hover:text-white p-1">
+          <button 
+            onClick={onClose} 
+            className="lg:hidden text-neutral-400 hover:text-white p-1.5 rounded-lg hover:bg-neutral-900 transition-colors"
+            aria-label="Close menu"
+          >
             <X size={20} />
           </button>
         )}
       </div>
 
-      {/* Nav List */}
-      <nav className="flex-1 overflow-y-auto scrollbar-none p-3 space-y-1">
-        {navItems.map((item) => {
-          const isActive =
-            item.href === '/admin'
-              ? pathname === '/admin'
-              : pathname.startsWith(item.href);
+      {/* Nav List with Section Headings */}
+      <nav className="flex-1 overflow-y-auto scrollbar-none p-3 space-y-4">
+        {navSections.map((section, sIdx) => (
+          <div key={sIdx} className="space-y-1">
+            {section.title && (
+              <div className="text-[10px] font-black text-neutral-500 uppercase tracking-widest px-3 pt-1 pb-1">
+                {section.title}
+              </div>
+            )}
+            <div className="space-y-1">
+              {section.items.map((item) => {
+                const isActive =
+                  item.href === '/admin'
+                    ? pathname === '/admin'
+                    : pathname.startsWith(item.href);
 
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={onClose}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-bold transition-all ${
-                isActive
-                  ? 'bg-orange-500 text-white shadow-md shadow-orange-500/20'
-                  : 'text-neutral-400 hover:text-white hover:bg-neutral-900'
-              }`}
-            >
-              <span className={isActive ? 'text-white' : 'text-neutral-400'}>{item.icon}</span>
-              <span>{item.label}</span>
-            </Link>
-          );
-        })}
+                const isOrdersItem = item.href === '/admin/orders';
+                const showRedDot = isOrdersItem && hasNewOrders;
+
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => {
+                      if (isOrdersItem) {
+                        if (latestOrderTimestamp) {
+                          localStorage.setItem('admin_last_seen_order_time', latestOrderTimestamp);
+                        } else {
+                          localStorage.setItem('admin_last_seen_order_time', new Date().toISOString());
+                        }
+                        setHasNewOrders(false);
+                      }
+                      if (onClose) onClose();
+                    }}
+                    className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold transition-all ${
+                      isActive
+                        ? 'bg-orange-500 text-white shadow-md shadow-orange-500/20'
+                        : 'text-neutral-400 hover:text-white hover:bg-neutral-900'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className={isActive ? 'text-white' : 'text-neutral-400'}>{item.icon}</span>
+                      <span>{item.label}</span>
+                    </div>
+
+                    {showRedDot && (
+                      <span className="relative flex h-2.5 w-2.5 shrink-0" title="New order received">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500 shadow-sm shadow-red-500"></span>
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
 
       {/* Footer / Storefront link */}
@@ -148,11 +322,14 @@ export default function AdminSidebar({ mobileOpen = false, onClose }: AdminSideb
         {content}
       </aside>
 
-      {/* Mobile Drawer */}
+      {/* Mobile Drawer on Right Side */}
       {mobileOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-xs" onClick={onClose} />
-          <div className="fixed inset-y-0 left-0 w-64 z-50 shadow-2xl">
+          <div 
+            className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200" 
+            onClick={onClose} 
+          />
+          <div className="fixed inset-y-0 right-0 w-72 max-w-[85vw] z-50 shadow-2xl animate-in slide-in-from-right duration-300">
             {content}
           </div>
         </div>

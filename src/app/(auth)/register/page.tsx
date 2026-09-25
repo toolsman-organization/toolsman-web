@@ -25,53 +25,45 @@ function RegisterForm() {
     setErrorMsg('');
 
     try {
-      const supabase = createClient();
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            full_name: fullName,
-            phone: phone,
-          },
-        },
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fullName: fullName.trim(),
+          phone: phone.trim(),
+          email: email.trim(),
+          password,
+        }),
       });
 
-      if (error) {
-        setErrorMsg(error.message);
+      const data = await res.json();
+
+      if (!res.ok || data.error) {
+        setErrorMsg(data.error || 'Failed to create account');
         setLoading(false);
         return;
       }
 
-      if (data.session) {
-        router.push(redirectTo);
+      // Automatically sign in the user immediately without requiring email verification
+      const supabase = createClient();
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
+
+      if (signInError) {
+        // If automatic sign in has any issue, redirect to login page with email prefilled
+        router.push(`/login?redirect=${encodeURIComponent(redirectTo)}`);
         router.refresh();
       } else {
-        setSuccess(true);
+        router.push(redirectTo);
+        router.refresh();
       }
     } catch {
-      setErrorMsg('Failed to create account. Please check your details.');
-    } finally {
+      setErrorMsg('Failed to create account. Please check your network connection.');
       setLoading(false);
     }
   };
-
-  if (success) {
-    return (
-      <div className="text-center py-4">
-        <div className="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
-          <CheckCircle2 size={32} />
-        </div>
-        <h2 className="text-xl font-black text-neutral-900 mb-2">Registration Successful!</h2>
-        <p className="text-xs text-neutral-600 mb-6 leading-relaxed">
-          Please check your email inbox to verify your account, or sign in now if email confirmation is disabled.
-        </p>
-        <Link href={`/login?redirect=${encodeURIComponent(redirectTo)}`} className="btn-primary w-full py-3 text-xs font-bold">
-          Sign In Now
-        </Link>
-      </div>
-    );
-  }
 
   return (
     <div>
