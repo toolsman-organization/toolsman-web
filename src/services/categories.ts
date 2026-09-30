@@ -58,14 +58,29 @@ export async function getCategoryTree(): Promise<Category[]> {
  */
 export async function getCategoryBySlug(slug: string): Promise<Category | null> {
   const supabase = await createClient();
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from('categories')
     .select('*')
     .eq('slug', slug)
     .eq('is_active', true)
-    .single();
+    .maybeSingle();
 
-  if (error || !data) return null;
+  // If not found by exact slug, check common plural/singular forms (e.g., hand-tools <-> hand-tool)
+  if (!data) {
+    const altSlug = slug.endsWith('s') ? slug.slice(0, -1) : slug + 's';
+    const { data: altData } = await supabase
+      .from('categories')
+      .select('*')
+      .eq('slug', altSlug)
+      .eq('is_active', true)
+      .maybeSingle();
+
+    if (altData) {
+      data = altData;
+    } else {
+      return null;
+    }
+  }
 
   const category = data as Category;
 
