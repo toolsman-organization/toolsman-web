@@ -103,11 +103,21 @@ export async function getProductsByCategory(categorySlug: string, limit = 8): Pr
   const supabase = await createClient();
 
   // Check if category is a main category
-  const { data: catData } = await supabase
+  let { data: catData } = await supabase
     .from('categories')
-    .select('id, parent_id')
+    .select('id, slug, parent_id')
     .eq('slug', categorySlug)
-    .single();
+    .maybeSingle();
+
+  if (!catData) {
+    const altSlug = categorySlug.endsWith('s') ? categorySlug.slice(0, -1) : categorySlug + 's';
+    const { data: altCat } = await supabase
+      .from('categories')
+      .select('id, slug, parent_id')
+      .eq('slug', altSlug)
+      .maybeSingle();
+    if (altCat) catData = altCat;
+  }
 
   let query = supabase
     .from('product_with_details')
@@ -120,11 +130,10 @@ export async function getProductsByCategory(categorySlug: string, limit = 8): Pr
       .select('id')
       .eq('parent_id', catData.id);
     const subIds = (subcats || []).map((s) => s.id);
-    if (subIds.length > 0) {
-      query = query.in('category_id', subIds);
-    } else {
-      query = query.eq('category_id', catData.id);
-    }
+    const allIds = [catData.id, ...subIds];
+    query = query.in('category_id', allIds);
+  } else if (catData) {
+    query = query.eq('category_id', catData.id);
   } else {
     query = query.eq('category_slug', categorySlug);
   }
@@ -177,10 +186,15 @@ export async function getProducts(
       .filter(Boolean);
 
     if (categorySlugs.length > 0) {
+      const expandedSlugs = new Set<string>(categorySlugs);
+      for (const s of categorySlugs) {
+        expandedSlugs.add(s.endsWith('s') ? s.slice(0, -1) : s + 's');
+      }
+
       const { data: matchedCats } = await supabase
         .from('categories')
         .select('id, slug, parent_id')
-        .in('slug', categorySlugs);
+        .in('slug', Array.from(expandedSlugs));
 
       if (matchedCats && matchedCats.length > 0) {
         const targetCategoryIds = new Set<string>();

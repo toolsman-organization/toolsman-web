@@ -17,7 +17,7 @@ export default function BrandSection({ brands }: BrandSectionProps) {
       : [...brands, ...brands];
 
   return (
-    <section className="py-8 sm:py-12 lg:py-14 bg-black text-white border-b border-neutral-850 overflow-hidden">
+    <section id="brands" className="py-8 sm:py-12 lg:py-14 bg-black text-white border-b border-neutral-850 overflow-hidden scroll-mt-24 sm:scroll-mt-28">
       <div className="container-site">
 
         {/* Section Header */}

@@ -21,7 +21,7 @@ export default async function StoreLayout({ children }: { children: React.ReactN
         <AnnouncementBarComponent announcements={announcements} />
         <Header categories={categories} />
         <main className="flex-1">{children}</main>
-        <Footer settings={settings} />
+        <Footer settings={settings} categories={categories} />
       </div>
     </CartProvider>
   );
