@@ -352,7 +352,7 @@ export default function Header({ categories }: HeaderProps) {
 
                 {/* Brands link */}
                 <Link
-                  href="/shop"
+                  href="/#brands"
                   className="px-3.5 py-2 text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 rounded-md transition-colors whitespace-nowrap"
                 >
                   Brands

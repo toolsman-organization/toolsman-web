@@ -4,18 +4,12 @@ import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Phone, Mail, MapPin, ChevronDown } from 'lucide-react';
-import type { SiteSettings } from '@/types/database';
+import type { SiteSettings, Category } from '@/types/database';
 
 interface FooterProps {
   settings: SiteSettings;
+  categories?: Category[];
 }
-
-const quickLinks = [
-  { label: 'Shop All Products', href: '/shop' },
-  { label: 'Power Tools', href: '/shop?search=power+tools' },
-  { label: 'Hand Tools', href: '/shop?search=hand+tools' },
-  { label: 'Accessories', href: '/shop?search=accessories' },
-];
 
 const companyLinks = [
   { label: 'Terms & Conditions', href: '/terms' },
@@ -26,10 +20,9 @@ const companyLinks = [
 const customerCareLinks = [
   { label: 'About Us', href: '/about' },
   { label: 'Contact Us', href: '/contact' },
-  { label: 'All Categories', href: '/shop' },
 ];
 
-export default function Footer({ settings }: FooterProps) {
+export default function Footer({ settings, categories = [] }: FooterProps) {
   // Mobile accordion state
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     quick: false,
@@ -44,6 +37,21 @@ export default function Footer({ settings }: FooterProps) {
       [section]: !prev[section],
     }));
   };
+
+  const mainCategories = categories.filter((c) => !c.parent_id);
+  const quickLinks = [
+    { label: 'Shop All Products', href: '/shop' },
+    ...(mainCategories.length > 0
+      ? mainCategories.slice(0, 4).map((c) => ({
+          label: c.name,
+          href: `/category/${c.slug}`,
+        }))
+      : [
+          { label: 'Power Tools', href: '/category/power-tools' },
+          { label: 'Hand Tools', href: '/category/hand-tool' },
+          { label: 'Accessories', href: '/category/accessories' },
+        ]),
+  ];
 
   return (
     <footer style={{ backgroundColor: '#0f0f0f', color: '#d4d4d4' }} className="border-t border-neutral-850 select-none">

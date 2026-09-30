@@ -16,6 +16,7 @@ const fallbackCategoryIcons: Record<string, React.ReactNode> = {
   'rotary-hammers': <Hammer className="w-8 h-8 sm:w-10 sm:h-10 text-orange-500" />,
   'cutting-tools': <Disc className="w-8 h-8 sm:w-10 sm:h-10 text-orange-500" />,
   'hand-tools': <Hammer className="w-8 h-8 sm:w-10 sm:h-10 text-orange-500" />,
+  'hand-tool': <Hammer className="w-8 h-8 sm:w-10 sm:h-10 text-orange-500" />,
   'accessories': <Sparkles className="w-8 h-8 sm:w-10 sm:h-10 text-orange-500" />,
   'batteries-chargers': <Battery className="w-8 h-8 sm:w-10 sm:h-10 text-orange-500" />,
 };

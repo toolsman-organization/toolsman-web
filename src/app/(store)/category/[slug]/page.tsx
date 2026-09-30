@@ -93,7 +93,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
   if (!category) notFound();
 
   const filters = {
-    category: slug,
+    category: category.slug,
     brand: sp.brand,
     minPrice: sp.minPrice ? parseFloat(sp.minPrice) : undefined,
     maxPrice: sp.maxPrice ? parseFloat(sp.maxPrice) : undefined,
